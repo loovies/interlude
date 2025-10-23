@@ -1,0 +1,233 @@
+package com.interlude.service.impl;
+
+import com.interlude.entity.constants.Constants;
+import com.interlude.component.RedisComponent;
+import com.interlude.entity.po.UserRoleRelation;
+import com.interlude.entity.query.SimplePage;
+import com.interlude.entity.query.UserRoleRelationQuery;
+import com.interlude.enums.PageSize;
+import com.interlude.entity.vo.PaginationResultVO;
+
+import java.util.Date;
+import java.util.List;
+import com.interlude.entity.po.UserInfo;
+import com.interlude.entity.query.UserInfoQuery;
+import com.interlude.enums.ResponseCodeEnum;
+import com.interlude.enums.UserStatusEnum;
+import com.interlude.exception.BusinessException;
+import com.interlude.mapper.UserInfoMapper;
+import com.interlude.mapper.UserRoleRelationMapper;
+import com.interlude.service.UserInfoService;
+import com.interlude.utils.StringTools;
+import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
+
+import static com.interlude.entity.constants.Constants.REDIS_ADMIN_TOKEN;
+
+/**
+ * @Description:用户信息表
+Service
+ * @auther:dazhi
+ * @date:2025/10/14
+ */
+
+@Service("userInfoService")
+public class UserInfoServiceImpl implements UserInfoService{
+
+	@Resource
+	private UserInfoMapper<UserInfo,UserInfoQuery> userInfoMapper;
+
+	@Resource
+	private UserRoleRelationMapper<UserRoleRelation, UserRoleRelationQuery> userRoleRelationMapper;
+
+	@Resource
+	private RedisComponent redisComponent;
+	/**
+	 * 根据条件查询列表
+	 */
+	public List<UserInfo> findListByParam(UserInfoQuery query) {
+		return this.userInfoMapper.selectList(query);
+	}
+
+	/**
+	 * 根据条件查询数量
+	 */
+	public Integer findCountByParam(UserInfoQuery query) {
+		return this.userInfoMapper.selectCount(query);
+	}
+
+	/**
+	 * 分页查询
+	 */
+	public PaginationResultVO<UserInfo> findListByPage(UserInfoQuery query) {
+		Integer count = this.findCountByParam(query);
+		Integer pageSize = query.getPageSize() == null ? PageSize.SIZE15.getSize() : query.getPageSize();
+		SimplePage page = new SimplePage(query.getPageNo(),count,pageSize);
+		query.setSimplePage(page);
+		List<UserInfo> listByParam = this.findListByParam(query);
+		PaginationResultVO<UserInfo> result = new PaginationResultVO(count,page.getPageSize(),page.getPageNo(),page.getPageTotal(),listByParam);
+		return result;
+	}
+
+	/**
+	 * 新增
+	 */
+	public Integer add(UserInfo bean) {
+		return this.userInfoMapper.insert(bean);
+	}
+
+	/**
+	 * 批量新增
+	 */
+	public Integer addBatch(List<UserInfo> listBean) {
+		if (listBean == null || listBean.isEmpty()) {
+			return 0;
+		}
+		return this.userInfoMapper.insertBatch(listBean);
+	}
+
+	/**
+	 * 批量新增或修改
+	 */
+	public Integer addOrUpdateBatch(List<UserInfo> listBean) {
+		if (listBean == null || listBean.isEmpty()) {
+			return 0;
+		}
+		return this.userInfoMapper.insertOrUpdateBatch(listBean);
+	}
+
+
+	/**
+	 * 根据UserId查询
+	 */
+	public UserInfo getUserInfoByUserId(String userId) {
+		return this.userInfoMapper.selectByUserId(userId);
+	}
+
+	/**
+	 * 根据UserId更新
+	 */
+	public Integer updateUserInfoByUserId(UserInfo bean, String userId) {
+		return this.userInfoMapper.updateByUserId(bean, userId);
+	}
+
+	/**
+	 * 根据UserId删除
+	 */
+	public Integer deleteUserInfoByUserId(String userId) {
+		return this.userInfoMapper.deleteByUserId(userId);
+	}
+
+	/**
+	 * 根据NickName查询
+	 */
+	public UserInfo getUserInfoByNickName(String nickName) {
+		return this.userInfoMapper.selectByNickName(nickName);
+	}
+
+	/**
+	 * 根据NickName更新
+	 */
+	public Integer updateUserInfoByNickName(UserInfo bean, String nickName) {
+		return this.userInfoMapper.updateByNickName(bean, nickName);
+	}
+
+	/**
+	 * 根据NickName删除
+	 */
+	public Integer deleteUserInfoByNickName(String nickName) {
+		return this.userInfoMapper.deleteByNickName(nickName);
+	}
+
+	/**
+	 * 根据Phone查询
+	 */
+	public UserInfo getUserInfoByPhone(String phone) {
+		return this.userInfoMapper.selectByPhone(phone);
+	}
+
+	/**
+	 * 根据Phone更新
+	 */
+	public Integer updateUserInfoByPhone(UserInfo bean, String phone) {
+		return this.userInfoMapper.updateByPhone(bean, phone);
+	}
+
+	/**
+	 * 根据Phone删除
+	 */
+	public Integer deleteUserInfoByPhone(String phone) {
+		return this.userInfoMapper.deleteByPhone(phone);
+	}
+
+	/**
+	 * 根据Email查询
+	 */
+	public UserInfo getUserInfoByEmail(String email) {
+		return this.userInfoMapper.selectByEmail(email);
+	}
+
+	/**
+	 * 根据Email更新
+	 */
+	public Integer updateUserInfoByEmail(UserInfo bean, String email) {
+		return this.userInfoMapper.updateByEmail(bean, email);
+	}
+
+	/**
+	 * 根据Email删除
+	 */
+	public Integer deleteUserInfoByEmail(String email) {
+		return this.userInfoMapper.deleteByEmail(email);
+	}
+
+	@Override
+	public UserInfo login(String account, String password , HttpServletResponse response) {
+		UserInfoQuery query = new UserInfoQuery();
+		query.setAccount(account);
+		query.setPassword(password);
+		UserInfo userInfo = userInfoMapper.selectByParam(query);
+		if(userInfo == null){
+			throw new BusinessException("账号密码不正确");
+		}
+		if(userInfo.getEnabled() == UserStatusEnum.DISABLE.getStatus()){
+			throw new BusinessException("该账号已被封禁");
+		}
+		String token = redisComponent.saveAdmin4Token(account);
+		saveTokenAdminCookie(response,token);
+
+		UserInfo updateQuery = new UserInfo();
+		updateQuery.setUpdateTime(new Date());
+		userInfoMapper.updateByUserId(updateQuery,userInfo.getUserId());
+		return userInfo;
+	}
+
+	@Override
+	public Integer addOrUpdateUserInfo(UserInfoQuery query) {
+		if (query == null){
+			throw new BusinessException(ResponseCodeEnum.CODE_600);
+		}
+		if(query.getUserId() == null){
+			// 新增用户
+			query.setUserId(StringTools.getRandomString(Constants.NUMBER_10));
+			query.setCreateTime(new Date());
+			query.setUpdateTime(new Date());
+			query.setPwdResetTime(new Date());
+			query.setTheme(1);
+
+		}else{
+			//修改用户
+		}
+		return 0;
+	}
+
+	protected void saveTokenAdminCookie(HttpServletResponse response, String token){
+		Cookie cookie = new Cookie(REDIS_ADMIN_TOKEN, token);
+		cookie.setPath("/");
+		cookie.setMaxAge(Constants.REDIS_TIME_ONE_DAY * 7);
+		response.addCookie(cookie);
+	}
+}

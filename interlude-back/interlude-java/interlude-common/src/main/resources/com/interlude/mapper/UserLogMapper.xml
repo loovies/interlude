@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.interlude.mapper.UserLogMapper">
+	<!--实体映射-->
+	<resultMap id="base_result_map" type="com.interlude.entity.po.UserLog">
+		<!--日志id-->
+		<id column="log_id" property="logId"/>
+		<!--描述-->
+		<result column="description" property="description"/>
+		<!--日志类型-->
+		<result column="log_type" property="logType"/>
+		<!--输出方法-->
+		<result column="method" property="method"/>
+		<!--用户Id-->
+		<result column="user_id" property="userId"/>
+		<!--ip地址-->
+		<result column="last_login_ip" property="lastLoginIp"/>
+		<!--时间-->
+		<result column="time" property="time"/>
+		<!--地址-->
+		<result column="address" property="address"/>
+		<!--浏览器-->
+		<result column="browser" property="browser"/>
+		<!--报错信息-->
+		<result column="exception_detail" property="exceptionDetail"/>
+		<!--创建时间-->
+		<result column="create_time" property="createTime"/>
+	</resultMap>
+	<!--通用测序结果列-->
+	<sql id="base_column_list">
+		log_id,description,log_type,method,user_id,last_login_ip,time,address,browser,exception_detail,create_time
+	</sql>
+
+
+	<!--基础条件查询-->
+	<sql id="base_query_condition">
+		<if test="query.logId != null">
+			and log_id = #{query.logId} 
+		</if>
+		<if test="query.description != null and query.description != ''">
+			and description = #{query.description} 
+		</if>
+		<if test="query.logType != null and query.logType != ''">
+			and log_type = #{query.logType} 
+		</if>
+		<if test="query.method != null and query.method != ''">
+			and method = #{query.method} 
+		</if>
+		<if test="query.userId != null and query.userId != ''">
+			and user_id = #{query.userId} 
+		</if>
+		<if test="query.lastLoginIp != null and query.lastLoginIp != ''">
+			and last_login_ip = #{query.lastLoginIp} 
+		</if>
+		<if test="query.time != null">
+			and time = #{query.time} 
+		</if>
+		<if test="query.address != null and query.address != ''">
+			and address = #{query.address} 
+		</if>
+		<if test="query.browser != null and query.browser != ''">
+			and browser = #{query.browser} 
+		</if>
+		<if test="query.exceptionDetail != null and query.exceptionDetail != ''">
+			and exception_detail = #{query.exceptionDetail} 
+		</if>
+		<if test="query.createTime != null">
+			and create_time = #{query.createTime} 
+		</if>
+	</sql>
+
+	<!--扩展的条件查询-->
+	<sql id="base_query_condition_extend">
+		<if test="query.descriptionFuzzy != null and query.descriptionFuzzy != ''">
+			and description like concat('%', #{query.descriptionFuzzy}, '%')
+		</if>
+		<if test="query.logTypeFuzzy != null and query.logTypeFuzzy != ''">
+			and log_type like concat('%', #{query.logTypeFuzzy}, '%')
+		</if>
+		<if test="query.methodFuzzy != null and query.methodFuzzy != ''">
+			and method like concat('%', #{query.methodFuzzy}, '%')
+		</if>
+		<if test="query.userIdFuzzy != null and query.userIdFuzzy != ''">
+			and user_id like concat('%', #{query.userIdFuzzy}, '%')
+		</if>
+		<if test="query.lastLoginIpFuzzy != null and query.lastLoginIpFuzzy != ''">
+			and last_login_ip like concat('%', #{query.lastLoginIpFuzzy}, '%')
+		</if>
+		<if test="query.addressFuzzy != null and query.addressFuzzy != ''">
+			and address like concat('%', #{query.addressFuzzy}, '%')
+		</if>
+		<if test="query.browserFuzzy != null and query.browserFuzzy != ''">
+			and browser like concat('%', #{query.browserFuzzy}, '%')
+		</if>
+		<if test="query.exceptionDetailFuzzy != null and query.exceptionDetailFuzzy != ''">
+			and exception_detail like concat('%', #{query.exceptionDetailFuzzy}, '%')
+		</if>
+		<if test="query.createTimeStart != null and query.createTimeStart != ''">
+			<![CDATA[ and create_time >= str_to_date(#{query.createTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.createTimeEnd != null and query.createTimeEnd != ''">
+			<![CDATA[ and create_time < date_sub(str_to_date(#{query.createTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+	</sql>
+
+	<!--扩展的查询条件-->
+	<sql id="query_condition">
+		<where>
+			<include refid="base_query_condition"/>
+			<include refid="base_query_condition_extend"/>
+		</where>
+	</sql>
+
+	<!--查询列表-->
+	<select id="selectList" resultMap="base_result_map">
+		SELECT <include refid="base_column_list"/> FROM user_log <include refid="query_condition"/>
+		<if test="query.orderBy != null"> order by ${query.orderBy} </if>
+		<if test="query.simplePage != null"> limit #{query.simplePage.start},#{query.simplePage.end}</if>
+	</select>
+
+	<!--查询数量-->
+	<select id="selectCount" resultType="java.lang.Integer">
+		SELECT count(1) FROM user_log <include refid="query_condition"/>
+	</select>
+
+	<!--插入(匹配有值的字段)-->
+	<insert id="insert" parameterType="com.interlude.entity.po.UserLog">
+		<selectKey keyProperty = "bean.log_id" resultType = "Integer" order="AFTER">
+			SELECT LAST_INSERT_ID()
+		</selectKey>		INSERT INTO user_log
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.logId != null">
+				log_id,
+			</if>
+			<if test="bean.description != null">
+				description,
+			</if>
+			<if test="bean.logType != null">
+				log_type,
+			</if>
+			<if test="bean.method != null">
+				method,
+			</if>
+			<if test="bean.userId != null">
+				user_id,
+			</if>
+			<if test="bean.lastLoginIp != null">
+				last_login_ip,
+			</if>
+			<if test="bean.time != null">
+				time,
+			</if>
+			<if test="bean.address != null">
+				address,
+			</if>
+			<if test="bean.browser != null">
+				browser,
+			</if>
+			<if test="bean.exceptionDetail != null">
+				exception_detail,
+			</if>
+			<if test="bean.createTime != null">
+				create_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.logId != null">
+				#{bean.logId},
+			</if>
+			<if test="bean.description != null">
+				#{bean.description},
+			</if>
+			<if test="bean.logType != null">
+				#{bean.logType},
+			</if>
+			<if test="bean.method != null">
+				#{bean.method},
+			</if>
+			<if test="bean.userId != null">
+				#{bean.userId},
+			</if>
+			<if test="bean.lastLoginIp != null">
+				#{bean.lastLoginIp},
+			</if>
+			<if test="bean.time != null">
+				#{bean.time},
+			</if>
+			<if test="bean.address != null">
+				#{bean.address},
+			</if>
+			<if test="bean.browser != null">
+				#{bean.browser},
+			</if>
+			<if test="bean.exceptionDetail != null">
+				#{bean.exceptionDetail},
+			</if>
+			<if test="bean.createTime != null">
+				#{bean.createTime},
+			</if>
+		</trim>
+	</insert>
+
+	<!-- 插入或者更新 (匹配有值的字段) -->
+	<insert id="insertOrUpdate" parameterType="com.interlude.entity.po.UserLog">
+		INSERT INTO user_log
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.logId != null">
+				log_id,
+			</if>
+			<if test="bean.description != null">
+				description,
+			</if>
+			<if test="bean.logType != null">
+				log_type,
+			</if>
+			<if test="bean.method != null">
+				method,
+			</if>
+			<if test="bean.userId != null">
+				user_id,
+			</if>
+			<if test="bean.lastLoginIp != null">
+				last_login_ip,
+			</if>
+			<if test="bean.time != null">
+				time,
+			</if>
+			<if test="bean.address != null">
+				address,
+			</if>
+			<if test="bean.browser != null">
+				browser,
+			</if>
+			<if test="bean.exceptionDetail != null">
+				exception_detail,
+			</if>
+			<if test="bean.createTime != null">
+				create_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.logId != null">
+				#{bean.logId},
+			</if>
+			<if test="bean.description != null">
+				#{bean.description},
+			</if>
+			<if test="bean.logType != null">
+				#{bean.logType},
+			</if>
+			<if test="bean.method != null">
+				#{bean.method},
+			</if>
+			<if test="bean.userId != null">
+				#{bean.userId},
+			</if>
+			<if test="bean.lastLoginIp != null">
+				#{bean.lastLoginIp},
+			</if>
+			<if test="bean.time != null">
+				#{bean.time},
+			</if>
+			<if test="bean.address != null">
+				#{bean.address},
+			</if>
+			<if test="bean.browser != null">
+				#{bean.browser},
+			</if>
+			<if test="bean.exceptionDetail != null">
+				#{bean.exceptionDetail},
+			</if>
+			<if test="bean.createTime != null">
+				#{bean.createTime},
+			</if>
+		</trim>
+		on DUPLICATE key update
+		<trim  prefix="" suffix="" suffixOverrides=",">
+
+			<if test="bean.description!=null">
+				description = VALUES(description),
+			</if>
+			<if test="bean.logType!=null">
+				log_type = VALUES(log_type),
+			</if>
+			<if test="bean.method!=null">
+				method = VALUES(method),
+			</if>
+			<if test="bean.userId!=null">
+				user_id = VALUES(user_id),
+			</if>
+			<if test="bean.lastLoginIp!=null">
+				last_login_ip = VALUES(last_login_ip),
+			</if>
+			<if test="bean.time!=null">
+				time = VALUES(time),
+			</if>
+			<if test="bean.address!=null">
+				address = VALUES(address),
+			</if>
+			<if test="bean.browser!=null">
+				browser = VALUES(browser),
+			</if>
+			<if test="bean.exceptionDetail!=null">
+				exception_detail = VALUES(exception_detail),
+			</if>
+			<if test="bean.createTime!=null">
+				create_time = VALUES(create_time),
+			</if>
+		</trim>
+	</insert>
+
+	<!--添加 (批量插入)-->
+	<insert id="insertBatch" parameterType="com.interlude.entity.po.UserLog" >
+		INSERT INTO user_log(description,log_type,method,user_id,last_login_ip,time,address,browser,exception_detail,create_time)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.description},#{item.logType},#{item.method},#{item.userId},#{item.lastLoginIp},#{item.time},#{item.address},#{item.browser},#{item.exceptionDetail},#{item.createTime})
+		</foreach>
+	</insert>
+
+	<!--批量插入或者更新-->
+	<insert id="insertOrUpdateBatch" parameterType="com.interlude.entity.po.UserLog" >
+		INSERT INTO user_log(description,log_type,method,user_id,last_login_ip,time,address,browser,exception_detail,create_time)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.description},#{item.logType},#{item.method},#{item.userId},#{item.lastLoginIp},#{item.time},#{item.address},#{item.browser},#{item.exceptionDetail},#{item.createTime})
+		</foreach>
+		on DUPLICATE key update
+		log_id = VALUES(log_id),description = VALUES(description),log_type = VALUES(log_type),method = VALUES(method),user_id = VALUES(user_id),last_login_ip = VALUES(last_login_ip),time = VALUES(time),address = VALUES(address),browser = VALUES(browser),exception_detail = VALUES(exception_detail),create_time = VALUES(create_time)
+	</insert>
+
+	<!-- 根据LogId查询 -->
+	<select id="selectByLogId" resultMap="base_result_map">
+		select <include refid="base_column_list"/> from user_log where log_id=#{logId}
+	</select>
+
+	<!-- 根据LogId更新 -->
+	<update id="updateByLogId" parameterType="com.interlude.entity.po.UserLog">
+		update user_log
+		<set>
+			<if test="bean.logId != null" >
+				log_id = #{bean.logId},
+			</if>
+			<if test="bean.description != null" >
+				description = #{bean.description},
+			</if>
+			<if test="bean.logType != null" >
+				log_type = #{bean.logType},
+			</if>
+			<if test="bean.method != null" >
+				method = #{bean.method},
+			</if>
+			<if test="bean.userId != null" >
+				user_id = #{bean.userId},
+			</if>
+			<if test="bean.lastLoginIp != null" >
+				last_login_ip = #{bean.lastLoginIp},
+			</if>
+			<if test="bean.time != null" >
+				time = #{bean.time},
+			</if>
+			<if test="bean.address != null" >
+				address = #{bean.address},
+			</if>
+			<if test="bean.browser != null" >
+				browser = #{bean.browser},
+			</if>
+			<if test="bean.exceptionDetail != null" >
+				exception_detail = #{bean.exceptionDetail},
+			</if>
+			<if test="bean.createTime != null" >
+				create_time = #{bean.createTime},
+			</if>
+
+		</set>
+		where log_id=#{logId}
+	</update>
+
+	<!-- 根据LogId删除 -->
+	<delete id="deleteByLogId">
+		delete from user_log where log_id=#{logId}
+	</delete>
+
+</mapper>

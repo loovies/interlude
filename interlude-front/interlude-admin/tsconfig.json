@@ -1,0 +1,21 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    },
+    {
+      "path": "./tsconfig.app.json"
+    }
+  ],  
+  "compilerOptions": {
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types" // 添加这行
+    ]
+  },
+  "include": [
+    "src/types/**/*",
+    "src/view/layout/user/*"
+  ]
+}

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--表示这是一个XML文件，使用UTF-8编码-->
+<!--configuration元素是Logback配置的根元素。 scan="true" 表示Logback会定期扫描这个配置文件，如果发生改变则重新加载。scanPeriod="10 minutes" 表示每10分钟扫描一次。-->
+<configuration scan="true" scanPeriod="10 minutes">
+<!--    这个appender的名字是"stdot"，输出到控制台。布局模式（PatternLayout）定义了日志输出的格式-->
+    <appender name="stdot" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss,GMT+8} [%p][%c][%M][%L]-> %m%n</pattern>
+        </layout>
+    </appender>
+<!--    使用springProperty从Spring环境变量中获取属性-->
+<!--    log.path：对应Spring属性project.folder，表示日志文件存储的路径。-->
+<!--    log.root.level：对应Spring属性log.root.level，表示根日志级别。-->
+<!--    appname：对应Spring属性spring.application.name，表示应用名称。-->
+    <springProperty scope="context" name="log.path" source="project.folder"/>
+    <springProperty scope="context" name="log.root.level" source="log.root.level"/>
+    <springProperty scope="context" name="appname" source="spring.application.name"/>
+
+<!--    这个属性会在后面用于构建日志文件的路径。-->
+    <property name="LOG_FOLDER" value="logs"/>
+
+<!--    定义一个文件输出的appender-->
+    <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.path}/${LOG_FOLDER}/${appname}.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>${log.path}/${LOG_FOLDER}/${appname}.%d{yyyyMMdd}.%i</FileNamePattern>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+            <TimeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <MaxFileSize>20MB</MaxFileSize>
+            </TimeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <charset>utf-8</charset>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss,GMT+8} [%p][%c][%M][%L]-> %m%n</pattern>
+        </encoder>
+        <append>false</append>
+        <prudent>false</prudent>
+    </appender>
+
+<!--    设置特定Logger的日志级别：-->
+    <logger name="org.springframework.boot.autoconfigure.logging.ConditionEvaluationReportLoggingListener"
+            level="error"></logger>
+    <logger name="org.redisson.connection.DNSMonitor" level="error"></logger>
+    <logger name="com.zaxxer.hikari" level="info"></logger>
+    <logger name="io.lettuce.core" level="info"></logger>
+    <logger name="org.springframework.data.redis" level="info"></logger>
+    <root level="${log.root.level}">
+        <appender-ref ref="stdot"/>
+        <appender-ref ref="file"/>
+    </root>
+
+</configuration>

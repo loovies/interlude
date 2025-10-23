@@ -1,0 +1,806 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.interlude.mapper.UserInfoMapper">
+	<!--实体映射-->
+	<resultMap id="base_result_map" type="com.interlude.entity.po.UserInfo">
+		<!--用户ID-->
+		<id column="user_id" property="userId"/>
+		<!--邮箱-->
+		<result column="email" property="email"/>
+		<!--头像-->
+		<result column="avatar" property="avatar"/>
+		<!--昵称-->
+		<result column="nick_name" property="nickName"/>
+		<!--密码-->
+		<result column="password" property="password"/>
+		<!--0: 女 1: 男 2: 未知-->
+		<result column="sex" property="sex"/>
+		<!--生日-->
+		<result column="birthday" property="birthday"/>
+		<!--手机号-->
+		<result column="phone" property="phone"/>
+		<!--地址-->
+		<result column="address" property="address"/>
+		<!--学校-->
+		<result column="school" property="school"/>
+		<!--个人简介-->
+		<result column="person_introduction" property="personIntroduction"/>
+		<!--创建时间-->
+		<result column="create_time" property="createTime"/>
+		<!--更新时间-->
+		<result column="update_time" property="updateTime"/>
+		<!--密码更新时间-->
+		<result column="pwd_reset_time" property="pwdResetTime"/>
+		<!--主题-->
+		<result column="theme" property="theme"/>
+		<!--创建者-->
+		<result column="create_by" property="createBy"/>
+		<!--更新者-->
+		<result column="update_by" property="updateBy"/>
+		<!--是否启用 0 : 否 1: 是-->
+		<result column="enabled" property="enabled"/>
+	</resultMap>
+	<!--通用测序结果列-->
+	<sql id="base_column_list">
+		u.user_id,u.email,u.avatar,u.nick_name,u.password,u.sex,u.birthday,u.phone,u.address,u.school,u.person_introduction,u.create_time,u.update_time,u.pwd_reset_time,u.theme,u.create_by,u.update_by,u.enabled
+	</sql>
+
+
+	<!--基础条件查询-->
+	<sql id="base_query_condition">
+		<if test="query.userId != null and query.userId != ''">
+			and u.user_id = #{query.userId}
+		</if>
+		<if test="query.email != null and query.email != ''">
+			and u.email = #{query.email}
+		</if>
+		<if test="query.avatar != null and query.avatar != ''">
+			and u.avatar = #{query.avatar}
+		</if>
+		<if test="query.nickName != null and query.nickName != ''">
+			and u.nick_name = #{query.nickName}
+		</if>
+		<if test="query.password != null and query.password != ''">
+			and u.password = #{query.password}
+		</if>
+		<if test="query.sex != null">
+			and u.sex = #{query.sex}
+		</if>
+		<if test="query.birthday != null and query.birthday != ''">
+			and u.birthday = #{query.birthday}
+		</if>
+		<if test="query.phone != null and query.phone != ''">
+			and u.phone = #{query.phone}
+		</if>
+		<if test="query.address != null and query.address != ''">
+			and u.address = #{query.address}
+		</if>
+		<if test="query.school != null and query.school != ''">
+			and u.school = #{query.school}
+		</if>
+		<if test="query.personIntroduction != null and query.personIntroduction != ''">
+			and u.person_introduction = #{query.personIntroduction}
+		</if>
+		<if test="query.createTime != null">
+			and u.create_time = #{query.createTime}
+		</if>
+		<if test="query.updateTime != null">
+			and u.update_time = #{query.updateTime}
+		</if>
+		<if test="query.pwdResetTime != null">
+			and u.pwd_reset_time = #{query.pwdResetTime}
+		</if>
+		<if test="query.theme != null">
+			and u.theme = #{query.theme}
+		</if>
+		<if test="query.createBy != null and query.createBy != ''">
+			and u.create_by = #{query.createBy}
+		</if>
+		<if test="query.updateBy != null and query.updateBy != ''">
+			and u.update_by = #{query.updateBy}
+		</if>
+		<if test="query.enabled != null">
+			and u.enabled = #{query.enabled}
+		</if>
+		<if test="query.account != null and query.account != ''">
+			and (u.phone = #{query.account} or u.email = #{query.account})
+		</if>
+		<if test="query.createTimeFormatArray != null and query.createTimeFormatArray.size() > 0">
+			and DATE_FORMAT(u.create_time, '%Y-%m-%d') in (<foreach collection="query.createTimeFormatArray" item="item" separator=",">#{item}</foreach>)
+		</if>
+	</sql>
+
+
+	<!--扩展的条件查询-->
+	<sql id="base_query_condition_extend">
+		<if test="query.userIdFuzzy != null and query.userIdFuzzy != ''">
+			and u.user_id like concat('%', #{query.userIdFuzzy}, '%')
+		</if>
+		<if test="query.emailFuzzy != null and query.emailFuzzy != ''">
+			and u.email like concat('%', #{query.emailFuzzy}, '%')
+		</if>
+		<if test="query.avatarFuzzy != null and query.avatarFuzzy != ''">
+			and u.avatar like concat('%', #{query.avatarFuzzy}, '%')
+		</if>
+		<if test="query.nickNameFuzzy != null and query.nickNameFuzzy != ''">
+			and u.nick_name like concat('%', #{query.nickNameFuzzy}, '%')
+		</if>
+		<if test="query.passwordFuzzy != null and query.passwordFuzzy != ''">
+			and u.password like concat('%', #{query.passwordFuzzy}, '%')
+		</if>
+		<if test="query.birthdayFuzzy != null and query.birthdayFuzzy != ''">
+			and u.birthday like concat('%', #{query.birthdayFuzzy}, '%')
+		</if>
+		<if test="query.phoneFuzzy != null and query.phoneFuzzy != ''">
+			and u.phone like concat('%', #{query.phoneFuzzy}, '%')
+		</if>
+		<if test="query.addressFuzzy != null and query.addressFuzzy != ''">
+			and u.address like concat('%', #{query.addressFuzzy}, '%')
+		</if>
+		<if test="query.schoolFuzzy != null and query.schoolFuzzy != ''">
+			and u.school like concat('%', #{query.schoolFuzzy}, '%')
+		</if>
+		<if test="query.personIntroductionFuzzy != null and query.personIntroductionFuzzy != ''">
+			and u.person_introduction like concat('%', #{query.personIntroductionFuzzy}, '%')
+		</if>
+		<if test="query.createTimeStart != null and query.createTimeStart != ''">
+			<![CDATA[ and u.create_time >= str_to_date(#{query.createTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.createTimeEnd != null and query.createTimeEnd != ''">
+			<![CDATA[ and u.create_time < date_sub(str_to_date(#{query.createTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+		<if test="query.updateTimeStart != null and query.updateTimeStart != ''">
+			<![CDATA[ and u.update_time >= str_to_date(#{query.updateTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.updateTimeEnd != null and query.updateTimeEnd != ''">
+			<![CDATA[ and u.update_time < date_sub(str_to_date(#{query.updateTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+		<if test="query.pwdResetTimeStart != null and query.pwdResetTimeStart != ''">
+			<![CDATA[ and u.pwd_reset_time >= str_to_date(#{query.pwdResetTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.pwdResetTimeEnd != null and query.pwdResetTimeEnd != ''">
+			<![CDATA[ and u.pwd_reset_time < date_sub(str_to_date(#{query.pwdResetTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+		<if test="query.createByFuzzy != null and query.createByFuzzy != ''">
+			and u.create_by like concat('%', #{query.createByFuzzy}, '%')
+		</if>
+		<if test="query.updateByFuzzy != null and query.updateByFuzzy != ''">
+			and u.update_by like concat('%', #{query.updateByFuzzy}, '%')
+		</if>
+	</sql>
+
+	<!--扩展的查询条件-->
+	<sql id="query_condition">
+		<where>
+			<include refid="base_query_condition"/>
+			<include refid="base_query_condition_extend"/>
+		</where>
+	</sql>
+
+	<select id="selectByParam"  resultMap="base_result_map">
+		SELECT <include refid="base_column_list"/> FROM user_info u <include refid="query_condition"/>
+	</select>
+
+	<!--查询列表-->
+	<select id="selectList" resultMap="base_result_map">
+		SELECT <include refid="base_column_list"/>
+		<if test="query.roleName != null and query.roleName.size() > 0">
+			,r.role_id
+		</if>
+		FROM user_info u
+		<if test="query.roleName != null and query.roleName.size() > 0">
+			left join user_role_relation r on u.user_id = r.user_id
+		</if>
+		<where>
+			<include refid="base_query_condition"/>
+			<include refid="base_query_condition_extend"/>
+			<if test="query.roleName != null and query.roleName.size() > 0">
+				and r.role_id in (<foreach collection="query.roleName" item="item" separator=",">#{item}</foreach>)
+			</if>
+		</where>
+
+		<if test="query.orderBy != null"> order by ${query.orderBy} </if>
+		<if test="query.simplePage != null"> limit #{query.simplePage.start},#{query.simplePage.end}</if>
+	</select>
+
+	<!--查询数量-->
+	<select id="selectCount" resultType="java.lang.Integer">
+		SELECT count(1) FROM user_info u<include refid="query_condition"/>
+	</select>
+
+	<!--插入(匹配有值的字段)-->
+	<insert id="insert" parameterType="com.interlude.entity.po.UserInfo">
+		INSERT INTO user_info
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.userId != null">
+				user_id,
+			</if>
+			<if test="bean.email != null">
+				email,
+			</if>
+			<if test="bean.avatar != null">
+				avatar,
+			</if>
+			<if test="bean.nickName != null">
+				nick_name,
+			</if>
+			<if test="bean.password != null">
+				password,
+			</if>
+			<if test="bean.sex != null">
+				sex,
+			</if>
+			<if test="bean.birthday != null">
+				birthday,
+			</if>
+			<if test="bean.phone != null">
+				phone,
+			</if>
+			<if test="bean.address != null">
+				address,
+			</if>
+			<if test="bean.school != null">
+				school,
+			</if>
+			<if test="bean.personIntroduction != null">
+				person_introduction,
+			</if>
+			<if test="bean.createTime != null">
+				create_time,
+			</if>
+			<if test="bean.updateTime != null">
+				update_time,
+			</if>
+			<if test="bean.pwdResetTime != null">
+				pwd_reset_time,
+			</if>
+			<if test="bean.theme != null">
+				theme,
+			</if>
+			<if test="bean.createBy != null">
+				create_by,
+			</if>
+			<if test="bean.updateBy != null">
+				update_by,
+			</if>
+			<if test="bean.enabled != null">
+				enabled,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.userId != null">
+				#{bean.userId},
+			</if>
+			<if test="bean.email != null">
+				#{bean.email},
+			</if>
+			<if test="bean.avatar != null">
+				#{bean.avatar},
+			</if>
+			<if test="bean.nickName != null">
+				#{bean.nickName},
+			</if>
+			<if test="bean.password != null">
+				#{bean.password},
+			</if>
+			<if test="bean.sex != null">
+				#{bean.sex},
+			</if>
+			<if test="bean.birthday != null">
+				#{bean.birthday},
+			</if>
+			<if test="bean.phone != null">
+				#{bean.phone},
+			</if>
+			<if test="bean.address != null">
+				#{bean.address},
+			</if>
+			<if test="bean.school != null">
+				#{bean.school},
+			</if>
+			<if test="bean.personIntroduction != null">
+				#{bean.personIntroduction},
+			</if>
+			<if test="bean.createTime != null">
+				#{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null">
+				#{bean.updateTime},
+			</if>
+			<if test="bean.pwdResetTime != null">
+				#{bean.pwdResetTime},
+			</if>
+			<if test="bean.theme != null">
+				#{bean.theme},
+			</if>
+			<if test="bean.createBy != null">
+				#{bean.createBy},
+			</if>
+			<if test="bean.updateBy != null">
+				#{bean.updateBy},
+			</if>
+			<if test="bean.enabled != null">
+				#{bean.enabled},
+			</if>
+		</trim>
+	</insert>
+
+	<!-- 插入或者更新 (匹配有值的字段) -->
+	<insert id="insertOrUpdate" parameterType="com.interlude.entity.po.UserInfo">
+		INSERT INTO user_info
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.userId != null">
+				user_id,
+			</if>
+			<if test="bean.email != null">
+				email,
+			</if>
+			<if test="bean.avatar != null">
+				avatar,
+			</if>
+			<if test="bean.nickName != null">
+				nick_name,
+			</if>
+			<if test="bean.password != null">
+				password,
+			</if>
+			<if test="bean.sex != null">
+				sex,
+			</if>
+			<if test="bean.birthday != null">
+				birthday,
+			</if>
+			<if test="bean.phone != null">
+				phone,
+			</if>
+			<if test="bean.address != null">
+				address,
+			</if>
+			<if test="bean.school != null">
+				school,
+			</if>
+			<if test="bean.personIntroduction != null">
+				person_introduction,
+			</if>
+			<if test="bean.createTime != null">
+				create_time,
+			</if>
+			<if test="bean.updateTime != null">
+				update_time,
+			</if>
+			<if test="bean.pwdResetTime != null">
+				pwd_reset_time,
+			</if>
+			<if test="bean.theme != null">
+				theme,
+			</if>
+			<if test="bean.createBy != null">
+				create_by,
+			</if>
+			<if test="bean.updateBy != null">
+				update_by,
+			</if>
+			<if test="bean.enabled != null">
+				enabled,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.userId != null">
+				#{bean.userId},
+			</if>
+			<if test="bean.email != null">
+				#{bean.email},
+			</if>
+			<if test="bean.avatar != null">
+				#{bean.avatar},
+			</if>
+			<if test="bean.nickName != null">
+				#{bean.nickName},
+			</if>
+			<if test="bean.password != null">
+				#{bean.password},
+			</if>
+			<if test="bean.sex != null">
+				#{bean.sex},
+			</if>
+			<if test="bean.birthday != null">
+				#{bean.birthday},
+			</if>
+			<if test="bean.phone != null">
+				#{bean.phone},
+			</if>
+			<if test="bean.address != null">
+				#{bean.address},
+			</if>
+			<if test="bean.school != null">
+				#{bean.school},
+			</if>
+			<if test="bean.personIntroduction != null">
+				#{bean.personIntroduction},
+			</if>
+			<if test="bean.createTime != null">
+				#{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null">
+				#{bean.updateTime},
+			</if>
+			<if test="bean.pwdResetTime != null">
+				#{bean.pwdResetTime},
+			</if>
+			<if test="bean.theme != null">
+				#{bean.theme},
+			</if>
+			<if test="bean.createBy != null">
+				#{bean.createBy},
+			</if>
+			<if test="bean.updateBy != null">
+				#{bean.updateBy},
+			</if>
+			<if test="bean.enabled != null">
+				#{bean.enabled},
+			</if>
+		</trim>
+		on DUPLICATE key update
+		<trim  prefix="" suffix="" suffixOverrides=",">
+
+			<if test="bean.avatar!=null">
+				avatar = VALUES(avatar),
+			</if>
+			<if test="bean.password!=null">
+				password = VALUES(password),
+			</if>
+			<if test="bean.sex!=null">
+				sex = VALUES(sex),
+			</if>
+			<if test="bean.birthday!=null">
+				birthday = VALUES(birthday),
+			</if>
+			<if test="bean.address!=null">
+				address = VALUES(address),
+			</if>
+			<if test="bean.school!=null">
+				school = VALUES(school),
+			</if>
+			<if test="bean.personIntroduction!=null">
+				person_introduction = VALUES(person_introduction),
+			</if>
+			<if test="bean.createTime!=null">
+				create_time = VALUES(create_time),
+			</if>
+			<if test="bean.updateTime!=null">
+				update_time = VALUES(update_time),
+			</if>
+			<if test="bean.pwdResetTime!=null">
+				pwd_reset_time = VALUES(pwd_reset_time),
+			</if>
+			<if test="bean.theme!=null">
+				theme = VALUES(theme),
+			</if>
+			<if test="bean.createBy!=null">
+				create_by = VALUES(create_by),
+			</if>
+			<if test="bean.updateBy!=null">
+				update_by = VALUES(update_by),
+			</if>
+			<if test="bean.enabled!=null">
+				enabled = VALUES(enabled),
+			</if>
+		</trim>
+	</insert>
+
+	<!--添加 (批量插入)-->
+	<insert id="insertBatch" parameterType="com.interlude.entity.po.UserInfo" >
+		INSERT INTO user_info(user_id,email,avatar,nick_name,password,sex,birthday,phone,address,school,person_introduction,create_time,update_time,pwd_reset_time,theme,create_by,update_by,enabled)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.userId},#{item.email},#{item.avatar},#{item.nickName},#{item.password},#{item.sex},#{item.birthday},#{item.phone},#{item.address},#{item.school},#{item.personIntroduction},#{item.createTime},#{item.updateTime},#{item.pwdResetTime},#{item.theme},#{item.createBy},#{item.updateBy},#{item.enabled})
+		</foreach>
+	</insert>
+
+	<!--批量插入或者更新-->
+	<insert id="insertOrUpdateBatch" parameterType="com.interlude.entity.po.UserInfo" >
+		INSERT INTO user_info(user_id,email,avatar,nick_name,password,sex,birthday,phone,address,school,person_introduction,create_time,update_time,pwd_reset_time,theme,create_by,update_by,enabled)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.userId},#{item.email},#{item.avatar},#{item.nickName},#{item.password},#{item.sex},#{item.birthday},#{item.phone},#{item.address},#{item.school},#{item.personIntroduction},#{item.createTime},#{item.updateTime},#{item.pwdResetTime},#{item.theme},#{item.createBy},#{item.updateBy},#{item.enabled})
+		</foreach>
+		on DUPLICATE key update
+		user_id = VALUES(user_id),email = VALUES(email),avatar = VALUES(avatar),nick_name = VALUES(nick_name),password = VALUES(password),sex = VALUES(sex),birthday = VALUES(birthday),phone = VALUES(phone),address = VALUES(address),school = VALUES(school),person_introduction = VALUES(person_introduction),create_time = VALUES(create_time),update_time = VALUES(update_time),pwd_reset_time = VALUES(pwd_reset_time),theme = VALUES(theme),create_by = VALUES(create_by),update_by = VALUES(update_by),enabled = VALUES(enabled)
+	</insert>
+
+	<!-- 根据UserId查询 -->
+	<select id="selectByUserId" resultMap="base_result_map">
+		select <include refid="base_column_list"/> from user_info u where u.user_id=#{userId}
+	</select>
+
+	<!-- 根据UserId更新 -->
+	<update id="updateByUserId" parameterType="com.interlude.entity.po.UserInfo">
+		update user_info
+		<set>
+			<if test="bean.userId != null" >
+				user_id = #{bean.userId},
+			</if>
+			<if test="bean.email != null" >
+				email = #{bean.email},
+			</if>
+			<if test="bean.avatar != null" >
+				avatar = #{bean.avatar},
+			</if>
+			<if test="bean.nickName != null" >
+				nick_name = #{bean.nickName},
+			</if>
+			<if test="bean.password != null" >
+				password = #{bean.password},
+			</if>
+			<if test="bean.sex != null" >
+				sex = #{bean.sex},
+			</if>
+			<if test="bean.birthday != null" >
+				birthday = #{bean.birthday},
+			</if>
+			<if test="bean.phone != null" >
+				phone = #{bean.phone},
+			</if>
+			<if test="bean.address != null" >
+				address = #{bean.address},
+			</if>
+			<if test="bean.school != null" >
+				school = #{bean.school},
+			</if>
+			<if test="bean.personIntroduction != null" >
+				person_introduction = #{bean.personIntroduction},
+			</if>
+			<if test="bean.createTime != null" >
+				create_time = #{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null" >
+				update_time = #{bean.updateTime},
+			</if>
+			<if test="bean.pwdResetTime != null" >
+				pwd_reset_time = #{bean.pwdResetTime},
+			</if>
+			<if test="bean.theme != null" >
+				theme = #{bean.theme},
+			</if>
+			<if test="bean.createBy != null" >
+				create_by = #{bean.createBy},
+			</if>
+			<if test="bean.updateBy != null" >
+				update_by = #{bean.updateBy},
+			</if>
+			<if test="bean.enabled != null" >
+				enabled = #{bean.enabled},
+			</if>
+
+		</set>
+		where user_id=#{userId}
+	</update>
+
+	<!-- 根据UserId删除 -->
+	<delete id="deleteByUserId">
+		delete from user_info where user_id=#{userId}
+	</delete>
+
+
+	<!-- 根据NickName查询 -->
+	<select id="selectByNickName" resultMap="base_result_map">
+		select <include refid="base_column_list"/> from user_info u where u.nick_name=#{nickName}
+	</select>
+
+	<!-- 根据NickName更新 -->
+	<update id="updateByNickName" parameterType="com.interlude.entity.po.UserInfo">
+		update user_info
+		<set>
+			<if test="bean.userId != null" >
+				user_id = #{bean.userId},
+			</if>
+			<if test="bean.email != null" >
+				email = #{bean.email},
+			</if>
+			<if test="bean.avatar != null" >
+				avatar = #{bean.avatar},
+			</if>
+			<if test="bean.nickName != null" >
+				nick_name = #{bean.nickName},
+			</if>
+			<if test="bean.password != null" >
+				password = #{bean.password},
+			</if>
+			<if test="bean.sex != null" >
+				sex = #{bean.sex},
+			</if>
+			<if test="bean.birthday != null" >
+				birthday = #{bean.birthday},
+			</if>
+			<if test="bean.phone != null" >
+				phone = #{bean.phone},
+			</if>
+			<if test="bean.address != null" >
+				address = #{bean.address},
+			</if>
+			<if test="bean.school != null" >
+				school = #{bean.school},
+			</if>
+			<if test="bean.personIntroduction != null" >
+				person_introduction = #{bean.personIntroduction},
+			</if>
+			<if test="bean.createTime != null" >
+				create_time = #{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null" >
+				update_time = #{bean.updateTime},
+			</if>
+			<if test="bean.pwdResetTime != null" >
+				pwd_reset_time = #{bean.pwdResetTime},
+			</if>
+			<if test="bean.theme != null" >
+				theme = #{bean.theme},
+			</if>
+			<if test="bean.createBy != null" >
+				create_by = #{bean.createBy},
+			</if>
+			<if test="bean.updateBy != null" >
+				update_by = #{bean.updateBy},
+			</if>
+			<if test="bean.enabled != null" >
+				enabled = #{bean.enabled},
+			</if>
+
+		</set>
+		where nick_name=#{nickName}
+	</update>
+
+	<!-- 根据NickName删除 -->
+	<delete id="deleteByNickName">
+		delete from user_info where nick_name=#{nickName}
+	</delete>
+
+
+	<!-- 根据Phone查询 -->
+	<select id="selectByPhone" resultMap="base_result_map">
+		select <include refid="base_column_list"/> from user_info u where u.phone=#{phone}
+	</select>
+
+	<!-- 根据Phone更新 -->
+	<update id="updateByPhone" parameterType="com.interlude.entity.po.UserInfo">
+		update user_info
+		<set>
+			<if test="bean.userId != null" >
+				user_id = #{bean.userId},
+			</if>
+			<if test="bean.email != null" >
+				email = #{bean.email},
+			</if>
+			<if test="bean.avatar != null" >
+				avatar = #{bean.avatar},
+			</if>
+			<if test="bean.nickName != null" >
+				nick_name = #{bean.nickName},
+			</if>
+			<if test="bean.password != null" >
+				password = #{bean.password},
+			</if>
+			<if test="bean.sex != null" >
+				sex = #{bean.sex},
+			</if>
+			<if test="bean.birthday != null" >
+				birthday = #{bean.birthday},
+			</if>
+			<if test="bean.phone != null" >
+				phone = #{bean.phone},
+			</if>
+			<if test="bean.address != null" >
+				address = #{bean.address},
+			</if>
+			<if test="bean.school != null" >
+				school = #{bean.school},
+			</if>
+			<if test="bean.personIntroduction != null" >
+				person_introduction = #{bean.personIntroduction},
+			</if>
+			<if test="bean.createTime != null" >
+				create_time = #{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null" >
+				update_time = #{bean.updateTime},
+			</if>
+			<if test="bean.pwdResetTime != null" >
+				pwd_reset_time = #{bean.pwdResetTime},
+			</if>
+			<if test="bean.theme != null" >
+				theme = #{bean.theme},
+			</if>
+			<if test="bean.createBy != null" >
+				create_by = #{bean.createBy},
+			</if>
+			<if test="bean.updateBy != null" >
+				update_by = #{bean.updateBy},
+			</if>
+			<if test="bean.enabled != null" >
+				enabled = #{bean.enabled},
+			</if>
+
+		</set>
+		where phone=#{phone}
+	</update>
+
+	<!-- 根据Phone删除 -->
+	<delete id="deleteByPhone">
+		delete from user_info where phone=#{phone}
+	</delete>
+
+
+	<!-- 根据Email查询 -->
+	<select id="selectByEmail" resultMap="base_result_map">
+		select <include refid="base_column_list"/> from user_info u where u.email=#{email}
+	</select>
+
+
+	<!-- 根据Email更新 -->
+	<update id="updateByEmail" parameterType="com.interlude.entity.po.UserInfo">
+		update user_info
+		<set>
+			<if test="bean.userId != null" >
+				user_id = #{bean.userId},
+			</if>
+			<if test="bean.email != null" >
+				email = #{bean.email},
+			</if>
+			<if test="bean.avatar != null" >
+				avatar = #{bean.avatar},
+			</if>
+			<if test="bean.nickName != null" >
+				nick_name = #{bean.nickName},
+			</if>
+			<if test="bean.password != null" >
+				password = #{bean.password},
+			</if>
+			<if test="bean.sex != null" >
+				sex = #{bean.sex},
+			</if>
+			<if test="bean.birthday != null" >
+				birthday = #{bean.birthday},
+			</if>
+			<if test="bean.phone != null" >
+				phone = #{bean.phone},
+			</if>
+			<if test="bean.address != null" >
+				address = #{bean.address},
+			</if>
+			<if test="bean.school != null" >
+				school = #{bean.school},
+			</if>
+			<if test="bean.personIntroduction != null" >
+				person_introduction = #{bean.personIntroduction},
+			</if>
+			<if test="bean.createTime != null" >
+				create_time = #{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null" >
+				update_time = #{bean.updateTime},
+			</if>
+			<if test="bean.pwdResetTime != null" >
+				pwd_reset_time = #{bean.pwdResetTime},
+			</if>
+			<if test="bean.theme != null" >
+				theme = #{bean.theme},
+			</if>
+			<if test="bean.createBy != null" >
+				create_by = #{bean.createBy},
+			</if>
+			<if test="bean.updateBy != null" >
+				update_by = #{bean.updateBy},
+			</if>
+			<if test="bean.enabled != null" >
+				enabled = #{bean.enabled},
+			</if>
+
+		</set>
+		where email=#{email}
+	</update>
+
+	<!-- 根据Email删除 -->
+	<delete id="deleteByEmail">
+		delete from user_info where email=#{email}
+	</delete>
+
+</mapper>
