@@ -1,6 +1,7 @@
 package com.interlude.admin.controller;
 
 import com.fasterxml.jackson.databind.util.BeanUtil;
+import com.interlude.entity.dto.TokenUserInfoDto;
 import com.interlude.entity.po.UserRole;
 import com.interlude.entity.query.UserRoleQuery;
 import com.interlude.entity.vo.ResponseVO;
@@ -76,7 +77,8 @@ public class UserInfoController extends ABaseController{
 	 */
 	@RequestMapping("addOrUpdateBatch")
 	public ResponseVO addOrUpdateBatch(UserInfoQuery query) {
-		this.UserInfoService.addOrUpdateUserInfo(query);
+		TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
+		this.UserInfoService.addOrUpdateUserInfo(query,tokenUserInfo);
 		return getSuccessResponseVO(null);
 	}
 

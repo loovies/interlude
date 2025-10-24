@@ -1,6 +1,7 @@
 package com.interlude.component;
 
 import com.interlude.entity.constants.Constants;
+import com.interlude.entity.dto.TokenUserInfoDto;
 import com.interlude.redis.RedisUtils;
 import org.springframework.context.annotation.Configuration;
 
@@ -33,14 +34,18 @@ public class RedisComponent {
     }
 
     // 保存token 到redis
-    public String saveAdmin4Token(String account){
+    public String saveAdmin4Token(TokenUserInfoDto tokenUserInfoDto){
         String token = UUID.randomUUID().toString();
-        redisUtils.setex(Constants.REDIS_TOKEN_ADMIN_KEY+token,account,Constants.REDIS_TIME_ONE_DAY);
+        tokenUserInfoDto.setToken(token);
+        tokenUserInfoDto.setExpireAt(System.currentTimeMillis() + Constants.REDIS_TIME_ONE_DAY * 7);
+        redisUtils.setex(Constants.REDIS_TOKEN_ADMIN_KEY+token,tokenUserInfoDto,Constants.REDIS_TIME_ONE_DAY * 7);
         return token;
     }
 
     // 获取token
-    public String getAdmin4Token(String token){
-        return (String) redisUtils.get(Constants.REDIS_TOKEN_ADMIN_KEY + token);
+    public TokenUserInfoDto getAdmin4Token(String token){
+        return (TokenUserInfoDto) redisUtils.get(Constants.REDIS_TOKEN_ADMIN_KEY + token);
     }
+
+    // 保存当前用户token及用户信息
 }

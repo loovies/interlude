@@ -1,5 +1,6 @@
 package com.interlude.service;
 
+import com.interlude.entity.dto.TokenUserInfoDto;
 import com.interlude.entity.vo.PaginationResultVO;
 import java.util.List;
 import com.interlude.entity.po.UserInfo;
@@ -109,5 +110,5 @@ public interface UserInfoService{
 
 	UserInfo login(String account, String password, HttpServletResponse response) ;
 
-	Integer addOrUpdateUserInfo(UserInfoQuery query);
+	Integer addOrUpdateUserInfo(UserInfoQuery query, TokenUserInfoDto tokenUserInfo);
 }

@@ -140,6 +140,7 @@ public class UserInfoQuery<T> extends BaseParam{
 	private String account;
 
 	private ArrayList<Date> createTimeArray;
+
 	private ArrayList<String> createTimeFormatArray;
 
 	public ArrayList<Date> getCreateTimeArray() {

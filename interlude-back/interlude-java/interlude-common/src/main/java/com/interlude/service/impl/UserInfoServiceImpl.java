@@ -2,6 +2,7 @@ package com.interlude.service.impl;
 
 import com.interlude.entity.constants.Constants;
 import com.interlude.component.RedisComponent;
+import com.interlude.entity.dto.TokenUserInfoDto;
 import com.interlude.entity.po.UserRoleRelation;
 import com.interlude.entity.query.SimplePage;
 import com.interlude.entity.query.UserRoleRelationQuery;
@@ -18,6 +19,7 @@ import com.interlude.exception.BusinessException;
 import com.interlude.mapper.UserInfoMapper;
 import com.interlude.mapper.UserRoleRelationMapper;
 import com.interlude.service.UserInfoService;
+import com.interlude.utils.CopyTools;
 import com.interlude.utils.StringTools;
 import org.springframework.stereotype.Service;
 
@@ -196,9 +198,14 @@ public class UserInfoServiceImpl implements UserInfoService{
 		if(userInfo.getEnabled() == UserStatusEnum.DISABLE.getStatus()){
 			throw new BusinessException("该账号已被封禁");
 		}
-		String token = redisComponent.saveAdmin4Token(account);
+		//将用户的数据(生成的token)Dto 存在redis中
+		TokenUserInfoDto tokenUserInfoDto = CopyTools.copy(userInfo, TokenUserInfoDto.class);
+		String token = redisComponent.saveAdmin4Token(tokenUserInfoDto);
+
+		// 保存token到 cookie
 		saveTokenAdminCookie(response,token);
 
+		// 更新更新时间
 		UserInfo updateQuery = new UserInfo();
 		updateQuery.setUpdateTime(new Date());
 		userInfoMapper.updateByUserId(updateQuery,userInfo.getUserId());
@@ -206,7 +213,7 @@ public class UserInfoServiceImpl implements UserInfoService{
 	}
 
 	@Override
-	public Integer addOrUpdateUserInfo(UserInfoQuery query) {
+	public Integer addOrUpdateUserInfo(UserInfoQuery query,TokenUserInfoDto tokenUserInfo) {
 		if (query == null){
 			throw new BusinessException(ResponseCodeEnum.CODE_600);
 		}
@@ -218,6 +225,7 @@ public class UserInfoServiceImpl implements UserInfoService{
 			query.setPwdResetTime(new Date());
 			query.setTheme(1);
 
+			// 增加角色
 		}else{
 			//修改用户
 		}

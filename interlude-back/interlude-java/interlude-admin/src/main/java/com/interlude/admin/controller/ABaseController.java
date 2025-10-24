@@ -1,14 +1,19 @@
 package com.interlude.admin.controller;
 
+import com.interlude.component.RedisComponent;
 import com.interlude.entity.config.AppConfig;
 import com.interlude.entity.constants.Constants;
+import com.interlude.entity.dto.TokenUserInfoDto;
 import com.interlude.enums.ResponseCodeEnum;;
 
 import com.interlude.entity.vo.ResponseVO;
 import com.interlude.utils.StringTools;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.bcel.Const;;import javax.annotation.Resource;
+import org.apache.tomcat.util.bcel.Const;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;;import javax.annotation.Resource;
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.File;
@@ -27,6 +32,9 @@ public class ABaseController {
 
     @Resource
     private AppConfig appConfig;
+
+    @Resource
+    private RedisComponent redisComponent;
 
     protected <T> ResponseVO getSuccessResponseVO(T t) {
         ResponseVO<T> responseVO = new ResponseVO<>();
@@ -62,5 +70,11 @@ public class ABaseController {
         }catch (Exception e){
             log.error("读取文件异常",e);
         }
+    }
+
+    protected TokenUserInfoDto getTokenUserInfo(){
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        String token = request.getHeader(REDIS_ADMIN_TOKEN);
+        return redisComponent.getAdmin4Token(token);
     }
 }
