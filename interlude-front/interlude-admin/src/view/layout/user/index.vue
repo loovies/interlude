@@ -125,7 +125,7 @@
         >
           <template #avatar="{ index, row }">
             <div class="cover">
-              <Cover :source="row.avatar" defaultImg="user.png" :width="30"></Cover>
+              <Avatar :avatar="row.avatar" :lazy="false" :width="35"></Avatar>
             </div>
           </template>
           <template #sex="{ index, row }">
@@ -146,19 +146,19 @@
           </template>
           <template #slotOperation="{ index, row }">
             <div class="row-op-panel">
-              <a class="a-link" href="javascript:void(0)">停用</a>
-              <a class="a-link" href="javascript:void(0)">修改</a>
-              <a class="a-link" href="javascript:void(0)">详情</a>
-              <a class="a-link" href="javascript:void(0)">重置密码</a>
-              <a class="a-link" href="javascript:void(0)">分配角色</a>
-              <a class="a-link" href="javascript:void(0)">删除</a>
+              <a class="a-link">停用</a>
+              <a class="a-link" @click="showEdit(row, 1)">修改</a>
+              <a class="a-link">详情</a>
+              <a class="a-link">重置密码</a>
+              <a class="a-link">分配角色</a>
+              <a class="a-link">删除</a>
             </div>
           </template>
         </Table>
       </el-card>
     </div>
   </div>
-  <UserInfoEdit ref="userInfoRef"></UserInfoEdit>
+  <UserInfoEdit ref="userInfoRef" @reload="loadUserInfoList"></UserInfoEdit>
 </template>
 
 <script setup lang="ts">
@@ -298,9 +298,7 @@ const handleRadioClick = (value) => {
 const userInfoRef = ref()
 
 const showEdit = (data: Object, type: number) => {
-  console.log('0009')
-
-  userInfoRef.value.showEdit(data)
+  userInfoRef.value.showEdit(data, type)
 }
 </script>
 
@@ -408,6 +406,7 @@ const showEdit = (data: Object, type: number) => {
         display: flex;
         justify-content: space-around;
         .a-link {
+          cursor: pointer;
           color: #7169c5;
         }
         .a-link:hover {

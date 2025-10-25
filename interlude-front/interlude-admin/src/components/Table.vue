@@ -147,6 +147,8 @@ const setCurrentRow = (rowKey, rowValue) => {
 // 将子组件暴露出去, 否则父组件无法调用
 defineExpose({ setCurrentRow, clearSelection })
 
+const emit = defineEmits(['rowSelected', 'rowClick'])
+
 // 行点击
 const handleRowClick = (row) => {
   emit('rowClick', row)

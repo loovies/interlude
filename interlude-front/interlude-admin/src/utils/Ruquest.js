@@ -91,11 +91,11 @@ const request = (config) => {
   if (dataType != null && dataType == 'json') {
     contentType = contentTypeJson
   }
-  const token = VueCookies.get('token')
+  const token = VueCookies.get('adminToken')
   let headers = {
     'Content-Type': contentType,
     'X-Requested-With': 'XMLHttpRequest',
-    token: token,
+    adminToken: token,
   }
   return instance
     .post(url, formData, {

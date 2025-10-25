@@ -21,12 +21,10 @@
         </div>
       </template>
       <template #error>
-        {{ fileSrouce }}
         <img
           :src="proxy.$Utils.getLocalImage(img404)"
           class="el_image_inner"
           :style="{ 'object-fit': fit }"
-          alt=""
         />
       </template>
     </el-image>
@@ -79,6 +77,7 @@ const props = defineProps({
   },
   img404: {
     type: String,
+    default: 'user.png',
   },
   preview: {
     type: Boolean,
@@ -127,8 +126,7 @@ const imageList = computed(() => {
   if (!props.preview) {
     return []
   }
-  const sourceImage =
-    proxy.$Api.sourcePath + (props.source as any).replace((proxy as any).imageThumbnailSuffix)
+  const sourceImage = proxy.$Api.sourcePath + props.source.replace(proxy.imageThumbnailSuffix, '')
   return [sourceImage]
 })
 

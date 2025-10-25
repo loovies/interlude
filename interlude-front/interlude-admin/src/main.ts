@@ -16,7 +16,7 @@ import router from './router'
 import Verify from '@/utils/Verify.js'
 import Request from '@/utils/Ruquest.js'
 import Message from '@/utils/Message.js'
-import Api from '@/utils/Api.js'
+import { Api } from '@/utils/Api.js'
 import utils from '@/utils/Utils.js'
 
 // 自定义组件

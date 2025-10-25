@@ -104,6 +104,9 @@ const submitFrom = (): void => {
     let res: Record<string, any> = await proxy.$Request({
       url: proxy.$Api.login,
       params,
+      errorCallback: (err: any) => {
+        changeCheckCode()
+      },
     })
     if (!res) {
       return
