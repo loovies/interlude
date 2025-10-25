@@ -143,6 +143,18 @@ public class UserInfoQuery<T> extends BaseParam{
 
 	private ArrayList<String> createTimeFormatArray;
 
+	private ArrayList<Integer> roleName;
+
+	private Long roleNameIndex;
+
+	public Long getRoleNameIndex() {
+		return roleNameIndex;
+	}
+
+	public void setRoleNameIndex(Long roleNameIndex) {
+		this.roleNameIndex = roleNameIndex;
+	}
+
 	public ArrayList<Date> getCreateTimeArray() {
 		return createTimeArray;
 	}
@@ -159,7 +171,7 @@ public class UserInfoQuery<T> extends BaseParam{
 		this.createTimeFormatArray = createTimeFormatArray;
 	}
 
-	private ArrayList<Integer> roleName;
+
 
 	public ArrayList<Integer> getRoleName() {
 		return roleName;

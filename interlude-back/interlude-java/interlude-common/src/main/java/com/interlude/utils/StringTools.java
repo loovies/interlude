@@ -40,9 +40,12 @@ public class StringTools {
 
     public static boolean pathIsOk(String path){
         if(StringTools.isEmpty(path)){
+            return true;
+        }
+        if(path.contains("../") || path.contains("..\\")){
             return false;
         }
-        return !path.matches(".*(\\.\\.|%2e%2e|%u002e%u002e).*[/\\\\].*");  // 判断文件路径是否非法,阻止基本的路径遍历攻击
+        return true;// 判断文件路径是否非法,阻止基本的路径遍历攻击
     }
 
     public static String rename(String fileName){

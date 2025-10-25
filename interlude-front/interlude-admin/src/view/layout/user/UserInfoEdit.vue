@@ -20,8 +20,12 @@
       <div class="base-info">
         <div class="left-base-info">
           <!--input输入-->
-          <el-form-item label="昵称:" prop="nicName">
-            <el-input clearable placeholder="请输入昵称" v-model.trim="formData.nicName"></el-input>
+          <el-form-item label="昵称:" prop="nickName">
+            <el-input
+              clearable
+              placeholder="请输入昵称"
+              v-model.trim="formData.nickName"
+            ></el-input>
           </el-form-item>
           <!-- 下拉框 -->
           <el-form-item label="性别:" prop="sex" class="input">
@@ -48,11 +52,11 @@
               v-model.trim="formData.password"
             ></el-input>
           </el-form-item>
-          <el-form-item label="角色:" prop="roleName">
-            <el-radio-group v-model="formData.roleName">
-              <el-radio :label="1">超级管理员</el-radio>
+          <el-form-item label="角色:" prop="roleNameIndex">
+            <el-radio-group v-model="formData.roleNameIndex">
+              <el-radio :label="3">超级管理员</el-radio>
               <el-radio :label="2">管理员</el-radio>
-              <el-radio :label="3">用户</el-radio>
+              <el-radio :label="1">用户</el-radio>
             </el-radio-group>
           </el-form-item>
         </div>
@@ -61,7 +65,7 @@
             <ImageUpload v-model="formData.avatar" :width="150" :height="150"></ImageUpload>
           </el-form-item>
 
-          <el-form-item label="用户状态:" prop="enable" class="status-switch">
+          <el-form-item v-if="showEnabled" label="用户状态:" prop="enable" class="status-switch">
             <el-switch v-model="formData.enable" />
           </el-form-item>
         </div>
@@ -104,7 +108,7 @@
 
 <script setup lang="ts">
 import { ref, getCurrentInstance, nextTick, Ref } from 'vue'
-
+import { uploadImage } from '@/utils/Api.js'
 const { proxy } = getCurrentInstance()
 
 const formDataRef = ref() as Ref<any>
@@ -127,7 +131,7 @@ const rules = ref<Record<string, any>>({
     { required: true, message: '请输入密码' },
     { pattern: proxy.$Verify.password, message: '请输入正确的密码' },
   ],
-  roleName: [{ required: true, message: '请选择角色' }],
+  roleNameIndex: [{ required: true, message: '请选择角色' }],
 })
 
 const dialogConfig = ref({
@@ -144,6 +148,7 @@ const dialogConfig = ref({
   ],
 })
 
+const emit = defineEmits(['reload'])
 const submitForm = (): void => {
   formDataRef.value.validate(async (valid: boolean) => {
     if (!valid) {
@@ -152,11 +157,38 @@ const submitForm = (): void => {
     let params: Record<string, any> = {}
     Object.assign(params, formData.value)
     params.enable = formData.value.enable ? 1 : 0
-    console.log(formData)
+    if (params.avatar instanceof File) {
+      params.avatar = await uploadImage(params.avatar)
+    }
+    const res = await proxy.$Request({
+      url: proxy.$Api.getaddOrUpdateBatch,
+      params,
+    })
+    if (!res) {
+      return
+    }
+    dialogConfig.value.show = false
+    proxy.$Message.success('新增成功')
+    emit('reload')
   })
 }
 
-const showEdit = (data: Array<Record<string, any>>) => {
+const showEnabled: boolean = ref(true)
+
+const showEdit = (data: Array<Record<string, any>>, type: number) => {
+  if (type === 1) {
+    dialogConfig.value.title = '修改用户'
+    Object.assign(formData.value, data)
+    formData.value.roleNameIndex = data.roleNameIndex
+    showEnabled.value = false
+  } else {
+    dialogConfig.value.title = '新增用户'
+    Object.keys(formData.value).forEach((key) => {
+      formData.value[key] = ''
+    })
+    showEnabled.value = true
+    formData.value.enable = true
+  }
   dialogConfig.value.show = true
 }
 

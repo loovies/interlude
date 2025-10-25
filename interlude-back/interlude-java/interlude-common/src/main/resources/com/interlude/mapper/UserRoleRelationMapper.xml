@@ -146,6 +146,10 @@
 		select <include refid="base_column_list"/> from user_role_relation where id=#{id}
 	</select>
 
+	<select id="selectByUserId" resultMap="base_result_map">
+		select <include refid="base_column_list"/> from user_role_relation where user_id=#{userId}
+	</select>
+
 	<!-- 根据Id更新 -->
 	<update id="updateById" parameterType="com.interlude.entity.po.UserRoleRelation">
 		update user_role_relation

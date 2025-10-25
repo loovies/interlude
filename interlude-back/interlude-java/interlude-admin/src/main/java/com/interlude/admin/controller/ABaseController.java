@@ -53,7 +53,7 @@ public class ABaseController {
     }
 
     protected void readFile(HttpServletResponse response, String path){
-        if(StringTools.pathIsOk(path)){
+        if(!StringTools.pathIsOk(path)){
             return;
         }
         File file = new File(appConfig.getProjectFolder() + Constants.FILE_FOLDER + path);

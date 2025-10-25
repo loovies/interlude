@@ -14,6 +14,7 @@ import java.util.List;
 import com.interlude.entity.po.UserInfo;
 import com.interlude.entity.query.UserInfoQuery;
 import com.interlude.enums.ResponseCodeEnum;
+import com.interlude.enums.RoleRelationEnum;
 import com.interlude.enums.UserStatusEnum;
 import com.interlude.exception.BusinessException;
 import com.interlude.mapper.UserInfoMapper;
@@ -22,6 +23,7 @@ import com.interlude.service.UserInfoService;
 import com.interlude.utils.CopyTools;
 import com.interlude.utils.StringTools;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.Cookie;
@@ -198,6 +200,10 @@ public class UserInfoServiceImpl implements UserInfoService{
 		if(userInfo.getEnabled() == UserStatusEnum.DISABLE.getStatus()){
 			throw new BusinessException("该账号已被封禁");
 		}
+		UserRoleRelation userRoleRelation = userRoleRelationMapper.selectByUserId(userInfo.getUserId());
+		if(userRoleRelation == null || userRoleRelation.getRoleId() == RoleRelationEnum.USER.getStatus()){
+			throw new BusinessException("无效账号,无法登录");
+		}
 		//将用户的数据(生成的token)Dto 存在redis中
 		TokenUserInfoDto tokenUserInfoDto = CopyTools.copy(userInfo, TokenUserInfoDto.class);
 		String token = redisComponent.saveAdmin4Token(tokenUserInfoDto);
@@ -213,19 +219,28 @@ public class UserInfoServiceImpl implements UserInfoService{
 	}
 
 	@Override
+	@Transactional(rollbackFor = Exception.class)
 	public Integer addOrUpdateUserInfo(UserInfoQuery query,TokenUserInfoDto tokenUserInfo) {
 		if (query == null){
 			throw new BusinessException(ResponseCodeEnum.CODE_600);
 		}
 		if(query.getUserId() == null){
 			// 新增用户
-			query.setUserId(StringTools.getRandomString(Constants.NUMBER_10));
+			String userId = StringTools.getRandomString(Constants.NUMBER_10);
+			query.setUserId(userId);
 			query.setCreateTime(new Date());
 			query.setUpdateTime(new Date());
 			query.setPwdResetTime(new Date());
 			query.setTheme(1);
+			query.setCreateBy(tokenUserInfo.getNickName());
+			query.setUpdateBy(tokenUserInfo.getNickName());
+			userInfoMapper.insert(query);
 
 			// 增加角色
+			UserRoleRelationQuery relationQuery = new UserRoleRelationQuery();
+			relationQuery.setUserId(userId);
+			relationQuery.setRoleId(query.getRoleNameIndex());
+			userRoleRelationMapper.insert(relationQuery);
 		}else{
 			//修改用户
 		}

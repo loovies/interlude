@@ -78,6 +78,7 @@ public class UserInfoController extends ABaseController{
 	@RequestMapping("addOrUpdateBatch")
 	public ResponseVO addOrUpdateBatch(UserInfoQuery query) {
 		TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
+		System.out.println(tokenUserInfo.getUserId());
 		this.UserInfoService.addOrUpdateUserInfo(query,tokenUserInfo);
 		return getSuccessResponseVO(null);
 	}

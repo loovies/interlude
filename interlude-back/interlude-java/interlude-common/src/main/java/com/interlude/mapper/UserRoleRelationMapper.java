@@ -13,6 +13,8 @@ public interface UserRoleRelationMapper<T, P> extends BaseMapper {
 	 */
 	T selectById(@Param("id") Integer id);
 
+	T selectByUserId(@Param("userId") String userId);
+
 	/**
 	 * 根据Id更新
 	 */
