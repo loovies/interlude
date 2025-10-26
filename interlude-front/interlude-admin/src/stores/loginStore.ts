@@ -12,6 +12,10 @@ const useLoginStore = defineStore('loginstate', {
       this.userInfo = info
     },
   },
+  persist: {
+    storage: localStorage, // 或 sessionStorage
+    paths: ['userInfo'], // 只持久化 userInfo
+  },
 })
 
 export { useLoginStore }

@@ -207,7 +207,17 @@
 
 	<!--查询数量-->
 	<select id="selectCount" resultType="java.lang.Integer">
-		SELECT count(1) FROM user_info u<include refid="query_condition"/>
+		SELECT count(1) FROM user_info u
+		<if test="query.roleName != null and query.roleName.size() > 0">
+			left join user_role_relation r on u.user_id = r.user_id
+		</if>
+		<where>
+			<include refid="base_query_condition"/>
+			<include refid="base_query_condition_extend"/>
+			<if test="query.roleName != null and query.roleName.size() > 0">
+				and r.role_id in (<foreach collection="query.roleName" item="item" separator=",">#{item}</foreach>)
+			</if>
+		</where>
 	</select>
 
 	<!--插入(匹配有值的字段)-->

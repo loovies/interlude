@@ -9,9 +9,8 @@
     <el-form
       :model="formData"
       class="form-style"
-      :rules="rules"
       ref="formDataEditRef"
-      label-width="90px"
+      label-width="100px"
       @submit.prevent
     >
       <div class="title">
@@ -23,13 +22,14 @@
           <el-form-item label="昵称:" prop="nickName">
             <el-input
               clearable
+              disabled
               placeholder="请输入昵称"
               v-model.trim="formData.nickName"
             ></el-input>
           </el-form-item>
           <!-- 下拉框 -->
           <el-form-item label="性别:" prop="sex" class="input">
-            <el-select clearable placeholder="请选择性别" v-model="formData.sex">
+            <el-select disabled clearable placeholder="请选择性别" v-model="formData.sex">
               <el-option :value="0" label="女"></el-option>
               <el-option :value="1" label="男"></el-option>
               <el-option :value="2" label="其他"></el-option>
@@ -38,22 +38,23 @@
           <!-- 单选 -->
 
           <el-form-item label="手机号:" prop="phone">
-            <el-input clearable placeholder="请输入手机号" v-model.trim="formData.phone"></el-input>
+            <el-input disabled clearable placeholder="无" v-model.trim="formData.phone"></el-input>
           </el-form-item>
           <el-form-item label="邮箱:" prop="email">
-            <el-input clearable placeholder="请输入邮箱" v-model.trim="formData.email"></el-input>
+            <el-input clearable disabled placeholder="无" v-model.trim="formData.email"></el-input>
           </el-form-item>
           <el-form-item label="登录密码:" prop="password">
             <el-input
               clearable
+              disabled
               type="password"
               show-password
-              placeholder="请输入登录密码"
+              placeholder="无"
               v-model.trim="formData.password"
             ></el-input>
           </el-form-item>
           <el-form-item label="角色:" prop="roleNameIndex" v-if="showEnabled">
-            <el-radio-group v-model="formData.roleNameIndex">
+            <el-radio-group disabled v-model="formData.roleNameIndex">
               <!-- <el-radio :label="3">超级管理员</el-radio> -->
               <el-radio :label="2">管理员</el-radio>
               <el-radio :label="1">用户</el-radio>
@@ -62,11 +63,17 @@
         </div>
         <div class="right-base-info">
           <el-form-item label="头像:" prop="avatar">
-            <ImageUpload v-model="formData.avatar" :width="150" :height="150"></ImageUpload>
+            <ImageUpload
+              class="disable"
+              v-model="formData.avatar"
+              :width="150"
+              :height="150"
+              :isBtn="false"
+            ></ImageUpload>
           </el-form-item>
 
           <el-form-item v-if="showEnabled" label="用户状态:" prop="enable" class="status-switch">
-            <el-switch v-model="formData.enable" />
+            <el-switch disabled v-model="formData.enable" />
           </el-form-item>
         </div>
       </div>
@@ -76,23 +83,58 @@
       <div class="other-info">
         <div class="other-onerow">
           <el-form-item class="input" label="学校:" prop="school">
-            <el-input clearable placeholder="请输入学校" v-model.trim="formData.school"></el-input>
+            <el-input disabled clearable placeholder="无" v-model.trim="formData.school"></el-input>
           </el-form-item>
           <el-form-item label="生日:" prop="birthday">
-            <el-date-picker v-model="formData.birthday" type="date" placeholder="请选择生日" />
+            <el-date-picker disabled v-model="formData.birthday" type="date" placeholder="无" />
           </el-form-item>
         </div>
 
         <!--input输入-->
+        <div class="other-tworow">
+          <el-form-item class="input" label="地址:" prop="address">
+            <el-input
+              clearable
+              disabled
+              placeholder="无"
+              v-model.trim="formData.address"
+            ></el-input>
+          </el-form-item>
+          <el-form-item class="input" label="创建者:" prop="createBy">
+            <el-input clearable disabled v-model.trim="formData.createBy"></el-input>
+          </el-form-item>
+          <el-form-item class="input" label="更新者:" prop="updateBy">
+            <el-input clearable disabled v-model.trim="formData.updateBy"></el-input>
+          </el-form-item>
+        </div>
+        <div class="other-threerow">
+          <el-form-item class="input" label="创建时间:" prop="createTime">
+            <el-input clearable disabled v-model.trim="formData.createTime"></el-input>
+          </el-form-item>
+          <el-form-item class="input" label="更新时间:" prop="updateTime">
+            <el-input
+              clearable
+              disabled
+              placeholder="无"
+              v-model.trim="formData.updateTime"
+            ></el-input>
+          </el-form-item>
+          <el-form-item class="input" placeholder="无" label="密码更新时间:" prop="pwdResetTime">
+            <el-input
+              clearable
+              disabled
+              placeholder="无"
+              v-model.trim="formData.pwdResetTime"
+            ></el-input>
+          </el-form-item>
+        </div>
 
-        <el-form-item class="input" label="地址:" prop="address">
-          <el-input clearable placeholder="请输入地址" v-model.trim="formData.address"></el-input>
-        </el-form-item>
         <!--textarea输入-->
         <el-form-item label="简介:" prop="personIntroduction">
           <el-input
             clearable
-            placeholder="请输入个人简介"
+            disabled
+            placeholder="无"
             type="textarea"
             :rows="5"
             :maxlength="150"
@@ -116,84 +158,26 @@ const formData = ref<Record<string, any>>({
   enable: true,
 })
 
-const rules = ref<Record<string, any>>({
-  nicName: [{ required: true, message: '请输入昵称' }],
-  sex: [{ required: true, message: '请选择性别' }],
-  phone: [
-    { required: true, message: '请输入手机号' },
-    { pattern: proxy.$Verify.phone, message: '请输入正确的手机号' },
-  ],
-  email: [
-    { type: 'email', message: '请输入正确的邮箱地址' },
-    { pattern: proxy.$Verify.email, message: '请输入正确的邮箱地址' },
-  ],
-  password: [
-    { required: true, message: '请输入密码' },
-    { pattern: proxy.$Verify.password, message: '请输入正确的密码' },
-  ],
-  roleNameIndex: [{ required: true, message: '请选择角色' }],
-})
-
 const dialogConfig = ref({
   show: false,
-  title: '新增用户',
+  title: '详情信息',
   buttons: [
     {
       type: 'primary',
       text: '确定',
-      click: (e: any) => {
-        submitForm()
-      },
+      click: (e: any) => {},
     },
   ],
 })
 
 const emit = defineEmits(['reload'])
-// 提交表单
-const submitForm = (): void => {
-  formDataEditRef.value.validate(async (valid: boolean) => {
-    if (!valid) {
-      return
-    }
-    let params: Record<string, any> = {}
-    Object.assign(params, formData.value)
-    params.enabled = formData.value.enable ? 1 : 0
-    params.birthday = proxy.$Utils.formatDateToYYYYMMDD(formData.value.birthday)
-    if (params.avatar instanceof File) {
-      params.avatar = await uploadImage(params.avatar)
-    }
-    const res = await proxy.$Request({
-      url: proxy.$Api.getaddOrUpdateBatch,
-      params,
-    })
-    if (!res) {
-      return
-    }
-    dialogConfig.value.show = false
-    proxy.$Message.success('保存成功')
-    emit('reload')
-  })
-}
 
 const showEnabled: boolean = ref(true)
 
-// 显示编辑弹窗
 const showEdit = (data: Array<Record<string, any>>, type: number) => {
-  if (type === 1) {
-    dialogConfig.value.title = '修改用户'
-    Object.assign(formData.value, data)
-    showEnabled.value = false
-  } else {
-    dialogConfig.value.title = '新增用户'
-    // 确保在下一个渲染周期执行
-    showEnabled.value = true
-    formData.value.enable = true
-    nextTick(() => {
-      formDataEditRef.value?.resetFields()
-      formData.value = {}
-    })
-  }
   dialogConfig.value.show = true
+  Object.assign(formData.value, data)
+  formData.value.roleNameIndex = data.roleId
 }
 defineExpose({
   showEdit,
@@ -246,12 +230,28 @@ defineExpose({
       display: flex;
       width: 100%;
       .input {
-        width: 500px;
+        width: 400px;
+        margin-right: 40px;
+      }
+    }
+    .other-tworow {
+      display: flex;
+      width: 100%;
+      .input {
+        width: 400px;
+        margin-right: 40px;
+      }
+    }
+    .other-threerow {
+      display: flex;
+      width: 100%;
+      .input {
+        width: 300px;
         margin-right: 40px;
       }
     }
     .input {
-      width: 600px;
+      width: 400px;
     }
   }
 }

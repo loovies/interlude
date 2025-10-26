@@ -80,6 +80,7 @@
 <script setup lang="ts">
 import { ref, getCurrentInstance, Ref, watch, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { storeToRefs } from 'pinia'
 
 const route = useRoute()
 const router = useRouter()
@@ -88,6 +89,11 @@ const { proxy } = getCurrentInstance()
 
 import { useLoginStore } from '../../stores/loginStore'
 const loginStore = useLoginStore()
+const { userInfo } = storeToRefs(loginStore)
+
+const currentUserId = computed(() => {
+  return userInfo.value.userId
+})
 
 const isCollapse: Ref<boolean> = ref(false)
 
@@ -227,7 +233,7 @@ const changeCollapse = (flag: boolean): void => {
         font-size: 28px;
       }
       .header-content {
-        width: 100px;
+        width: 80px;
       }
     }
     .main-style {

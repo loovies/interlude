@@ -1,6 +1,6 @@
 <template>
   <div class="user-panel">
-    <div class="user-search">
+    <div class="user-search" v-if="userSearchDisplay">
       <el-card :class="['user-search-card', isShrink ? 'user-shrink-show' : 'user-shrink']">
         <el-form
           :model="formData"
@@ -95,7 +95,7 @@
         </el-form>
       </el-card>
     </div>
-    <div class="userCenter">
+    <div class="userCenter" v-if="userSearchDisplay">
       <h2 class="user-title">用户列表</h2>
       <div class="user-controll">
         <div class="contrual-btn jia" @click="showEdit({}, 0)">
@@ -123,6 +123,7 @@
     </div>
     <div class="user-table">
       <el-card class="user-table-card">
+        <span class="iconfont icon-kuoda1 upstep" @click="handleUpStepClick"></span>
         <Table
           ref="dataTableRef"
           :columns="columns"
@@ -156,14 +157,28 @@
           </template>
           <template #slotOperation="{ index, row }">
             <div class="row-op-panel">
-              <a class="a-link" v-if="row.roleId != 3" @click="stopEnable(row)">
+              <a
+                class="a-link"
+                v-if="row.roleId != 3 && row.userId != currentUserId"
+                @click="stopEnable(row)"
+              >
                 {{ row.enabled == 0 ? '启用' : '停用' }}
               </a>
               <a class="a-link" v-if="row.roleId != 3" @click="showEdit(row, 1)">修改</a>
               <a class="a-link" @click="showDetail(row)">详情</a>
               <a class="a-link" v-if="row.roleId != 3" @click="resetPassword(row)">重置密码</a>
-              <a class="a-link" v-if="row.roleId != 3" @click="showRoleDialog(row)">分配角色</a>
-              <a class="a-link" @click="deleteUser(row)" v-if="row.roleId != 3">删除</a>
+              <a
+                class="a-link"
+                v-if="row.roleId != 3 && row.userId != currentUserId"
+                @click="showRoleDialog(row)"
+                >分配角色</a
+              >
+              <a
+                class="a-link"
+                @click="deleteUser(row)"
+                v-if="row.roleId != 3 && row.userId != currentUserId"
+                >删除</a
+              >
             </div>
           </template>
         </Table>
@@ -196,6 +211,16 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, getCurrentInstance, Ref, watch, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getRoleByUserId } from '@/utils/Api.js'
+import { storeToRefs } from 'pinia'
+
+import { useLoginStore } from '../../../stores/loginStore.ts'
+const loginStore = useLoginStore()
+
+const { userInfo } = storeToRefs(loginStore)
+
+const currentUserId = computed(() => {
+  return userInfo.value.userId
+})
 
 const { proxy } = getCurrentInstance()
 
@@ -212,7 +237,7 @@ const tableOptions = {
   exHeight: 0,
   showIndex: true,
   selectType: 'checkbox',
-  tableHeight: 550,
+  tableHeight: 720,
 }
 
 const columns = [
@@ -299,16 +324,17 @@ const loadUserInfoList = async (): Promise<void> => {
   tableData.value = result.data
 }
 
-const MaxHeight: Ref<number> = ref(550)
+const MaxHeight: Ref<number> = ref(565)
 
 const isShrink: Ref<boolean> = ref(false)
 
+// 收起/展开搜索框
 const changeShrink = (): void => {
   isShrink.value = !isShrink.value
   if (isShrink.value) {
-    MaxHeight.value = 500
+    MaxHeight.value = 510
   } else {
-    MaxHeight.value = 550
+    MaxHeight.value = 565
   }
 }
 
@@ -493,6 +519,11 @@ const rowSelectedList = ref([])
 // 选中行数据
 const rowSelected = async (selectedRows: Array<Object>): Promise<void> => {
   for (let item of selectedRows) {
+    if (item.userId == currentUserId.value) {
+      proxy.$Message.warning('当前登录用户不能被批量操作')
+      loadUserInfoList()
+      return
+    }
     let roleId = await getRoleByUserId(item.userId)
     if (roleId == 3) {
       proxy.$Message.warning('超级管理员不能被批量操作')
@@ -527,6 +558,18 @@ const deleteSelectedRows = (): void => {
     loadUserInfoList()
     proxy.$Message.success('删除成功')
   })
+}
+
+const userSearchDisplay = ref(true)
+const handleUpStepClick = (): void => {
+  userSearchDisplay.value = !userSearchDisplay.value
+  if (userSearchDisplay.value) {
+    isShrink.value = false
+    MaxHeight.value = 565
+  } else {
+    MaxHeight.value = 800
+    tableOptions.tableHeight = 800
+  }
 }
 </script>
 
@@ -615,6 +658,15 @@ const deleteSelectedRows = (): void => {
     flex: 1;
     .user-table-card {
       height: 100%;
+      position: relative;
+      .upstep {
+        position: absolute;
+        cursor: pointer;
+        top: 2px;
+        right: 4px;
+        color: #bbb9b9;
+        border: 1px solid rgba(219, 218, 218, 0.6);
+      }
       .enabled {
         .comment {
           padding: 2px 5px;

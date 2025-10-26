@@ -192,7 +192,7 @@ function exportClick() {
       new Blob([wbout], {
         type: 'application/octet-stream',
       }),
-      '心理测试成绩.xlsx'
+      '用户信息表.xlsx'
     )
   } catch (e) {
     // eslint-disable-next-line max-statements-per-line, no-console
