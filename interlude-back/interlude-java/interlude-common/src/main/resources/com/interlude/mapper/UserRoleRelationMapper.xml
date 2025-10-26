@@ -165,7 +165,7 @@
 			</if>
 
 		</set>
-		where id=#{id}
+		where user_id=#{id}
 	</update>
 
 	<!-- 根据Id删除 -->

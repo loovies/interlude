@@ -86,8 +86,8 @@ public class UserRoleRelationServiceImpl implements UserRoleRelationService{
 	/**
 	 * 根据Id更新
 	 */
-	public Integer updateUserRoleRelationById(UserRoleRelation bean, Integer id) {
-		return this.userRoleRelationMapper.updateById(bean, id);
+	public Integer updateUserRoleRelationByUserId(UserRoleRelation bean, String userId) {
+		return this.userRoleRelationMapper.updateById(bean, userId);
 	}
 
 	/**
@@ -95,5 +95,10 @@ public class UserRoleRelationServiceImpl implements UserRoleRelationService{
 	 */
 	public Integer deleteUserRoleRelationById(Integer id) {
 		return this.userRoleRelationMapper.deleteById(id);
+	}
+
+	@Override
+	public UserRoleRelation getRoleRelationByUserId(String userId) {
+		return this.userRoleRelationMapper.selectByUserId(userId);
 	}
 }

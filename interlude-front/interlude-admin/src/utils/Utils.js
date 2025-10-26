@@ -51,4 +51,15 @@ export default {
       .toString()
       .padStart(2, '0')}`
   },
+  // 将日期格式化为 yy-MM-dd 格式
+  formatDateToYYYYMMDD: (date) => {
+    if (!date) return ''
+
+    const d = new Date(date)
+    const year = d.getFullYear().toString() // 获取后两位年份
+    const month = (d.getMonth() + 1).toString().padStart(2, '0')
+    const day = d.getDate().toString().padStart(2, '0')
+
+    return `${year}-${month}-${day}`
+  },
 }

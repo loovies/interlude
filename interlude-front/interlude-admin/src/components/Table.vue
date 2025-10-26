@@ -3,6 +3,7 @@
     <el-table
       :data="dataSource.list || []"
       ref="dataTable"
+      id="data-table"
       :height="tableHeight"
       :stripe="options.stripe"
       :border="options.border"
@@ -74,6 +75,8 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import FileSaver from 'file-saver'
+import * as XLSX from 'xlsx'
 
 const props = defineProps({
   dataSource: Object,
@@ -145,7 +148,7 @@ const setCurrentRow = (rowKey, rowValue) => {
 }
 
 // 将子组件暴露出去, 否则父组件无法调用
-defineExpose({ setCurrentRow, clearSelection })
+defineExpose({ setCurrentRow, clearSelection, exportClick })
 
 const emit = defineEmits(['rowSelected', 'rowClick'])
 
@@ -172,6 +175,32 @@ const handlePageNoChange = (pageNo) => {
   props.dataSource.pageNo = pageNo
   // 获取数据
   props.fetch()
+}
+
+function exportClick() {
+  console.log('导入')
+
+  const wb = XLSX.utils.table_to_book(document.querySelector('#data-table')) // 关联dom节点
+  /* get binary string as output */
+  const wbout = XLSX.write(wb, {
+    bookType: 'xlsx',
+    bookSST: true,
+    type: 'array',
+  })
+  try {
+    FileSaver.saveAs(
+      new Blob([wbout], {
+        type: 'application/octet-stream',
+      }),
+      '心理测试成绩.xlsx'
+    )
+  } catch (e) {
+    // eslint-disable-next-line max-statements-per-line, no-console
+    if (typeof console !== 'undefined') {
+      console.log(e, wbout)
+    }
+  }
+  return wbout
 }
 </script>
 

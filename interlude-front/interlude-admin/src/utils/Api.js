@@ -7,8 +7,12 @@ const Api = {
 
   // user
   getLoadDataList: '/user/loadDataList',
-  getRoleName: '/user/loadUserRole',
   getaddOrUpdateBatch: '/user/addOrUpdateBatch',
+  getRoleName: '/user/loadUserRole',
+  getRoleByUserId: '/user/getRoleByUserId',
+  getdeleteUserByUserId: '/user/deleteUserInfoByUserId',
+  updateUserRelation: '/user/updateUserRelation',
+  getResetPassword: '/user/getResetPassword',
 
   //file
   uploadImage: '/file/uploadImage',
@@ -26,4 +30,14 @@ const uploadImage = async (file, createThumbnail = true) => {
   }
   return result.data
 }
-export { Api, uploadImage }
+
+// 根据userId获取用户角色
+const getRoleByUserId = async (userId) => {
+  let res = await Ruquest({
+    url: Api.getRoleByUserId,
+    params: { userId },
+  })
+  if (!res) return
+  return res.data.roleId
+}
+export { Api, uploadImage, getRoleByUserId }

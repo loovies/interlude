@@ -10,7 +10,7 @@
       :http-request="selectFile"
       :accept="proxy.imageAccept"
     >
-      <el-button type="primary" class="select-btn">选择</el-button>
+      <el-button type="primary" class="select-btn" v-if="isBtn">选择</el-button>
     </el-upload>
   </div>
 </template>
@@ -34,6 +34,10 @@ const props = defineProps({
   height: {
     type: Number,
     default: 100,
+  },
+  isBtn: {
+    type: Boolean,
+    default: true,
   },
 })
 

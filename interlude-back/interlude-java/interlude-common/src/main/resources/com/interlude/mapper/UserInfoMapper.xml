@@ -40,6 +40,7 @@
 		<result column="update_by" property="updateBy"/>
 		<!--是否启用 0 : 否 1: 是-->
 		<result column="enabled" property="enabled"/>
+
 	</resultMap>
 	<!--通用测序结果列-->
 	<sql id="base_column_list">
@@ -186,7 +187,7 @@
 	<select id="selectList" resultMap="base_result_map">
 		SELECT <include refid="base_column_list"/>
 		<if test="query.roleName != null and query.roleName.size() > 0">
-			,r.role_id
+			,r.role_id as roleId
 		</if>
 		FROM user_info u
 		<if test="query.roleName != null and query.roleName.size() > 0">
@@ -801,6 +802,10 @@
 	<!-- 根据Email删除 -->
 	<delete id="deleteByEmail">
 		delete from user_info where email=#{email}
+	</delete>
+
+	<delete id="deleteByUserIds">
+		delete from user_info where user_id in (<foreach collection="userIds" separator="," item="item">#{item}</foreach>)
 	</delete>
 
 </mapper>

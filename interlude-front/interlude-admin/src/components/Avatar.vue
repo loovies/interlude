@@ -18,6 +18,7 @@
       borderRadius="50%"
       :scale="1"
       :width="width"
+      :preview="preview"
     ></Cover>
   </div>
 </template>
@@ -51,6 +52,10 @@ const props = defineProps({
     //顶部头像使用lazy页面 不跳转路由不加载图片
     type: Boolean,
     default: true,
+  },
+  preview: {
+    type: Boolean,
+    default: false,
   },
 })
 </script>

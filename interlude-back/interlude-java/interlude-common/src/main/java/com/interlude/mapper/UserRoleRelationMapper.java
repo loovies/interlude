@@ -18,7 +18,7 @@ public interface UserRoleRelationMapper<T, P> extends BaseMapper {
 	/**
 	 * 根据Id更新
 	 */
-	Integer updateById(@Param("bean") T t, @Param("id") Integer id);
+	Integer updateById(@Param("bean") T t, @Param("id") String userId);
 
 	/**
 	 * 根据Id删除

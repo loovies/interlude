@@ -56,12 +56,12 @@ public interface UserInfoService{
 	/**
 	 * 根据UserId更新
 	 */
-	Integer updateUserInfoByUserId(UserInfo bean, String userId);
+	Integer updateUserInfoByUserId(UserInfoQuery bean, String userId);
 
 	/**
 	 * 根据UserId删除
 	 */
-	Integer deleteUserInfoByUserId(String userId);
+	Integer deleteUserInfoByUserId(String userIds);
 
 	/**
 	 * 根据NickName查询
@@ -111,4 +111,6 @@ public interface UserInfoService{
 	UserInfo login(String account, String password, HttpServletResponse response) ;
 
 	Integer addOrUpdateUserInfo(UserInfoQuery query, TokenUserInfoDto tokenUserInfo);
+
+	String resetPassword(String userId);
 }

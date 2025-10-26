@@ -50,11 +50,12 @@ public interface UserRoleRelationService{
 	/**
 	 * 根据Id更新
 	 */
-	Integer updateUserRoleRelationById(UserRoleRelation bean, Integer id);
+	public Integer updateUserRoleRelationByUserId(UserRoleRelation bean, String userId);
 
 	/**
 	 * 根据Id删除
 	 */
 	Integer deleteUserRoleRelationById(Integer id);
 
+    UserRoleRelation getRoleRelationByUserId(String userId);
 }

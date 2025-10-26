@@ -101,13 +101,22 @@
         <div class="contrual-btn jia" @click="showEdit({}, 0)">
           <i class="iconfont icon-jia"></i>
         </div>
-        <div :class="['contrual-btn jia', tableData.length <= 0 ? 'disable' : '']">
+        <div
+          :class="['contrual-btn jia', tableData.length <= 0 ? 'disable' : '']"
+          @click="exportClick()"
+        >
           <i class="iconfont icon-xiazai"></i>
         </div>
-        <div :class="['contrual-btn jia', tableData.length <= 0 ? 'disable' : '']">
+        <div
+          :class="['contrual-btn jia', tableData.length <= 0 ? 'disable' : '']"
+          @click="changeSort()"
+        >
           <i class="iconfont icon-paixu"></i>
         </div>
-        <div :class="['contrual-btn', 'del', 'disable']">
+        <div
+          :class="['contrual-btn', 'del', rowSelectedList.length <= 0 ? 'disable' : '']"
+          @click="deleteSelectedRows"
+        >
           <i class="iconfont icon-lajitong"></i>
         </div>
       </div>
@@ -122,10 +131,11 @@
           :initFetch="true"
           :options="tableOptions"
           :MaxHeight="MaxHeight"
+          @rowSelected="rowSelected"
         >
           <template #avatar="{ index, row }">
             <div class="cover">
-              <Avatar :avatar="row.avatar" :lazy="false" :width="35"></Avatar>
+              <Avatar :avatar="row.avatar" :lazy="false" :width="35" :preview="true"></Avatar>
             </div>
           </template>
           <template #sex="{ index, row }">
@@ -146,26 +156,46 @@
           </template>
           <template #slotOperation="{ index, row }">
             <div class="row-op-panel">
-              <a class="a-link">停用</a>
-              <a class="a-link" @click="showEdit(row, 1)">修改</a>
-              <a class="a-link">详情</a>
-              <a class="a-link">重置密码</a>
-              <a class="a-link">分配角色</a>
-              <a class="a-link">删除</a>
+              <a class="a-link" v-if="row.roleId != 3" @click="stopEnable(row)">
+                {{ row.enabled == 0 ? '启用' : '停用' }}
+              </a>
+              <a class="a-link" v-if="row.roleId != 3" @click="showEdit(row, 1)">修改</a>
+              <a class="a-link" @click="showDetail(row)">详情</a>
+              <a class="a-link" v-if="row.roleId != 3" @click="resetPassword(row)">重置密码</a>
+              <a class="a-link" v-if="row.roleId != 3" @click="showRoleDialog(row)">分配角色</a>
+              <a class="a-link" @click="deleteUser(row)" v-if="row.roleId != 3">删除</a>
             </div>
           </template>
         </Table>
       </el-card>
     </div>
   </div>
+  <!-- 用户信息编辑弹窗 -->
   <UserInfoEdit ref="userInfoRef" @reload="loadUserInfoList"></UserInfoEdit>
+  <UserInfoDetail ref="userInfoDetailRef"></UserInfoDetail>
+  <Dialog
+    :show="dialogConfig.show"
+    :title="dialogConfig.title"
+    :buttons="dialogConfig.buttons"
+    width="400px"
+    :showCancel="false"
+    @closeDialog="dialogConfig.show = false"
+  >
+    <el-radio-group v-model="RoleSelected.roleId">
+      <!-- <el-radio :label="3">超级管理员</el-radio> -->
+      <el-radio :label="2">管理员</el-radio>
+      <el-radio :label="1">用户</el-radio>
+    </el-radio-group>
+  </Dialog>
 </template>
 
 <script setup lang="ts">
 import UserInfoEdit from './UserInfoEdit.vue'
-
+import UserInfoDetail from './UserInfoDatil.vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, getCurrentInstance, Ref, watch, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { getRoleByUserId } from '@/utils/Api.js'
 
 const { proxy } = getCurrentInstance()
 
@@ -244,10 +274,18 @@ onMounted(() => {
   getRoleName()
 })
 
+// 用户信息表格数据
 const tableData = ref([])
 
+const flag = ref('asc')
+
+// 加载用户信息列表
 const loadUserInfoList = async (): Promise<void> => {
-  let params: Record<string, any> = {}
+  let params: Record<string, any> = {
+    pageNo: tableData.value.pageNo,
+    pageSize: tableData.value.pageSize,
+  }
+  formData.value.isCreatTimeDesc = flag.value
   Object.assign(params, formData.value)
   if (params.enabled == 2) params.enabled = null
   let result = await proxy.$Request({
@@ -281,6 +319,7 @@ const cheanFrom = () => {
 
 const RoleNameList = ref([])
 
+// 获取角色列表
 const getRoleName = async (): Promise<void> => {
   let result = await proxy.$Request({
     url: proxy.$Api.getRoleName,
@@ -296,9 +335,198 @@ const handleRadioClick = (value) => {
 }
 
 const userInfoRef = ref()
+const userInfoDetailRef = ref()
 
+// 显示编辑用户信息弹窗
 const showEdit = (data: Object, type: number) => {
   userInfoRef.value.showEdit(data, type)
+}
+
+// 启用/停用用户
+const stopEnable = (data: Object) => {
+  const enableMsg = data.enabled === 0 ? '启用' : '停用'
+  ElMessageBox.confirm(`是否${enableMsg}此账号`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(async () => {
+    let params: Record<string, any> = {
+      userId: data.userId,
+      enabled: data.enabled === 0 ? 1 : 0,
+    }
+    const res = await proxy.$Request({
+      url: proxy.$Api.getaddOrUpdateBatch,
+      params,
+    })
+    if (!res) {
+      return
+    }
+    loadUserInfoList()
+    ElMessage({
+      type: 'success',
+      message: `${enableMsg}成功!`,
+    })
+  })
+}
+
+// 删除用户
+const deleteUser = (data: Object) => {
+  ElMessageBox.confirm(`是否删除此账号`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(async () => {
+    let params: Record<string, any> = {
+      userIds: data.userId,
+    }
+    const res = await proxy.$Request({
+      url: proxy.$Api.getdeleteUserByUserId,
+      params,
+    })
+    if (!res) {
+      return
+    }
+    loadUserInfoList()
+    ElMessage({
+      type: 'success',
+      message: `删除成功!`,
+    })
+  })
+}
+
+// 重置密码
+const resetPassword = (data: Object) => {
+  if (data.enabled == 0) {
+    proxy.$Message.warning('该用户未启用，无法重置密码')
+    return
+  }
+  ElMessageBox.confirm(`是否重置此账号密码`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(async () => {
+    let params: Record<string, any> = {
+      userId: data.userId,
+    }
+    const res = await proxy.$Request({
+      url: proxy.$Api.getResetPassword,
+      params,
+    })
+    if (!res) {
+      return
+    }
+    ElMessageBox.alert(`密码重置成功: 密码为${res.data} , 请及时复制`, '提示', {
+      confirmButtonText: 'OK',
+      callback: (action: Action) => {},
+    })
+    loadUserInfoList()
+  })
+}
+// 分配角色
+const RoleSelected: Object = ref({
+  userId: 0,
+  roleId: 0,
+})
+
+const dialogConfig = ref({
+  show: false,
+  title: '分配角色',
+  buttons: [
+    {
+      type: 'primary',
+      text: '确定',
+      click: async (e: any) => {
+        let res = await proxy.$Request({
+          url: proxy.$Api.updateUserRelation,
+          params: {
+            userId: RoleSelected.value.userId,
+            roleId: RoleSelected.value.roleId,
+          },
+        })
+        if (!res) {
+          return
+        }
+        dialogConfig.value.show = false
+        proxy.$Message.success('分配成功')
+        loadUserInfoList()
+      },
+    },
+  ],
+})
+
+// 显示分配角色弹窗
+const showRoleDialog = (data: Object) => {
+  if (data.enabled == 0) {
+    proxy.$Message.warning('该用户未启用，无法分配角色')
+    return
+  }
+  RoleSelected.value.userId = data.userId
+  RoleSelected.value.roleId = data.roleId
+  dialogConfig.value.show = true
+}
+
+// 显示用户详情弹窗
+const showDetail = (data: Object) => {
+  userInfoDetailRef.value.showEdit(data)
+}
+
+const dataTableRef = ref()
+
+// 导出用户信息
+const exportClick = (): void => {
+  dataTableRef.value.exportClick()
+  proxy.$Message.success('导出成功')
+}
+
+// 排序切换
+const changeSort = (): void => {
+  if (flag.value === 'desc') {
+    flag.value = 'asc'
+  } else {
+    flag.value = 'desc'
+  }
+  loadUserInfoList()
+}
+
+const rowSelectedList = ref([])
+
+// 选中行数据
+const rowSelected = async (selectedRows: Array<Object>): Promise<void> => {
+  for (let item of selectedRows) {
+    let roleId = await getRoleByUserId(item.userId)
+    if (roleId == 3) {
+      proxy.$Message.warning('超级管理员不能被批量操作')
+      loadUserInfoList()
+      return
+    }
+  }
+  rowSelectedList.value = selectedRows
+}
+
+// 删除选中行
+const deleteSelectedRows = (): void => {
+  if (rowSelectedList.value.length <= 0) {
+    return
+  }
+  ElMessageBox.confirm(`是否删除选中账号`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(async () => {
+    let userIds = rowSelectedList.value.map((item: any) => item.userId).join(',')
+    let params: Record<string, any> = {
+      userIds: userIds,
+    }
+    const res = await proxy.$Request({
+      url: proxy.$Api.getdeleteUserByUserId,
+      params,
+    })
+    if (!res) {
+      return
+    }
+    loadUserInfoList()
+    proxy.$Message.success('删除成功')
+  })
 }
 </script>
 

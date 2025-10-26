@@ -22,6 +22,8 @@ import com.interlude.mapper.UserRoleRelationMapper;
 import com.interlude.service.UserInfoService;
 import com.interlude.utils.CopyTools;
 import com.interlude.utils.StringTools;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +43,7 @@ Service
 @Service("userInfoService")
 public class UserInfoServiceImpl implements UserInfoService{
 
+	private static final Logger log = LoggerFactory.getLogger(UserInfoServiceImpl.class);
 	@Resource
 	private UserInfoMapper<UserInfo,UserInfoQuery> userInfoMapper;
 
@@ -111,18 +114,30 @@ public class UserInfoServiceImpl implements UserInfoService{
 		return this.userInfoMapper.selectByUserId(userId);
 	}
 
+
 	/**
 	 * 根据UserId更新
 	 */
-	public Integer updateUserInfoByUserId(UserInfo bean, String userId) {
+	public Integer updateUserInfoByUserId(UserInfoQuery bean, String userId) {
 		return this.userInfoMapper.updateByUserId(bean, userId);
 	}
 
 	/**
 	 * 根据UserId删除
 	 */
-	public Integer deleteUserInfoByUserId(String userId) {
-		return this.userInfoMapper.deleteByUserId(userId);
+	public Integer deleteUserInfoByUserId(String userIds) {
+		if (StringTools.isEmpty(userIds)) {
+			throw new BusinessException(ResponseCodeEnum.CODE_600);
+		}
+		int i = userIds.indexOf(",");
+		if(i != -1){
+			String[] split = userIds.split(",");
+			this.userInfoMapper.deleteByUserIds(split);
+		}else{
+			this.userInfoMapper.deleteByUserId(userIds);
+		}
+
+		return 1;
 	}
 
 	/**
@@ -212,7 +227,7 @@ public class UserInfoServiceImpl implements UserInfoService{
 		saveTokenAdminCookie(response,token);
 
 		// 更新更新时间
-		UserInfo updateQuery = new UserInfo();
+		UserInfoQuery updateQuery = new UserInfoQuery();
 		updateQuery.setUpdateTime(new Date());
 		userInfoMapper.updateByUserId(updateQuery,userInfo.getUserId());
 		return userInfo;
@@ -242,9 +257,36 @@ public class UserInfoServiceImpl implements UserInfoService{
 			relationQuery.setRoleId(query.getRoleNameIndex());
 			userRoleRelationMapper.insert(relationQuery);
 		}else{
+			UserInfo userInfo = userInfoMapper.selectByUserId(query.getUserId());
 			//修改用户
+			query.setUpdateTime(new Date());
+			query.setCreateBy(tokenUserInfo.getNickName());
+			query.setUpdateBy(tokenUserInfo.getNickName());
+			if(!userInfo.getPassword().equalsIgnoreCase(query.getPassword())){
+				query.setPwdResetTime(new Date());
+			}
+			query.setUpdateBy(tokenUserInfo.getNickName());
+			userInfoMapper.updateByUserId(query,query.getUserId());
 		}
 		return 0;
+	}
+
+	@Override
+	public String resetPassword(String userId) {
+		UserInfo userInfo = userInfoMapper.selectByUserId(userId);
+		if(userInfo.getEnabled() == Constants.NUMBER_ZERO){
+			throw new BusinessException(ResponseCodeEnum.CODE_600);
+		}
+		UserRoleRelation userRoleRelation = userRoleRelationMapper.selectByUserId(userInfo.getUserId());
+		if(userRoleRelation.getRoleId() == RoleRelationEnum.SUPERADMIN.getStatus()){
+			throw new BusinessException(ResponseCodeEnum.CODE_600);
+		}
+		UserInfoQuery query = new UserInfoQuery();
+		String randomString = StringTools.getRandomString(Constants.NUMBER_15);
+		query.setPwdResetTime(new Date());
+		query.setPassword(randomString);
+		userInfoMapper.updateByUserId(query,userInfo.getUserId());
+		return randomString;
 	}
 
 	protected void saveTokenAdminCookie(HttpServletResponse response, String token){

@@ -1,5 +1,8 @@
 package com.interlude.entity.query;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
+import javax.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -54,6 +57,8 @@ public class UserInfoQuery<T> extends BaseParam{
 	/**
 	 * 生日
 	 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd")
+	@Size(max = 10, message = "生日格式不正确")
 	private String birthday;
 
 	private String birthdayFuzzy;
@@ -89,6 +94,7 @@ public class UserInfoQuery<T> extends BaseParam{
 	/**
 	 * 创建时间
 	 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
 	private Date createTime;
 
 	private String createTimeStart;
@@ -98,6 +104,7 @@ public class UserInfoQuery<T> extends BaseParam{
 	/**
 	 * 更新时间
 	 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
 	private Date updateTime;
 
 	private String updateTimeStart;
@@ -107,6 +114,7 @@ public class UserInfoQuery<T> extends BaseParam{
 	/**
 	 * 密码更新时间
 	 */
+	@DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
 	private Date pwdResetTime;
 
 	private String pwdResetTimeStart;
@@ -146,6 +154,16 @@ public class UserInfoQuery<T> extends BaseParam{
 	private ArrayList<Integer> roleName;
 
 	private Long roleNameIndex;
+
+	private String isCreatTimeDesc;
+
+	public String getIsCreatTimeDesc() {
+		return isCreatTimeDesc;
+	}
+
+	public void setIsCreatTimeDesc(String isCreatTimeDesc) {
+		this.isCreatTimeDesc = isCreatTimeDesc;
+	}
 
 	public Long getRoleNameIndex() {
 		return roleNameIndex;

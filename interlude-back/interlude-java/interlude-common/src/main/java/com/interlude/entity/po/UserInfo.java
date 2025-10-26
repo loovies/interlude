@@ -112,6 +112,15 @@ public class UserInfo implements Serializable {
 	 * 是否启用 0 : 否 1: 是
 	 */
 	private Integer enabled;
+	private Long roleId;
+
+	public Long getRoleId() {
+		return roleId;
+	}
+
+	public void setRoleId(Long roleId) {
+		this.roleId = roleId;
+	}
 
 	public void setUserId(String userId) {
 		this.userId = userId;

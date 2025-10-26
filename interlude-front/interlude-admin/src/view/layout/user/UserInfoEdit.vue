@@ -10,7 +10,7 @@
       :model="formData"
       class="form-style"
       :rules="rules"
-      ref="formDataRef"
+      ref="formDataEditRef"
       label-width="90px"
       @submit.prevent
     >
@@ -52,9 +52,9 @@
               v-model.trim="formData.password"
             ></el-input>
           </el-form-item>
-          <el-form-item label="角色:" prop="roleNameIndex">
+          <el-form-item label="角色:" prop="roleNameIndex" v-if="showEnabled">
             <el-radio-group v-model="formData.roleNameIndex">
-              <el-radio :label="3">超级管理员</el-radio>
+              <!-- <el-radio :label="3">超级管理员</el-radio> -->
               <el-radio :label="2">管理员</el-radio>
               <el-radio :label="1">用户</el-radio>
             </el-radio-group>
@@ -108,10 +108,10 @@
 
 <script setup lang="ts">
 import { ref, getCurrentInstance, nextTick, Ref } from 'vue'
-import { uploadImage } from '@/utils/Api.js'
+import { uploadImage, getRoleByUserId } from '@/utils/Api.js'
 const { proxy } = getCurrentInstance()
 
-const formDataRef = ref() as Ref<any>
+const formDataEditRef = ref()
 const formData = ref<Record<string, any>>({
   enable: true,
 })
@@ -150,13 +150,14 @@ const dialogConfig = ref({
 
 const emit = defineEmits(['reload'])
 const submitForm = (): void => {
-  formDataRef.value.validate(async (valid: boolean) => {
+  formDataEditRef.value.validate(async (valid: boolean) => {
     if (!valid) {
       return
     }
     let params: Record<string, any> = {}
     Object.assign(params, formData.value)
-    params.enable = formData.value.enable ? 1 : 0
+    params.enabled = formData.value.enable ? 1 : 0
+    params.birthday = proxy.$Utils.formatDateToYYYYMMDD(formData.value.birthday)
     if (params.avatar instanceof File) {
       params.avatar = await uploadImage(params.avatar)
     }
@@ -168,7 +169,7 @@ const submitForm = (): void => {
       return
     }
     dialogConfig.value.show = false
-    proxy.$Message.success('新增成功')
+    proxy.$Message.success('保存成功')
     emit('reload')
   })
 }
@@ -179,19 +180,18 @@ const showEdit = (data: Array<Record<string, any>>, type: number) => {
   if (type === 1) {
     dialogConfig.value.title = '修改用户'
     Object.assign(formData.value, data)
-    formData.value.roleNameIndex = data.roleNameIndex
     showEnabled.value = false
   } else {
     dialogConfig.value.title = '新增用户'
-    Object.keys(formData.value).forEach((key) => {
-      formData.value[key] = ''
+    nextTick(() => {
+      // 确保在下一个渲染周期执行
+      showEnabled.value = true
+      formData.value.enable = true
+      formDataEditRef.value.resetFields()
     })
-    showEnabled.value = true
-    formData.value.enable = true
   }
   dialogConfig.value.show = true
 }
-
 defineExpose({
   showEdit,
 })
