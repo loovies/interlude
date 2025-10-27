@@ -18,6 +18,7 @@ import Request from '@/utils/Ruquest.js'
 import Message from '@/utils/Message.js'
 import { Api } from '@/utils/Api.js'
 import utils from '@/utils/Utils.js'
+import Confirm from '@/utils/Confirm.js'
 
 // 自定义组件
 import Cover from '@/components/Cover.vue'
@@ -34,6 +35,7 @@ app.component('Avatar', Avatar)
 app.component('Breadcrumb', Breadcrumb)
 app.component('Table', Table)
 app.component('Dialog', Dialog)
+
 app.component('ImageUpload', ImageUpload)
 
 app.config.globalProperties.$VueCookies = VueCookies
@@ -42,6 +44,7 @@ app.config.globalProperties.$Message = Message
 app.config.globalProperties.$Request = Request
 app.config.globalProperties.$Api = Api
 app.config.globalProperties.$Utils = utils
+app.config.globalProperties.$Confirm = Confirm
 
 //缩略图后缀
 app.config.globalProperties.imageThumbnailSuffix = '_thumbnail.jpg'

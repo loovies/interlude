@@ -322,6 +322,7 @@ const loadUserInfoList = async (): Promise<void> => {
     return
   }
   tableData.value = result.data
+  console.log(tableData.value)
 }
 
 const MaxHeight: Ref<number> = ref(565)

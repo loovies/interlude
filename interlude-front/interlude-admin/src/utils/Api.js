@@ -14,6 +14,10 @@ const Api = {
   updateUserRelation: '/user/updateUserRelation',
   getResetPassword: '/user/getResetPassword',
 
+  // category
+  getLoadCategoryInfo: '/category/loadCategoryInfo',
+  getSaveCategory: '/category/saveCategory',
+  getDelCategory: '/category/delCategory',
   //file
   uploadImage: '/file/uploadImage',
   sourcePath: '/api/file/getResource?sourceName=',

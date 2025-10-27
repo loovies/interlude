@@ -5,7 +5,7 @@ import com.interlude.entity.query.CategoryInfoQuery;
 import com.interlude.entity.vo.ResponseVO;
 import com.interlude.service.CategoryInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.validation.annotation.Validated;  
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
