@@ -2,6 +2,8 @@ package com.interlude.mapper;
 
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * @Description:分类信息 Mapper
  * @auther:dazhi
@@ -41,4 +43,6 @@ public interface CategoryInfoMapper<T, P> extends BaseMapper {
 	Integer deleteByParam(@Param("query") P query);
 
 	Integer selectMaxSort(@Param("pCategoryId") Integer pCategoryId);
+
+	void updateBatchSort(@Param("categoryInfoList")  List<T> categoryInfoList);
 }

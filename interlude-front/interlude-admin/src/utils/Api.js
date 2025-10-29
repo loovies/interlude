@@ -4,7 +4,7 @@ const Api = {
   //login
   checkCode: '/account/checkCode',
   login: '/account/login',
-
+  logout: '/account/logout',
   // user
   getLoadDataList: '/user/loadDataList',
   getaddOrUpdateBatch: '/user/addOrUpdateBatch',
@@ -18,6 +18,8 @@ const Api = {
   getLoadCategoryInfo: '/category/loadCategoryInfo',
   getSaveCategory: '/category/saveCategory',
   getDelCategory: '/category/delCategory',
+  getChangeSort: '/category/changeSort',
+
   //file
   uploadImage: '/file/uploadImage',
   sourcePath: '/api/file/getResource?sourceName=',

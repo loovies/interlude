@@ -247,6 +247,12 @@
         where category_code=#{categoryCode}
     </update>
 
+    <update id="updateBatchSort">
+        <foreach collection="categoryInfoList" separator=";" item="item">
+            update category_info set sort = #{item.sort} where category_id=#{item.categoryId} and p_category_id = #{item.pCategoryId}
+        </foreach>
+    </update>
+
     <!-- 根据CategoryCode删除 -->
     <delete id="deleteByCategoryCode">
         delete from category_info where category_code=#{categoryCode}

@@ -2,10 +2,12 @@ package com.interlude.component;
 
 import com.interlude.entity.constants.Constants;
 import com.interlude.entity.dto.TokenUserInfoDto;
+import com.interlude.entity.po.CategoryInfo;
 import com.interlude.redis.RedisUtils;
 import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.UUID;
 
 @Configuration
@@ -47,5 +49,18 @@ public class RedisComponent {
         return (TokenUserInfoDto) redisUtils.get(Constants.REDIS_TOKEN_ADMIN_KEY + token);
     }
 
-    // 保存当前用户token及用户信息
+    // 清除token
+    public void cleanToken(String token){
+        redisUtils.delete(Constants.REDIS_TOKEN_ADMIN_KEY+token);
+    }
+
+    // 保存分类信息
+    public void saveCategoryList(List<CategoryInfo> categoryInfoList){
+        redisUtils.set(Constants.REDIS_KEY_CATEGORY_LIST,categoryInfoList);
+    }
+
+    // 获取分类信息
+    public List<CategoryInfo> getCategoryList(){
+        return  (List<CategoryInfo>) redisUtils.get(Constants.REDIS_KEY_CATEGORY_LIST);
+    }
 }

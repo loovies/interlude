@@ -10,6 +10,9 @@ public class Constants {
     public static final String REDIS_PREFIX_NAME = "interlude:";
     public static final String REDIS_CHECKCODE_PREFIX = REDIS_PREFIX_NAME + "checkcode:";
 
+    // 分类
+    public static final String REDIS_KEY_CATEGORY_LIST = REDIS_PREFIX_NAME+ "category:list:";
+
     // 数字
     public static final Integer NUMBER_10 = 10;
     public static final Integer NUMBER_15 = 15;

@@ -52,6 +52,7 @@ public class ABaseController {
         response.addCookie(cookie);
     }
 
+    // 读取文件
     protected void readFile(HttpServletResponse response, String path){
         if(!StringTools.pathIsOk(path)){
             return;
@@ -72,9 +73,27 @@ public class ABaseController {
         }
     }
 
+    // 获取当前登录信息
     protected TokenUserInfoDto getTokenUserInfo(){
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
         String token = request.getHeader(REDIS_ADMIN_TOKEN);
         return redisComponent.getAdmin4Token(token);
+    }
+
+    protected void cleanToken2Cookie(HttpServletResponse response){
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        Cookie[] cookies = request.getCookies();
+        if(cookies == null){
+            return;
+        }
+        for (Cookie cookie : cookies) {
+            if (cookie.getName().equals(REDIS_ADMIN_TOKEN)){
+                redisComponent.cleanToken(cookie.getValue());
+                cookie.setMaxAge(0);
+                cookie.setPath("/");
+                response.addCookie(cookie);
+                break;
+            }
+        }
     }
 }

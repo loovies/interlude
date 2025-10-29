@@ -1,10 +1,12 @@
 package com.interlude.service.impl;
 
+import com.interlude.component.RedisComponent;
 import com.interlude.entity.query.SimplePage;
 import com.interlude.enums.PageSize;
 import com.interlude.entity.vo.PaginationResultVO;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import com.interlude.entity.po.CategoryInfo;
 import com.interlude.entity.query.CategoryInfoQuery;
@@ -24,6 +26,10 @@ public class CategoryInfoServiceImpl implements CategoryInfoService{
 
 	@Resource
 	private CategoryInfoMapper<CategoryInfo,CategoryInfoQuery> categoryInfoMapper;
+
+	@Resource
+	private RedisComponent redisComponent;
+
 	/**
 	 * 根据条件查询列表
 	 */
@@ -154,6 +160,7 @@ public class CategoryInfoServiceImpl implements CategoryInfoService{
 		}else{
 			categoryInfoMapper.updateByCategoryId(categoryInfo,categoryInfo.getCategoryId());
 		}
+		save2Redis();
 	}
 
 	@Override
@@ -163,5 +170,45 @@ public class CategoryInfoServiceImpl implements CategoryInfoService{
 		CategoryInfoQuery query = new CategoryInfoQuery();
 		query.setCategoryIdOrPCategoryId(categoryId);
 		categoryInfoMapper.deleteByParam(query);
+		save2Redis();
+	}
+
+	/**
+	 * 交换排序
+	 * @param pCategoryId
+	 * @param categoryIds
+	 */
+	@Override
+	public void changeSort(Integer pCategoryId, String categoryIds) {
+		String[] categoryIdList = categoryIds.split(",");
+		List<CategoryInfo> categoryInfoList = new ArrayList<>();
+		Integer sort = 0;
+		for (String categoryId : categoryIdList) {
+			CategoryInfo categoryInfo = new CategoryInfo();
+			categoryInfo.setCategoryId(Integer.parseInt(categoryId));
+			categoryInfo.setPCategoryId(pCategoryId);
+			categoryInfo.setSort(++sort);
+			categoryInfoList.add(categoryInfo);
+		}
+		categoryInfoMapper.updateBatchSort(categoryInfoList);
+		save2Redis();
+	}
+
+	@Override
+	public List<CategoryInfo> getALlCategoryInfo() {
+		List<CategoryInfo> categoryInfoList = redisComponent.getCategoryList();
+		if (categoryInfoList == null || categoryInfoList.isEmpty()){
+			save2Redis();
+		}
+		return redisComponent.getCategoryList();
+	}
+
+	//刷新缓存
+	public void save2Redis(){
+		CategoryInfoQuery categoryInfoQuery = new CategoryInfoQuery();
+		categoryInfoQuery.setOrderBy("sort asc");
+		categoryInfoQuery.setConvert2Tree(true);
+		List<CategoryInfo> list = this.findListByParam(categoryInfoQuery);
+		redisComponent.saveCategoryList(list);
 	}
 }

@@ -76,4 +76,10 @@ public class AccountController extends ABaseController{
 			redisComponent.delCheckCode(checkCodeKey);
 		}
 	}
+
+	@RequestMapping("/logout")
+	public ResponseVO logout(HttpServletResponse response){
+		this.cleanToken2Cookie(response);
+		return getSuccessResponseVO("退出成功");
+	}
 }

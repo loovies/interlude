@@ -5,11 +5,12 @@ import com.interlude.entity.query.CategoryInfoQuery;
 import com.interlude.entity.vo.ResponseVO;
 import com.interlude.service.CategoryInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;  
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
@@ -23,9 +24,7 @@ public class CategoryController extends ABaseController{
 
     @RequestMapping("loadCategoryInfo")
     public ResponseVO loadCategoryInfo(CategoryInfoQuery query) {
-        query.setOrderBy("sort asc");
-        query.setConvert2Tree(true);
-        List<CategoryInfo> listByParam = categoryInfoService.findListByParam(query);
+        List<CategoryInfo> listByParam = categoryInfoService.getALlCategoryInfo();
         return getSuccessResponseVO(listByParam);
     }
 
@@ -45,8 +44,13 @@ public class CategoryController extends ABaseController{
 
     @RequestMapping("/delCategory")
     public ResponseVO delCategory(@NotNull Integer categoryId){
-
         categoryInfoService.delCategory(categoryId);
+        return getSuccessResponseVO(null);
+    }
+
+    @RequestMapping("/changeSort")
+    public ResponseVO changeSort(@NotNull Integer pCategoryId, @NotEmpty String categoryIds){
+        categoryInfoService.changeSort(pCategoryId,categoryIds);
         return getSuccessResponseVO(null);
     }
 }

@@ -64,7 +64,12 @@
           @click="changeCollapse(!isCollapse)"
         ></span>
         <div class="header-content">
-          <Avatar :width="40" :lazy="false" :avatar="loginStore.userInfo.avatar"></Avatar>
+          <el-popover class="box-item" placement="bottom">
+            <template #reference>
+              <Avatar :width="40" :lazy="false" :avatar="loginStore.userInfo.avatar"></Avatar
+            ></template>
+            <el-button class="logoutbtn" @click="logout()">退出登录</el-button>
+          </el-popover>
         </div>
       </el-header>
       <div class="main-style">
@@ -157,6 +162,12 @@ const menuList: Array<Record<string, any>> = [
 const changeCollapse = (flag: boolean): void => {
   isCollapse.value = flag
 }
+
+const logout = async (): Promise<void> => {
+  await proxy.$Request({ url: proxy.$Api.logout })
+  proxy.$Message.success('退出成功')
+  router.push('/')
+}
 </script>
 
 <style lang="scss" scoped>
@@ -233,7 +244,10 @@ const changeCollapse = (flag: boolean): void => {
         font-size: 28px;
       }
       .header-content {
-        width: 80px;
+        width: 40px;
+        margin-right: 30px;
+        .box-item {
+        }
       }
     }
     .main-style {
@@ -245,7 +259,9 @@ const changeCollapse = (flag: boolean): void => {
     }
   }
 }
-
+.logoutbtn {
+  width: 100%;
+}
 :deep(.el-menu) {
   border: 0;
 }

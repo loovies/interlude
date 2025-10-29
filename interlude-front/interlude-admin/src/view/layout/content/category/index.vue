@@ -16,6 +16,7 @@
         :props="defaultProps"
         default-expand-all
         :filter-node-method="filterNode"
+        @node-click="nodeClick"
       />
     </div>
     <div class="category-list">
@@ -86,14 +87,14 @@
               <a
                 :class="[index == 0 ? 'disable' : 'a-link']"
                 href="javascript:void(0)"
-                @click="changeSort(0, index, 'up')"
+                @click="changeSort(row.pCategoryId, index, 'up')"
                 >上移</a
               >
               <el-divider direction="vertical"></el-divider>
               <a
-                :class="[index == tableData.list.length - 1 ? 'disable' : 'a-link']"
+                :class="[index == currentRowCategory.children.length - 1 ? 'disable' : 'a-link']"
                 href="javascript:void(0)"
-                @click="changeSort(0, index, 'down')"
+                @click="changeSort(row.pCategoryId, index, 'down')"
                 >下移</a
               >
             </div>
@@ -245,6 +246,36 @@ const showEdit = (data: any, type: number) => {
   categoryEditRef.value.showEdit(Object.assign({}, data))
 }
 
+// 改变排序
+const changeSort = async (pCategoryId: number, index: number, type: string): Promise<void> => {
+  // type 0 一级分类 1 二级分类
+  let dataList = pCategoryId == 0 ? tableData.value.list : currentRowCategory.value.children
+  if ((type == 'down' && index == dataList.length - 1) || (type == 'up' && index == 0)) {
+    return
+  }
+
+  let temp = dataList[index]
+  let number = type == 'down' ? 1 : -1
+  dataList.splice(index, 1)
+  dataList.splice(index + number, 0, temp)
+  let categoryIds = []
+  dataList.forEach((item: any) => {
+    categoryIds.push(item.categoryId)
+  })
+  let result = await proxy.$Request({
+    url: proxy.$Api.getChangeSort,
+    params: {
+      pCategoryId,
+      categoryIds: categoryIds.join(','),
+    },
+  })
+  if (!result) {
+    return
+  }
+  proxy.$Message.success('操作成功')
+  loadCategoryInfo()
+}
+
 const delCategory = (data) => {
   proxy.$Confirm({
     message: `确定要删除[${data.categoryName}] 吗?`,
@@ -266,6 +297,20 @@ const delCategory = (data) => {
       loadCategoryInfo()
     },
   })
+}
+
+// 点击树状分类,切换表格内容
+const nodeClick = (data, node) => {
+  if (node.data.pCategoryId == 0) {
+    currentRowCategory.value = node.data
+  } else {
+    tableData.value.list.forEach((item) => {
+      if (item.categoryId == node.data.pCategoryId) {
+        currentRowCategory.value = item
+      }
+    })
+  }
+  loadCategoryInfo()
 }
 </script>
 
