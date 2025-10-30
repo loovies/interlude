@@ -263,14 +263,12 @@ const columns = [
     label: '手机号',
     prop: 'phone',
     scopedSlots: 'phone',
-    width: 150,
     align: 'center',
   },
   {
     label: '邮箱',
     prop: 'email',
     scopedSlots: 'email',
-    width: 250,
     align: 'center',
   },
   {
@@ -278,13 +276,11 @@ const columns = [
     prop: 'enabled',
     scopedSlots: 'enabled',
     align: 'center',
-    width: 100,
   },
   {
     label: '最后登录时间',
     prop: 'updateTime',
     align: 'center',
-    width: 290,
   },
   {
     label: '操作',

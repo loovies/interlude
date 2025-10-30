@@ -124,7 +124,7 @@ const menuList: Array<Record<string, any>> = [
       },
       {
         menuName: '稿件管理',
-        path: '/content/video',
+        path: '/content/audit',
         icon: 'icon-gaojianguanli',
       },
     ],
@@ -147,10 +147,16 @@ const menuList: Array<Record<string, any>> = [
     ],
   },
   {
+    menuName: '视频管理',
+    path: '/video/videoList',
+    icon: 'icon-shipinguanli',
+  },
+  {
     menuName: '用户管理',
     path: '/user/userList',
     icon: 'icon-yonghuguanli',
   },
+
   {
     menuName: '系统设置',
     path: '/setting',

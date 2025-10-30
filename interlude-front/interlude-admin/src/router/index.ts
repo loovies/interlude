@@ -34,6 +34,11 @@ const router = createRouter({
           component: () => import('@/view/layout/user/index.vue'),
         },
         {
+          path: '/video/videoList',
+          name: 'video',
+          component: () => import('@/view/layout/video/index.vue'),
+        },
+        {
           path: '/interact/comment',
           name: 'comment',
           component: () => import('@/view/layout/interact/comment/index.vue'),
@@ -49,9 +54,9 @@ const router = createRouter({
           component: () => import('@/view/layout/content/category/index.vue'),
         },
         {
-          path: '/content/video',
-          name: 'video',
-          component: () => import('@/view/layout/content/video/index.vue'),
+          path: '/content/audit',
+          name: 'audit',
+          component: () => import('@/view/layout/content/audit/index.vue'),
         },
       ],
     },
