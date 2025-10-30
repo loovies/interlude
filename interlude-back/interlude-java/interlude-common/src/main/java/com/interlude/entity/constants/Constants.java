@@ -27,4 +27,7 @@ public class Constants {
     public static final String FILE_VIDEO="video/";
     public static final String FILE_COVER="cover/";
     public static final String FILE_FOLDER_TEMP="temp/";
+
+    // 系统
+    public static final String REDIS_SYS_SETTING_KEY = REDIS_PREFIX_NAME + "setting:";
 }

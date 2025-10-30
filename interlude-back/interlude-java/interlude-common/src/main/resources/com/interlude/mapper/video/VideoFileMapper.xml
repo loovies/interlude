@@ -1,0 +1,665 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.interlude.mapper.video.VideoFileMapper">
+	<!--实体映射-->
+	<resultMap id="base_result_map" type="com.interlude.entity.po.video.VideoFile">
+		<!--文件ID-->
+		<id column="file_id" property="fileId"/>
+		<!--视频ID-->
+		<result column="video_id" property="videoId"/>
+		<!--用户ID-->
+		<result column="user_id" property="userId"/>
+		<!--文件名-->
+		<result column="file_name" property="fileName"/>
+		<!--文件大小-->
+		<result column="file_size" property="fileSize"/>
+		<!--文件路径-->
+		<result column="file_path" property="filePath"/>
+		<!--CDN访问地址-->
+		<result column="file_url" property="fileUrl"/>
+		<!--持续时长-->
+		<result column="duration" property="duration"/>
+		<!--清晰度 1:LD 2:SD 3:HD 4:FHD 5:2K 6:4K-->
+		<result column="quality" property="quality"/>
+		<!---->
+		<result column="format" property="format"/>
+		<!---->
+		<result column="width" property="width"/>
+		<!---->
+		<result column="height" property="height"/>
+		<!--码率(bps)-->
+		<result column="bitrate" property="bitrate"/>
+		<!---->
+		<result column="video_codec" property="videoCodec"/>
+		<!---->
+		<result column="audio_codec" property="audioCodec"/>
+		<!--“1:上传”、“2:已上传”、“3:转码”、“4:准备就绪”、“5:失败”、“6:已删除”-->
+		<result column="file_status" property="fileStatus"/>
+		<!--是否主文件-->
+		<result column="is_primary" property="isPrimary"/>
+		<!--上传会话ID-->
+		<result column="upload_id" property="uploadId"/>
+		<!---->
+		<result column="create_time" property="createTime"/>
+		<!---->
+		<result column="update_time" property="updateTime"/>
+	</resultMap>
+	<!--通用测序结果列-->
+	<sql id="base_column_list">
+		file_id,video_id,user_id,file_name,file_size,file_path,file_url,duration,quality,format,width,height,bitrate,video_codec,audio_codec,file_status,is_primary,upload_id,create_time,update_time
+	</sql>
+
+
+	<!--基础条件查询-->
+	<sql id="base_query_condition">
+		<if test="query.fileId != null">
+			and file_id = #{query.fileId} 
+		</if>
+		<if test="query.videoId != null">
+			and video_id = #{query.videoId} 
+		</if>
+		<if test="query.userId != null">
+			and user_id = #{query.userId} 
+		</if>
+		<if test="query.fileName != null and query.fileName != ''">
+			and file_name = #{query.fileName} 
+		</if>
+		<if test="query.fileSize != null">
+			and file_size = #{query.fileSize} 
+		</if>
+		<if test="query.filePath != null and query.filePath != ''">
+			and file_path = #{query.filePath} 
+		</if>
+		<if test="query.fileUrl != null and query.fileUrl != ''">
+			and file_url = #{query.fileUrl} 
+		</if>
+		<if test="query.duration != null">
+			and duration = #{query.duration} 
+		</if>
+		<if test="query.quality != null">
+			and quality = #{query.quality} 
+		</if>
+		<if test="query.format != null and query.format != ''">
+			and format = #{query.format} 
+		</if>
+		<if test="query.width != null">
+			and width = #{query.width} 
+		</if>
+		<if test="query.height != null">
+			and height = #{query.height} 
+		</if>
+		<if test="query.bitrate != null">
+			and bitrate = #{query.bitrate} 
+		</if>
+		<if test="query.videoCodec != null and query.videoCodec != ''">
+			and video_codec = #{query.videoCodec} 
+		</if>
+		<if test="query.audioCodec != null and query.audioCodec != ''">
+			and audio_codec = #{query.audioCodec} 
+		</if>
+		<if test="query.fileStatus != null">
+			and file_status = #{query.fileStatus} 
+		</if>
+		<if test="query.isPrimary != null">
+			and is_primary = #{query.isPrimary} 
+		</if>
+		<if test="query.uploadId != null and query.uploadId != ''">
+			and upload_id = #{query.uploadId} 
+		</if>
+		<if test="query.createTime != null">
+			and create_time = #{query.createTime} 
+		</if>
+		<if test="query.updateTime != null">
+			and update_time = #{query.updateTime} 
+		</if>
+	</sql>
+
+	<!--扩展的条件查询-->
+	<sql id="base_query_condition_extend">
+		<if test="query.fileNameFuzzy != null and query.fileNameFuzzy != ''">
+			and file_name like concat('%', #{query.fileNameFuzzy}, '%')
+		</if>
+		<if test="query.filePathFuzzy != null and query.filePathFuzzy != ''">
+			and file_path like concat('%', #{query.filePathFuzzy}, '%')
+		</if>
+		<if test="query.fileUrlFuzzy != null and query.fileUrlFuzzy != ''">
+			and file_url like concat('%', #{query.fileUrlFuzzy}, '%')
+		</if>
+		<if test="query.formatFuzzy != null and query.formatFuzzy != ''">
+			and format like concat('%', #{query.formatFuzzy}, '%')
+		</if>
+		<if test="query.videoCodecFuzzy != null and query.videoCodecFuzzy != ''">
+			and video_codec like concat('%', #{query.videoCodecFuzzy}, '%')
+		</if>
+		<if test="query.audioCodecFuzzy != null and query.audioCodecFuzzy != ''">
+			and audio_codec like concat('%', #{query.audioCodecFuzzy}, '%')
+		</if>
+		<if test="query.uploadIdFuzzy != null and query.uploadIdFuzzy != ''">
+			and upload_id like concat('%', #{query.uploadIdFuzzy}, '%')
+		</if>
+		<if test="query.createTimeStart != null and query.createTimeStart != ''">
+			<![CDATA[ and create_time >= str_to_date(#{query.createTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.createTimeEnd != null and query.createTimeEnd != ''">
+			<![CDATA[ and create_time < date_sub(str_to_date(#{query.createTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+		<if test="query.updateTimeStart != null and query.updateTimeStart != ''">
+			<![CDATA[ and update_time >= str_to_date(#{query.updateTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.updateTimeEnd != null and query.updateTimeEnd != ''">
+			<![CDATA[ and update_time < date_sub(str_to_date(#{query.updateTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+	</sql>
+
+	<!--扩展的查询条件-->
+	<sql id="query_condition">
+		<where>
+			<include refid="base_query_condition"/>
+			<include refid="base_query_condition_extend"/>
+		</where>
+	</sql>
+
+	<!--查询列表-->
+	<select id="selectList" resultMap="base_result_map">
+		SELECT <include refid="base_column_list"/> FROM video_file <include refid="query_condition"/>
+		<if test="query.orderBy != null"> order by ${query.orderBy} </if>
+		<if test="query.simplePage != null"> limit #{query.simplePage.start},#{query.simplePage.end}</if>
+	</select>
+
+	<!--查询数量-->
+	<select id="selectCount" resultType="java.lang.Integer">
+		SELECT count(1) FROM video_file <include refid="query_condition"/>
+	</select>
+
+	<!--插入(匹配有值的字段)-->
+	<insert id="insert" parameterType="com.interlude.entity.po.video.VideoFile">
+		INSERT INTO video_file
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.fileId != null">
+				file_id,
+			</if>
+			<if test="bean.videoId != null">
+				video_id,
+			</if>
+			<if test="bean.userId != null">
+				user_id,
+			</if>
+			<if test="bean.fileName != null">
+				file_name,
+			</if>
+			<if test="bean.fileSize != null">
+				file_size,
+			</if>
+			<if test="bean.filePath != null">
+				file_path,
+			</if>
+			<if test="bean.fileUrl != null">
+				file_url,
+			</if>
+			<if test="bean.duration != null">
+				duration,
+			</if>
+			<if test="bean.quality != null">
+				quality,
+			</if>
+			<if test="bean.format != null">
+				format,
+			</if>
+			<if test="bean.width != null">
+				width,
+			</if>
+			<if test="bean.height != null">
+				height,
+			</if>
+			<if test="bean.bitrate != null">
+				bitrate,
+			</if>
+			<if test="bean.videoCodec != null">
+				video_codec,
+			</if>
+			<if test="bean.audioCodec != null">
+				audio_codec,
+			</if>
+			<if test="bean.fileStatus != null">
+				file_status,
+			</if>
+			<if test="bean.isPrimary != null">
+				is_primary,
+			</if>
+			<if test="bean.uploadId != null">
+				upload_id,
+			</if>
+			<if test="bean.createTime != null">
+				create_time,
+			</if>
+			<if test="bean.updateTime != null">
+				update_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.fileId != null">
+				#{bean.fileId},
+			</if>
+			<if test="bean.videoId != null">
+				#{bean.videoId},
+			</if>
+			<if test="bean.userId != null">
+				#{bean.userId},
+			</if>
+			<if test="bean.fileName != null">
+				#{bean.fileName},
+			</if>
+			<if test="bean.fileSize != null">
+				#{bean.fileSize},
+			</if>
+			<if test="bean.filePath != null">
+				#{bean.filePath},
+			</if>
+			<if test="bean.fileUrl != null">
+				#{bean.fileUrl},
+			</if>
+			<if test="bean.duration != null">
+				#{bean.duration},
+			</if>
+			<if test="bean.quality != null">
+				#{bean.quality},
+			</if>
+			<if test="bean.format != null">
+				#{bean.format},
+			</if>
+			<if test="bean.width != null">
+				#{bean.width},
+			</if>
+			<if test="bean.height != null">
+				#{bean.height},
+			</if>
+			<if test="bean.bitrate != null">
+				#{bean.bitrate},
+			</if>
+			<if test="bean.videoCodec != null">
+				#{bean.videoCodec},
+			</if>
+			<if test="bean.audioCodec != null">
+				#{bean.audioCodec},
+			</if>
+			<if test="bean.fileStatus != null">
+				#{bean.fileStatus},
+			</if>
+			<if test="bean.isPrimary != null">
+				#{bean.isPrimary},
+			</if>
+			<if test="bean.uploadId != null">
+				#{bean.uploadId},
+			</if>
+			<if test="bean.createTime != null">
+				#{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null">
+				#{bean.updateTime},
+			</if>
+		</trim>
+	</insert>
+
+	<!-- 插入或者更新 (匹配有值的字段) -->
+	<insert id="insertOrUpdate" parameterType="com.interlude.entity.po.video.VideoFile">
+		INSERT INTO video_file
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.fileId != null">
+				file_id,
+			</if>
+			<if test="bean.videoId != null">
+				video_id,
+			</if>
+			<if test="bean.userId != null">
+				user_id,
+			</if>
+			<if test="bean.fileName != null">
+				file_name,
+			</if>
+			<if test="bean.fileSize != null">
+				file_size,
+			</if>
+			<if test="bean.filePath != null">
+				file_path,
+			</if>
+			<if test="bean.fileUrl != null">
+				file_url,
+			</if>
+			<if test="bean.duration != null">
+				duration,
+			</if>
+			<if test="bean.quality != null">
+				quality,
+			</if>
+			<if test="bean.format != null">
+				format,
+			</if>
+			<if test="bean.width != null">
+				width,
+			</if>
+			<if test="bean.height != null">
+				height,
+			</if>
+			<if test="bean.bitrate != null">
+				bitrate,
+			</if>
+			<if test="bean.videoCodec != null">
+				video_codec,
+			</if>
+			<if test="bean.audioCodec != null">
+				audio_codec,
+			</if>
+			<if test="bean.fileStatus != null">
+				file_status,
+			</if>
+			<if test="bean.isPrimary != null">
+				is_primary,
+			</if>
+			<if test="bean.uploadId != null">
+				upload_id,
+			</if>
+			<if test="bean.createTime != null">
+				create_time,
+			</if>
+			<if test="bean.updateTime != null">
+				update_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.fileId != null">
+				#{bean.fileId},
+			</if>
+			<if test="bean.videoId != null">
+				#{bean.videoId},
+			</if>
+			<if test="bean.userId != null">
+				#{bean.userId},
+			</if>
+			<if test="bean.fileName != null">
+				#{bean.fileName},
+			</if>
+			<if test="bean.fileSize != null">
+				#{bean.fileSize},
+			</if>
+			<if test="bean.filePath != null">
+				#{bean.filePath},
+			</if>
+			<if test="bean.fileUrl != null">
+				#{bean.fileUrl},
+			</if>
+			<if test="bean.duration != null">
+				#{bean.duration},
+			</if>
+			<if test="bean.quality != null">
+				#{bean.quality},
+			</if>
+			<if test="bean.format != null">
+				#{bean.format},
+			</if>
+			<if test="bean.width != null">
+				#{bean.width},
+			</if>
+			<if test="bean.height != null">
+				#{bean.height},
+			</if>
+			<if test="bean.bitrate != null">
+				#{bean.bitrate},
+			</if>
+			<if test="bean.videoCodec != null">
+				#{bean.videoCodec},
+			</if>
+			<if test="bean.audioCodec != null">
+				#{bean.audioCodec},
+			</if>
+			<if test="bean.fileStatus != null">
+				#{bean.fileStatus},
+			</if>
+			<if test="bean.isPrimary != null">
+				#{bean.isPrimary},
+			</if>
+			<if test="bean.uploadId != null">
+				#{bean.uploadId},
+			</if>
+			<if test="bean.createTime != null">
+				#{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null">
+				#{bean.updateTime},
+			</if>
+		</trim>
+		on DUPLICATE key update
+		<trim  prefix="" suffix="" suffixOverrides=",">
+
+			<if test="bean.videoId!=null">
+				video_id = VALUES(video_id),
+			</if>
+			<if test="bean.fileName!=null">
+				file_name = VALUES(file_name),
+			</if>
+			<if test="bean.fileSize!=null">
+				file_size = VALUES(file_size),
+			</if>
+			<if test="bean.filePath!=null">
+				file_path = VALUES(file_path),
+			</if>
+			<if test="bean.fileUrl!=null">
+				file_url = VALUES(file_url),
+			</if>
+			<if test="bean.duration!=null">
+				duration = VALUES(duration),
+			</if>
+			<if test="bean.quality!=null">
+				quality = VALUES(quality),
+			</if>
+			<if test="bean.format!=null">
+				format = VALUES(format),
+			</if>
+			<if test="bean.width!=null">
+				width = VALUES(width),
+			</if>
+			<if test="bean.height!=null">
+				height = VALUES(height),
+			</if>
+			<if test="bean.bitrate!=null">
+				bitrate = VALUES(bitrate),
+			</if>
+			<if test="bean.videoCodec!=null">
+				video_codec = VALUES(video_codec),
+			</if>
+			<if test="bean.audioCodec!=null">
+				audio_codec = VALUES(audio_codec),
+			</if>
+			<if test="bean.fileStatus!=null">
+				file_status = VALUES(file_status),
+			</if>
+			<if test="bean.isPrimary!=null">
+				is_primary = VALUES(is_primary),
+			</if>
+			<if test="bean.createTime!=null">
+				create_time = VALUES(create_time),
+			</if>
+			<if test="bean.updateTime!=null">
+				update_time = VALUES(update_time),
+			</if>
+		</trim>
+	</insert>
+
+	<!--添加 (批量插入)-->
+	<insert id="insertBatch" parameterType="com.interlude.entity.po.video.VideoFile" >
+		INSERT INTO video_file(file_id,video_id,user_id,file_name,file_size,file_path,file_url,duration,quality,format,width,height,bitrate,video_codec,audio_codec,file_status,is_primary,upload_id,create_time,update_time)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.fileId},#{item.videoId},#{item.userId},#{item.fileName},#{item.fileSize},#{item.filePath},#{item.fileUrl},#{item.duration},#{item.quality},#{item.format},#{item.width},#{item.height},#{item.bitrate},#{item.videoCodec},#{item.audioCodec},#{item.fileStatus},#{item.isPrimary},#{item.uploadId},#{item.createTime},#{item.updateTime})
+		</foreach>
+	</insert>
+
+	<!--批量插入或者更新-->
+	<insert id="insertOrUpdateBatch" parameterType="com.interlude.entity.po.video.VideoFile" >
+		INSERT INTO video_file(file_id,video_id,user_id,file_name,file_size,file_path,file_url,duration,quality,format,width,height,bitrate,video_codec,audio_codec,file_status,is_primary,upload_id,create_time,update_time)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.fileId},#{item.videoId},#{item.userId},#{item.fileName},#{item.fileSize},#{item.filePath},#{item.fileUrl},#{item.duration},#{item.quality},#{item.format},#{item.width},#{item.height},#{item.bitrate},#{item.videoCodec},#{item.audioCodec},#{item.fileStatus},#{item.isPrimary},#{item.uploadId},#{item.createTime},#{item.updateTime})
+		</foreach>
+		on DUPLICATE key update
+		file_id = VALUES(file_id),video_id = VALUES(video_id),user_id = VALUES(user_id),file_name = VALUES(file_name),file_size = VALUES(file_size),file_path = VALUES(file_path),file_url = VALUES(file_url),duration = VALUES(duration),quality = VALUES(quality),format = VALUES(format),width = VALUES(width),height = VALUES(height),bitrate = VALUES(bitrate),video_codec = VALUES(video_codec),audio_codec = VALUES(audio_codec),file_status = VALUES(file_status),is_primary = VALUES(is_primary),upload_id = VALUES(upload_id),create_time = VALUES(create_time),update_time = VALUES(update_time)
+	</insert>
+
+	<!-- 根据FileId查询 -->
+	<select id="selectByFileId" resultMap="base_result_map">
+		select <include refid="base_column_list"/> from video_file where file_id=#{fileId}
+	</select>
+
+	<!-- 根据FileId更新 -->
+	<update id="updateByFileId" parameterType="com.interlude.entity.po.video.VideoFile">
+		update video_file
+		<set>
+			<if test="bean.fileId != null" >
+				file_id = #{bean.fileId},
+			</if>
+			<if test="bean.videoId != null" >
+				video_id = #{bean.videoId},
+			</if>
+			<if test="bean.userId != null" >
+				user_id = #{bean.userId},
+			</if>
+			<if test="bean.fileName != null" >
+				file_name = #{bean.fileName},
+			</if>
+			<if test="bean.fileSize != null" >
+				file_size = #{bean.fileSize},
+			</if>
+			<if test="bean.filePath != null" >
+				file_path = #{bean.filePath},
+			</if>
+			<if test="bean.fileUrl != null" >
+				file_url = #{bean.fileUrl},
+			</if>
+			<if test="bean.duration != null" >
+				duration = #{bean.duration},
+			</if>
+			<if test="bean.quality != null" >
+				quality = #{bean.quality},
+			</if>
+			<if test="bean.format != null" >
+				format = #{bean.format},
+			</if>
+			<if test="bean.width != null" >
+				width = #{bean.width},
+			</if>
+			<if test="bean.height != null" >
+				height = #{bean.height},
+			</if>
+			<if test="bean.bitrate != null" >
+				bitrate = #{bean.bitrate},
+			</if>
+			<if test="bean.videoCodec != null" >
+				video_codec = #{bean.videoCodec},
+			</if>
+			<if test="bean.audioCodec != null" >
+				audio_codec = #{bean.audioCodec},
+			</if>
+			<if test="bean.fileStatus != null" >
+				file_status = #{bean.fileStatus},
+			</if>
+			<if test="bean.isPrimary != null" >
+				is_primary = #{bean.isPrimary},
+			</if>
+			<if test="bean.uploadId != null" >
+				upload_id = #{bean.uploadId},
+			</if>
+			<if test="bean.createTime != null" >
+				create_time = #{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null" >
+				update_time = #{bean.updateTime},
+			</if>
+
+		</set>
+		where file_id=#{fileId}
+	</update>
+
+	<!-- 根据FileId删除 -->
+	<delete id="deleteByFileId">
+		delete from video_file where file_id=#{fileId}
+	</delete>
+
+
+	<!-- 根据UploadIdAndUserId查询 -->
+	<select id="selectByUploadIdAndUserId" resultMap="base_result_map">
+		select <include refid="base_column_list"/> from video_file where upload_id=#{uploadId} and user_id=#{userId}
+	</select>
+
+	<!-- 根据UploadIdAndUserId更新 -->
+	<update id="updateByUploadIdAndUserId" parameterType="com.interlude.entity.po.video.VideoFile">
+		update video_file
+		<set>
+			<if test="bean.fileId != null" >
+				file_id = #{bean.fileId},
+			</if>
+			<if test="bean.videoId != null" >
+				video_id = #{bean.videoId},
+			</if>
+			<if test="bean.userId != null" >
+				user_id = #{bean.userId},
+			</if>
+			<if test="bean.fileName != null" >
+				file_name = #{bean.fileName},
+			</if>
+			<if test="bean.fileSize != null" >
+				file_size = #{bean.fileSize},
+			</if>
+			<if test="bean.filePath != null" >
+				file_path = #{bean.filePath},
+			</if>
+			<if test="bean.fileUrl != null" >
+				file_url = #{bean.fileUrl},
+			</if>
+			<if test="bean.duration != null" >
+				duration = #{bean.duration},
+			</if>
+			<if test="bean.quality != null" >
+				quality = #{bean.quality},
+			</if>
+			<if test="bean.format != null" >
+				format = #{bean.format},
+			</if>
+			<if test="bean.width != null" >
+				width = #{bean.width},
+			</if>
+			<if test="bean.height != null" >
+				height = #{bean.height},
+			</if>
+			<if test="bean.bitrate != null" >
+				bitrate = #{bean.bitrate},
+			</if>
+			<if test="bean.videoCodec != null" >
+				video_codec = #{bean.videoCodec},
+			</if>
+			<if test="bean.audioCodec != null" >
+				audio_codec = #{bean.audioCodec},
+			</if>
+			<if test="bean.fileStatus != null" >
+				file_status = #{bean.fileStatus},
+			</if>
+			<if test="bean.isPrimary != null" >
+				is_primary = #{bean.isPrimary},
+			</if>
+			<if test="bean.uploadId != null" >
+				upload_id = #{bean.uploadId},
+			</if>
+			<if test="bean.createTime != null" >
+				create_time = #{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null" >
+				update_time = #{bean.updateTime},
+			</if>
+
+		</set>
+		where upload_id=#{uploadId} and user_id=#{userId}
+	</update>
+
+	<!-- 根据UploadIdAndUserId删除 -->
+	<delete id="deleteByUploadIdAndUserId">
+		delete from video_file where upload_id=#{uploadId} and user_id=#{userId}
+	</delete>
+
+</mapper>

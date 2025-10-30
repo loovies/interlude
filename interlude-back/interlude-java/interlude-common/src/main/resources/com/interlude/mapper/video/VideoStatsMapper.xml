@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.interlude.mapper.video.VideoStatsMapper">
+	<!--实体映射-->
+	<resultMap id="base_result_map" type="com.interlude.entity.po.video.VideoStats">
+		<!--视频ID-->
+		<id column="video_id" property="videoId"/>
+		<!--播放次数-->
+		<result column="play_count" property="playCount"/>
+		<!--喜欢数量-->
+		<result column="like_count" property="likeCount"/>
+		<!--弹幕数量-->
+		<result column="danmu_count" property="danmuCount"/>
+		<!--评论数量-->
+		<result column="comment_count" property="commentCount"/>
+		<!--收藏数量-->
+		<result column="collect_count" property="collectCount"/>
+		<!--分享数量-->
+		<result column="share_count" property="shareCount"/>
+		<!--不感兴趣数量-->
+		<result column="unconcern_count" property="unconcernCount"/>
+		<!--上次播放时间-->
+		<result column="last_play_time" property="lastPlayTime"/>
+		<!--热度分数-->
+		<result column="hot_score" property="hotScore"/>
+		<!---->
+		<result column="update_time" property="updateTime"/>
+	</resultMap>
+	<!--通用测序结果列-->
+	<sql id="base_column_list">
+		video_id,play_count,like_count,danmu_count,comment_count,collect_count,share_count,unconcern_count,last_play_time,hot_score,update_time
+	</sql>
+
+
+	<!--基础条件查询-->
+	<sql id="base_query_condition">
+		<if test="query.videoId != null">
+			and video_id = #{query.videoId} 
+		</if>
+		<if test="query.playCount != null">
+			and play_count = #{query.playCount} 
+		</if>
+		<if test="query.likeCount != null">
+			and like_count = #{query.likeCount} 
+		</if>
+		<if test="query.danmuCount != null">
+			and danmu_count = #{query.danmuCount} 
+		</if>
+		<if test="query.commentCount != null">
+			and comment_count = #{query.commentCount} 
+		</if>
+		<if test="query.collectCount != null">
+			and collect_count = #{query.collectCount} 
+		</if>
+		<if test="query.shareCount != null">
+			and share_count = #{query.shareCount} 
+		</if>
+		<if test="query.unconcernCount != null">
+			and unconcern_count = #{query.unconcernCount} 
+		</if>
+		<if test="query.lastPlayTime != null">
+			and last_play_time = #{query.lastPlayTime} 
+		</if>
+		<if test="query.hotScore != null">
+			and hot_score = #{query.hotScore} 
+		</if>
+		<if test="query.updateTime != null">
+			and update_time = #{query.updateTime} 
+		</if>
+	</sql>
+
+	<!--扩展的条件查询-->
+	<sql id="base_query_condition_extend">
+		<if test="query.lastPlayTimeStart != null and query.lastPlayTimeStart != ''">
+			<![CDATA[ and last_play_time >= str_to_date(#{query.lastPlayTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.lastPlayTimeEnd != null and query.lastPlayTimeEnd != ''">
+			<![CDATA[ and last_play_time < date_sub(str_to_date(#{query.lastPlayTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+		<if test="query.updateTimeStart != null and query.updateTimeStart != ''">
+			<![CDATA[ and update_time >= str_to_date(#{query.updateTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.updateTimeEnd != null and query.updateTimeEnd != ''">
+			<![CDATA[ and update_time < date_sub(str_to_date(#{query.updateTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+	</sql>
+
+	<!--扩展的查询条件-->
+	<sql id="query_condition">
+		<where>
+			<include refid="base_query_condition"/>
+			<include refid="base_query_condition_extend"/>
+		</where>
+	</sql>
+
+	<!--查询列表-->
+	<select id="selectList" resultMap="base_result_map">
+		SELECT <include refid="base_column_list"/> FROM video_stats <include refid="query_condition"/>
+		<if test="query.orderBy != null"> order by ${query.orderBy} </if>
+		<if test="query.simplePage != null"> limit #{query.simplePage.start},#{query.simplePage.end}</if>
+	</select>
+
+	<!--查询数量-->
+	<select id="selectCount" resultType="java.lang.Integer">
+		SELECT count(1) FROM video_stats <include refid="query_condition"/>
+	</select>
+
+	<!--插入(匹配有值的字段)-->
+	<insert id="insert" parameterType="com.interlude.entity.po.video.VideoStats">
+		INSERT INTO video_stats
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.videoId != null">
+				video_id,
+			</if>
+			<if test="bean.playCount != null">
+				play_count,
+			</if>
+			<if test="bean.likeCount != null">
+				like_count,
+			</if>
+			<if test="bean.danmuCount != null">
+				danmu_count,
+			</if>
+			<if test="bean.commentCount != null">
+				comment_count,
+			</if>
+			<if test="bean.collectCount != null">
+				collect_count,
+			</if>
+			<if test="bean.shareCount != null">
+				share_count,
+			</if>
+			<if test="bean.unconcernCount != null">
+				unconcern_count,
+			</if>
+			<if test="bean.lastPlayTime != null">
+				last_play_time,
+			</if>
+			<if test="bean.hotScore != null">
+				hot_score,
+			</if>
+			<if test="bean.updateTime != null">
+				update_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.videoId != null">
+				#{bean.videoId},
+			</if>
+			<if test="bean.playCount != null">
+				#{bean.playCount},
+			</if>
+			<if test="bean.likeCount != null">
+				#{bean.likeCount},
+			</if>
+			<if test="bean.danmuCount != null">
+				#{bean.danmuCount},
+			</if>
+			<if test="bean.commentCount != null">
+				#{bean.commentCount},
+			</if>
+			<if test="bean.collectCount != null">
+				#{bean.collectCount},
+			</if>
+			<if test="bean.shareCount != null">
+				#{bean.shareCount},
+			</if>
+			<if test="bean.unconcernCount != null">
+				#{bean.unconcernCount},
+			</if>
+			<if test="bean.lastPlayTime != null">
+				#{bean.lastPlayTime},
+			</if>
+			<if test="bean.hotScore != null">
+				#{bean.hotScore},
+			</if>
+			<if test="bean.updateTime != null">
+				#{bean.updateTime},
+			</if>
+		</trim>
+	</insert>
+
+	<!-- 插入或者更新 (匹配有值的字段) -->
+	<insert id="insertOrUpdate" parameterType="com.interlude.entity.po.video.VideoStats">
+		INSERT INTO video_stats
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.videoId != null">
+				video_id,
+			</if>
+			<if test="bean.playCount != null">
+				play_count,
+			</if>
+			<if test="bean.likeCount != null">
+				like_count,
+			</if>
+			<if test="bean.danmuCount != null">
+				danmu_count,
+			</if>
+			<if test="bean.commentCount != null">
+				comment_count,
+			</if>
+			<if test="bean.collectCount != null">
+				collect_count,
+			</if>
+			<if test="bean.shareCount != null">
+				share_count,
+			</if>
+			<if test="bean.unconcernCount != null">
+				unconcern_count,
+			</if>
+			<if test="bean.lastPlayTime != null">
+				last_play_time,
+			</if>
+			<if test="bean.hotScore != null">
+				hot_score,
+			</if>
+			<if test="bean.updateTime != null">
+				update_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.videoId != null">
+				#{bean.videoId},
+			</if>
+			<if test="bean.playCount != null">
+				#{bean.playCount},
+			</if>
+			<if test="bean.likeCount != null">
+				#{bean.likeCount},
+			</if>
+			<if test="bean.danmuCount != null">
+				#{bean.danmuCount},
+			</if>
+			<if test="bean.commentCount != null">
+				#{bean.commentCount},
+			</if>
+			<if test="bean.collectCount != null">
+				#{bean.collectCount},
+			</if>
+			<if test="bean.shareCount != null">
+				#{bean.shareCount},
+			</if>
+			<if test="bean.unconcernCount != null">
+				#{bean.unconcernCount},
+			</if>
+			<if test="bean.lastPlayTime != null">
+				#{bean.lastPlayTime},
+			</if>
+			<if test="bean.hotScore != null">
+				#{bean.hotScore},
+			</if>
+			<if test="bean.updateTime != null">
+				#{bean.updateTime},
+			</if>
+		</trim>
+		on DUPLICATE key update
+		<trim  prefix="" suffix="" suffixOverrides=",">
+
+			<if test="bean.playCount!=null">
+				play_count = VALUES(play_count),
+			</if>
+			<if test="bean.likeCount!=null">
+				like_count = VALUES(like_count),
+			</if>
+			<if test="bean.danmuCount!=null">
+				danmu_count = VALUES(danmu_count),
+			</if>
+			<if test="bean.commentCount!=null">
+				comment_count = VALUES(comment_count),
+			</if>
+			<if test="bean.collectCount!=null">
+				collect_count = VALUES(collect_count),
+			</if>
+			<if test="bean.shareCount!=null">
+				share_count = VALUES(share_count),
+			</if>
+			<if test="bean.unconcernCount!=null">
+				unconcern_count = VALUES(unconcern_count),
+			</if>
+			<if test="bean.lastPlayTime!=null">
+				last_play_time = VALUES(last_play_time),
+			</if>
+			<if test="bean.hotScore!=null">
+				hot_score = VALUES(hot_score),
+			</if>
+			<if test="bean.updateTime!=null">
+				update_time = VALUES(update_time),
+			</if>
+		</trim>
+	</insert>
+
+	<!--添加 (批量插入)-->
+	<insert id="insertBatch" parameterType="com.interlude.entity.po.video.VideoStats" >
+		INSERT INTO video_stats(video_id,play_count,like_count,danmu_count,comment_count,collect_count,share_count,unconcern_count,last_play_time,hot_score,update_time)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.videoId},#{item.playCount},#{item.likeCount},#{item.danmuCount},#{item.commentCount},#{item.collectCount},#{item.shareCount},#{item.unconcernCount},#{item.lastPlayTime},#{item.hotScore},#{item.updateTime})
+		</foreach>
+	</insert>
+
+	<!--批量插入或者更新-->
+	<insert id="insertOrUpdateBatch" parameterType="com.interlude.entity.po.video.VideoStats" >
+		INSERT INTO video_stats(video_id,play_count,like_count,danmu_count,comment_count,collect_count,share_count,unconcern_count,last_play_time,hot_score,update_time)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.videoId},#{item.playCount},#{item.likeCount},#{item.danmuCount},#{item.commentCount},#{item.collectCount},#{item.shareCount},#{item.unconcernCount},#{item.lastPlayTime},#{item.hotScore},#{item.updateTime})
+		</foreach>
+		on DUPLICATE key update
+		video_id = VALUES(video_id),play_count = VALUES(play_count),like_count = VALUES(like_count),danmu_count = VALUES(danmu_count),comment_count = VALUES(comment_count),collect_count = VALUES(collect_count),share_count = VALUES(share_count),unconcern_count = VALUES(unconcern_count),last_play_time = VALUES(last_play_time),hot_score = VALUES(hot_score),update_time = VALUES(update_time)
+	</insert>
+
+	<!-- 根据VideoId查询 -->
+	<select id="selectByVideoId" resultMap="base_result_map">
+		select <include refid="base_column_list"/> from video_stats where video_id=#{videoId}
+	</select>
+
+	<!-- 根据VideoId更新 -->
+	<update id="updateByVideoId" parameterType="com.interlude.entity.po.video.VideoStats">
+		update video_stats
+		<set>
+			<if test="bean.videoId != null" >
+				video_id = #{bean.videoId},
+			</if>
+			<if test="bean.playCount != null" >
+				play_count = #{bean.playCount},
+			</if>
+			<if test="bean.likeCount != null" >
+				like_count = #{bean.likeCount},
+			</if>
+			<if test="bean.danmuCount != null" >
+				danmu_count = #{bean.danmuCount},
+			</if>
+			<if test="bean.commentCount != null" >
+				comment_count = #{bean.commentCount},
+			</if>
+			<if test="bean.collectCount != null" >
+				collect_count = #{bean.collectCount},
+			</if>
+			<if test="bean.shareCount != null" >
+				share_count = #{bean.shareCount},
+			</if>
+			<if test="bean.unconcernCount != null" >
+				unconcern_count = #{bean.unconcernCount},
+			</if>
+			<if test="bean.lastPlayTime != null" >
+				last_play_time = #{bean.lastPlayTime},
+			</if>
+			<if test="bean.hotScore != null" >
+				hot_score = #{bean.hotScore},
+			</if>
+			<if test="bean.updateTime != null" >
+				update_time = #{bean.updateTime},
+			</if>
+
+		</set>
+		where video_id=#{videoId}
+	</update>
+
+	<!-- 根据VideoId删除 -->
+	<delete id="deleteByVideoId">
+		delete from video_stats where video_id=#{videoId}
+	</delete>
+
+</mapper>

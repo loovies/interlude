@@ -1,0 +1,671 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.interlude.mapper.video.VideoInfoMapper">
+	<!--实体映射-->
+	<resultMap id="base_result_map" type="com.interlude.entity.po.video.VideoInfo">
+		<!--视频ID-->
+		<id column="video_id" property="videoId"/>
+		<!--用户ID-->
+		<result column="user_id" property="userId"/>
+		<!--视频标题-->
+		<result column="video_name" property="videoName"/>
+		<!--封面图URL-->
+		<result column="video_cover" property="videoCover"/>
+		<!--视频描述-->
+		<result column="description" property="description"/>
+		<!--一级分类-->
+		<result column="p_category_id" property="pCategoryId"/>
+		<!--二级分类-->
+		<result column="category_id" property="categoryId"/>
+		<!--视频类型 1:原视频, 2转载视频-->
+		<result column="video_type" property="videoType"/>
+		<!--原作者(转载时使用)-->
+		<result column="origin_author" property="originAuthor"/>
+		<!--原视频链接-->
+		<result column="origin_url" property="originUrl"/>
+		<!--标签列表JSON-->
+		<result column="tags" property="tags"/>
+		<!--时长(秒)-->
+		<result column="duration" property="duration"/>
+		<!--视频宽度-->
+		<result column="width" property="width"/>
+		<!--视频高度-->
+		<result column="height" property="height"/>
+		<!--码率-->
+		<result column="bitrate" property="bitrate"/>
+		<!--视频格式-->
+		<result column="format" property="format"/>
+		<!--互动设置JSON-->
+		<result column="interaction_settings" property="interactionSettings"/>
+		<!--状态 1:已发布  2:已离线  3:已删除-->
+		<result column="status" property="status"/>
+		<!--可见性 1:公共、2: 私人、3:仅限好友-->
+		<result column="visibility" property="visibility"/>
+		<!--发布时间-->
+		<result column="publish_time" property="publishTime"/>
+		<!---->
+		<result column="create_time" property="createTime"/>
+		<!---->
+		<result column="update_time" property="updateTime"/>
+		<!---->
+		<result column="version" property="version"/>
+	</resultMap>
+	<!--通用测序结果列-->
+	<sql id="base_column_list">
+		video_id,user_id,video_name,video_cover,description,p_category_id,category_id,video_type,origin_author,origin_url,tags,duration,width,height,bitrate,format,interaction_settings,status,visibility,publish_time,create_time,update_time,version
+	</sql>
+
+
+	<!--基础条件查询-->
+	<sql id="base_query_condition">
+		<if test="query.videoId != null">
+			and video_id = #{query.videoId} 
+		</if>
+		<if test="query.userId != null">
+			and user_id = #{query.userId} 
+		</if>
+		<if test="query.videoName != null and query.videoName != ''">
+			and video_name = #{query.videoName} 
+		</if>
+		<if test="query.videoCover != null and query.videoCover != ''">
+			and video_cover = #{query.videoCover} 
+		</if>
+		<if test="query.description != null and query.description != ''">
+			and description = #{query.description} 
+		</if>
+		<if test="query.pCategoryId != null">
+			and p_category_id = #{query.pCategoryId} 
+		</if>
+		<if test="query.categoryId != null">
+			and category_id = #{query.categoryId} 
+		</if>
+		<if test="query.videoType != null">
+			and video_type = #{query.videoType} 
+		</if>
+		<if test="query.originAuthor != null and query.originAuthor != ''">
+			and origin_author = #{query.originAuthor} 
+		</if>
+		<if test="query.originUrl != null and query.originUrl != ''">
+			and origin_url = #{query.originUrl} 
+		</if>
+		<if test="query.tags != null and query.tags != ''">
+			and tags = #{query.tags} 
+		</if>
+		<if test="query.duration != null">
+			and duration = #{query.duration} 
+		</if>
+		<if test="query.width != null">
+			and width = #{query.width} 
+		</if>
+		<if test="query.height != null">
+			and height = #{query.height} 
+		</if>
+		<if test="query.bitrate != null">
+			and bitrate = #{query.bitrate} 
+		</if>
+		<if test="query.format != null and query.format != ''">
+			and format = #{query.format} 
+		</if>
+		<if test="query.interactionSettings != null and query.interactionSettings != ''">
+			and interaction_settings = #{query.interactionSettings} 
+		</if>
+		<if test="query.status != null">
+			and status = #{query.status} 
+		</if>
+		<if test="query.visibility != null">
+			and visibility = #{query.visibility} 
+		</if>
+		<if test="query.publishTime != null">
+			and publish_time = #{query.publishTime} 
+		</if>
+		<if test="query.createTime != null">
+			and create_time = #{query.createTime} 
+		</if>
+		<if test="query.updateTime != null">
+			and update_time = #{query.updateTime} 
+		</if>
+		<if test="query.version != null">
+			and version = #{query.version} 
+		</if>
+	</sql>
+
+	<!--扩展的条件查询-->
+	<sql id="base_query_condition_extend">
+		<if test="query.videoNameFuzzy != null and query.videoNameFuzzy != ''">
+			and video_name like concat('%', #{query.videoNameFuzzy}, '%')
+		</if>
+		<if test="query.videoCoverFuzzy != null and query.videoCoverFuzzy != ''">
+			and video_cover like concat('%', #{query.videoCoverFuzzy}, '%')
+		</if>
+		<if test="query.descriptionFuzzy != null and query.descriptionFuzzy != ''">
+			and description like concat('%', #{query.descriptionFuzzy}, '%')
+		</if>
+		<if test="query.originAuthorFuzzy != null and query.originAuthorFuzzy != ''">
+			and origin_author like concat('%', #{query.originAuthorFuzzy}, '%')
+		</if>
+		<if test="query.originUrlFuzzy != null and query.originUrlFuzzy != ''">
+			and origin_url like concat('%', #{query.originUrlFuzzy}, '%')
+		</if>
+		<if test="query.tagsFuzzy != null and query.tagsFuzzy != ''">
+			and tags like concat('%', #{query.tagsFuzzy}, '%')
+		</if>
+		<if test="query.formatFuzzy != null and query.formatFuzzy != ''">
+			and format like concat('%', #{query.formatFuzzy}, '%')
+		</if>
+		<if test="query.interactionSettingsFuzzy != null and query.interactionSettingsFuzzy != ''">
+			and interaction_settings like concat('%', #{query.interactionSettingsFuzzy}, '%')
+		</if>
+		<if test="query.publishTimeStart != null and query.publishTimeStart != ''">
+			<![CDATA[ and publish_time >= str_to_date(#{query.publishTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.publishTimeEnd != null and query.publishTimeEnd != ''">
+			<![CDATA[ and publish_time < date_sub(str_to_date(#{query.publishTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+		<if test="query.createTimeStart != null and query.createTimeStart != ''">
+			<![CDATA[ and create_time >= str_to_date(#{query.createTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.createTimeEnd != null and query.createTimeEnd != ''">
+			<![CDATA[ and create_time < date_sub(str_to_date(#{query.createTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+		<if test="query.updateTimeStart != null and query.updateTimeStart != ''">
+			<![CDATA[ and update_time >= str_to_date(#{query.updateTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.updateTimeEnd != null and query.updateTimeEnd != ''">
+			<![CDATA[ and update_time < date_sub(str_to_date(#{query.updateTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+	</sql>
+
+	<!--扩展的查询条件-->
+	<sql id="query_condition">
+		<where>
+			<include refid="base_query_condition"/>
+			<include refid="base_query_condition_extend"/>
+		</where>
+	</sql>
+
+	<!--查询列表-->
+	<select id="selectList" resultMap="base_result_map">
+		SELECT <include refid="base_column_list"/> FROM video_info <include refid="query_condition"/>
+		<if test="query.orderBy != null"> order by ${query.orderBy} </if>
+		<if test="query.simplePage != null"> limit #{query.simplePage.start},#{query.simplePage.end}</if>
+	</select>
+
+	<!--查询数量-->
+	<select id="selectCount" resultType="java.lang.Integer">
+		SELECT count(1) FROM video_info <include refid="query_condition"/>
+	</select>
+
+	<!--插入(匹配有值的字段)-->
+	<insert id="insert" parameterType="com.interlude.entity.po.video.VideoInfo">
+		<selectKey keyProperty = "bean.video_id" resultType = "Long" order="AFTER">
+			SELECT LAST_INSERT_ID()
+		</selectKey>		INSERT INTO video_info
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.videoId != null">
+				video_id,
+			</if>
+			<if test="bean.userId != null">
+				user_id,
+			</if>
+			<if test="bean.videoName != null">
+				video_name,
+			</if>
+			<if test="bean.videoCover != null">
+				video_cover,
+			</if>
+			<if test="bean.description != null">
+				description,
+			</if>
+			<if test="bean.pCategoryId != null">
+				p_category_id,
+			</if>
+			<if test="bean.categoryId != null">
+				category_id,
+			</if>
+			<if test="bean.videoType != null">
+				video_type,
+			</if>
+			<if test="bean.originAuthor != null">
+				origin_author,
+			</if>
+			<if test="bean.originUrl != null">
+				origin_url,
+			</if>
+			<if test="bean.tags != null">
+				tags,
+			</if>
+			<if test="bean.duration != null">
+				duration,
+			</if>
+			<if test="bean.width != null">
+				width,
+			</if>
+			<if test="bean.height != null">
+				height,
+			</if>
+			<if test="bean.bitrate != null">
+				bitrate,
+			</if>
+			<if test="bean.format != null">
+				format,
+			</if>
+			<if test="bean.interactionSettings != null">
+				interaction_settings,
+			</if>
+			<if test="bean.status != null">
+				status,
+			</if>
+			<if test="bean.visibility != null">
+				visibility,
+			</if>
+			<if test="bean.publishTime != null">
+				publish_time,
+			</if>
+			<if test="bean.createTime != null">
+				create_time,
+			</if>
+			<if test="bean.updateTime != null">
+				update_time,
+			</if>
+			<if test="bean.version != null">
+				version,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.videoId != null">
+				#{bean.videoId},
+			</if>
+			<if test="bean.userId != null">
+				#{bean.userId},
+			</if>
+			<if test="bean.videoName != null">
+				#{bean.videoName},
+			</if>
+			<if test="bean.videoCover != null">
+				#{bean.videoCover},
+			</if>
+			<if test="bean.description != null">
+				#{bean.description},
+			</if>
+			<if test="bean.pCategoryId != null">
+				#{bean.pCategoryId},
+			</if>
+			<if test="bean.categoryId != null">
+				#{bean.categoryId},
+			</if>
+			<if test="bean.videoType != null">
+				#{bean.videoType},
+			</if>
+			<if test="bean.originAuthor != null">
+				#{bean.originAuthor},
+			</if>
+			<if test="bean.originUrl != null">
+				#{bean.originUrl},
+			</if>
+			<if test="bean.tags != null">
+				#{bean.tags},
+			</if>
+			<if test="bean.duration != null">
+				#{bean.duration},
+			</if>
+			<if test="bean.width != null">
+				#{bean.width},
+			</if>
+			<if test="bean.height != null">
+				#{bean.height},
+			</if>
+			<if test="bean.bitrate != null">
+				#{bean.bitrate},
+			</if>
+			<if test="bean.format != null">
+				#{bean.format},
+			</if>
+			<if test="bean.interactionSettings != null">
+				#{bean.interactionSettings},
+			</if>
+			<if test="bean.status != null">
+				#{bean.status},
+			</if>
+			<if test="bean.visibility != null">
+				#{bean.visibility},
+			</if>
+			<if test="bean.publishTime != null">
+				#{bean.publishTime},
+			</if>
+			<if test="bean.createTime != null">
+				#{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null">
+				#{bean.updateTime},
+			</if>
+			<if test="bean.version != null">
+				#{bean.version},
+			</if>
+		</trim>
+	</insert>
+
+	<!-- 插入或者更新 (匹配有值的字段) -->
+	<insert id="insertOrUpdate" parameterType="com.interlude.entity.po.video.VideoInfo">
+		INSERT INTO video_info
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.videoId != null">
+				video_id,
+			</if>
+			<if test="bean.userId != null">
+				user_id,
+			</if>
+			<if test="bean.videoName != null">
+				video_name,
+			</if>
+			<if test="bean.videoCover != null">
+				video_cover,
+			</if>
+			<if test="bean.description != null">
+				description,
+			</if>
+			<if test="bean.pCategoryId != null">
+				p_category_id,
+			</if>
+			<if test="bean.categoryId != null">
+				category_id,
+			</if>
+			<if test="bean.videoType != null">
+				video_type,
+			</if>
+			<if test="bean.originAuthor != null">
+				origin_author,
+			</if>
+			<if test="bean.originUrl != null">
+				origin_url,
+			</if>
+			<if test="bean.tags != null">
+				tags,
+			</if>
+			<if test="bean.duration != null">
+				duration,
+			</if>
+			<if test="bean.width != null">
+				width,
+			</if>
+			<if test="bean.height != null">
+				height,
+			</if>
+			<if test="bean.bitrate != null">
+				bitrate,
+			</if>
+			<if test="bean.format != null">
+				format,
+			</if>
+			<if test="bean.interactionSettings != null">
+				interaction_settings,
+			</if>
+			<if test="bean.status != null">
+				status,
+			</if>
+			<if test="bean.visibility != null">
+				visibility,
+			</if>
+			<if test="bean.publishTime != null">
+				publish_time,
+			</if>
+			<if test="bean.createTime != null">
+				create_time,
+			</if>
+			<if test="bean.updateTime != null">
+				update_time,
+			</if>
+			<if test="bean.version != null">
+				version,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.videoId != null">
+				#{bean.videoId},
+			</if>
+			<if test="bean.userId != null">
+				#{bean.userId},
+			</if>
+			<if test="bean.videoName != null">
+				#{bean.videoName},
+			</if>
+			<if test="bean.videoCover != null">
+				#{bean.videoCover},
+			</if>
+			<if test="bean.description != null">
+				#{bean.description},
+			</if>
+			<if test="bean.pCategoryId != null">
+				#{bean.pCategoryId},
+			</if>
+			<if test="bean.categoryId != null">
+				#{bean.categoryId},
+			</if>
+			<if test="bean.videoType != null">
+				#{bean.videoType},
+			</if>
+			<if test="bean.originAuthor != null">
+				#{bean.originAuthor},
+			</if>
+			<if test="bean.originUrl != null">
+				#{bean.originUrl},
+			</if>
+			<if test="bean.tags != null">
+				#{bean.tags},
+			</if>
+			<if test="bean.duration != null">
+				#{bean.duration},
+			</if>
+			<if test="bean.width != null">
+				#{bean.width},
+			</if>
+			<if test="bean.height != null">
+				#{bean.height},
+			</if>
+			<if test="bean.bitrate != null">
+				#{bean.bitrate},
+			</if>
+			<if test="bean.format != null">
+				#{bean.format},
+			</if>
+			<if test="bean.interactionSettings != null">
+				#{bean.interactionSettings},
+			</if>
+			<if test="bean.status != null">
+				#{bean.status},
+			</if>
+			<if test="bean.visibility != null">
+				#{bean.visibility},
+			</if>
+			<if test="bean.publishTime != null">
+				#{bean.publishTime},
+			</if>
+			<if test="bean.createTime != null">
+				#{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null">
+				#{bean.updateTime},
+			</if>
+			<if test="bean.version != null">
+				#{bean.version},
+			</if>
+		</trim>
+		on DUPLICATE key update
+		<trim  prefix="" suffix="" suffixOverrides=",">
+
+			<if test="bean.userId!=null">
+				user_id = VALUES(user_id),
+			</if>
+			<if test="bean.videoName!=null">
+				video_name = VALUES(video_name),
+			</if>
+			<if test="bean.videoCover!=null">
+				video_cover = VALUES(video_cover),
+			</if>
+			<if test="bean.description!=null">
+				description = VALUES(description),
+			</if>
+			<if test="bean.pCategoryId!=null">
+				p_category_id = VALUES(p_category_id),
+			</if>
+			<if test="bean.categoryId!=null">
+				category_id = VALUES(category_id),
+			</if>
+			<if test="bean.videoType!=null">
+				video_type = VALUES(video_type),
+			</if>
+			<if test="bean.originAuthor!=null">
+				origin_author = VALUES(origin_author),
+			</if>
+			<if test="bean.originUrl!=null">
+				origin_url = VALUES(origin_url),
+			</if>
+			<if test="bean.tags!=null">
+				tags = VALUES(tags),
+			</if>
+			<if test="bean.duration!=null">
+				duration = VALUES(duration),
+			</if>
+			<if test="bean.width!=null">
+				width = VALUES(width),
+			</if>
+			<if test="bean.height!=null">
+				height = VALUES(height),
+			</if>
+			<if test="bean.bitrate!=null">
+				bitrate = VALUES(bitrate),
+			</if>
+			<if test="bean.format!=null">
+				format = VALUES(format),
+			</if>
+			<if test="bean.interactionSettings!=null">
+				interaction_settings = VALUES(interaction_settings),
+			</if>
+			<if test="bean.status!=null">
+				status = VALUES(status),
+			</if>
+			<if test="bean.visibility!=null">
+				visibility = VALUES(visibility),
+			</if>
+			<if test="bean.publishTime!=null">
+				publish_time = VALUES(publish_time),
+			</if>
+			<if test="bean.createTime!=null">
+				create_time = VALUES(create_time),
+			</if>
+			<if test="bean.updateTime!=null">
+				update_time = VALUES(update_time),
+			</if>
+			<if test="bean.version!=null">
+				version = VALUES(version),
+			</if>
+		</trim>
+	</insert>
+
+	<!--添加 (批量插入)-->
+	<insert id="insertBatch" parameterType="com.interlude.entity.po.video.VideoInfo" >
+		INSERT INTO video_info(user_id,video_name,video_cover,description,p_category_id,category_id,video_type,origin_author,origin_url,tags,duration,width,height,bitrate,format,interaction_settings,status,visibility,publish_time,create_time,update_time,version)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.userId},#{item.videoName},#{item.videoCover},#{item.description},#{item.pCategoryId},#{item.categoryId},#{item.videoType},#{item.originAuthor},#{item.originUrl},#{item.tags},#{item.duration},#{item.width},#{item.height},#{item.bitrate},#{item.format},#{item.interactionSettings},#{item.status},#{item.visibility},#{item.publishTime},#{item.createTime},#{item.updateTime},#{item.version})
+		</foreach>
+	</insert>
+
+	<!--批量插入或者更新-->
+	<insert id="insertOrUpdateBatch" parameterType="com.interlude.entity.po.video.VideoInfo" >
+		INSERT INTO video_info(user_id,video_name,video_cover,description,p_category_id,category_id,video_type,origin_author,origin_url,tags,duration,width,height,bitrate,format,interaction_settings,status,visibility,publish_time,create_time,update_time,version)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.userId},#{item.videoName},#{item.videoCover},#{item.description},#{item.pCategoryId},#{item.categoryId},#{item.videoType},#{item.originAuthor},#{item.originUrl},#{item.tags},#{item.duration},#{item.width},#{item.height},#{item.bitrate},#{item.format},#{item.interactionSettings},#{item.status},#{item.visibility},#{item.publishTime},#{item.createTime},#{item.updateTime},#{item.version})
+		</foreach>
+		on DUPLICATE key update
+		video_id = VALUES(video_id),user_id = VALUES(user_id),video_name = VALUES(video_name),video_cover = VALUES(video_cover),description = VALUES(description),p_category_id = VALUES(p_category_id),category_id = VALUES(category_id),video_type = VALUES(video_type),origin_author = VALUES(origin_author),origin_url = VALUES(origin_url),tags = VALUES(tags),duration = VALUES(duration),width = VALUES(width),height = VALUES(height),bitrate = VALUES(bitrate),format = VALUES(format),interaction_settings = VALUES(interaction_settings),status = VALUES(status),visibility = VALUES(visibility),publish_time = VALUES(publish_time),create_time = VALUES(create_time),update_time = VALUES(update_time),version = VALUES(version)
+	</insert>
+
+	<!-- 根据VideoId查询 -->
+	<select id="selectByVideoId" resultMap="base_result_map">
+		select <include refid="base_column_list"/> from video_info where video_id=#{videoId}
+	</select>
+
+	<!-- 根据VideoId更新 -->
+	<update id="updateByVideoId" parameterType="com.interlude.entity.po.video.VideoInfo">
+		update video_info
+		<set>
+			<if test="bean.videoId != null" >
+				video_id = #{bean.videoId},
+			</if>
+			<if test="bean.userId != null" >
+				user_id = #{bean.userId},
+			</if>
+			<if test="bean.videoName != null" >
+				video_name = #{bean.videoName},
+			</if>
+			<if test="bean.videoCover != null" >
+				video_cover = #{bean.videoCover},
+			</if>
+			<if test="bean.description != null" >
+				description = #{bean.description},
+			</if>
+			<if test="bean.pCategoryId != null" >
+				p_category_id = #{bean.pCategoryId},
+			</if>
+			<if test="bean.categoryId != null" >
+				category_id = #{bean.categoryId},
+			</if>
+			<if test="bean.videoType != null" >
+				video_type = #{bean.videoType},
+			</if>
+			<if test="bean.originAuthor != null" >
+				origin_author = #{bean.originAuthor},
+			</if>
+			<if test="bean.originUrl != null" >
+				origin_url = #{bean.originUrl},
+			</if>
+			<if test="bean.tags != null" >
+				tags = #{bean.tags},
+			</if>
+			<if test="bean.duration != null" >
+				duration = #{bean.duration},
+			</if>
+			<if test="bean.width != null" >
+				width = #{bean.width},
+			</if>
+			<if test="bean.height != null" >
+				height = #{bean.height},
+			</if>
+			<if test="bean.bitrate != null" >
+				bitrate = #{bean.bitrate},
+			</if>
+			<if test="bean.format != null" >
+				format = #{bean.format},
+			</if>
+			<if test="bean.interactionSettings != null" >
+				interaction_settings = #{bean.interactionSettings},
+			</if>
+			<if test="bean.status != null" >
+				status = #{bean.status},
+			</if>
+			<if test="bean.visibility != null" >
+				visibility = #{bean.visibility},
+			</if>
+			<if test="bean.publishTime != null" >
+				publish_time = #{bean.publishTime},
+			</if>
+			<if test="bean.createTime != null" >
+				create_time = #{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null" >
+				update_time = #{bean.updateTime},
+			</if>
+			<if test="bean.version != null" >
+				version = #{bean.version},
+			</if>
+
+		</set>
+		where video_id=#{videoId}
+	</update>
+
+	<!-- 根据VideoId删除 -->
+	<delete id="deleteByVideoId">
+		delete from video_info where video_id=#{videoId}
+	</delete>
+
+</mapper>

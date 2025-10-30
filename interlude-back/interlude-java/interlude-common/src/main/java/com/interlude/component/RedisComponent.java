@@ -1,6 +1,7 @@
 package com.interlude.component;
 
 import com.interlude.entity.constants.Constants;
+import com.interlude.entity.dto.SysSettingDto;
 import com.interlude.entity.dto.TokenUserInfoDto;
 import com.interlude.entity.po.CategoryInfo;
 import com.interlude.redis.RedisUtils;
@@ -62,5 +63,14 @@ public class RedisComponent {
     // 获取分类信息
     public List<CategoryInfo> getCategoryList(){
         return  (List<CategoryInfo>) redisUtils.get(Constants.REDIS_KEY_CATEGORY_LIST);
+    }
+
+    //获取系统信息
+    public SysSettingDto getSysSetting(){
+        SysSettingDto settingDto = (SysSettingDto) redisUtils.get(Constants.REDIS_SYS_SETTING_KEY);
+        if (settingDto == null){
+            settingDto = new SysSettingDto();
+        }
+        return  settingDto;
     }
 }

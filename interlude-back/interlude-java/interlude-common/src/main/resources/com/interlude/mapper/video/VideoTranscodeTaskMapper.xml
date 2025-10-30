@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.interlude.mapper.video.VideoTranscodeTaskMapper">
+	<!--实体映射-->
+	<resultMap id="base_result_map" type="com.interlude.entity.po.video.VideoTranscodeTask">
+		<!--任务ID-->
+		<id column="task_id" property="taskId"/>
+		<!--视频ID-->
+		<result column="video_id" property="videoId"/>
+		<!--用户ID-->
+		<result column="user_id" property="userId"/>
+		<!--源文件ID-->
+		<result column="source_file_id" property="sourceFileId"/>
+		<!--目标清晰度-->
+		<result column="target_quality" property="targetQuality"/>
+		<!--“1:待处理”“2:处理中”“3:成功”“4:失败”-->
+		<result column="task_status" property="taskStatus"/>
+		<!--进度0-100-->
+		<result column="progress" property="progress"/>
+		<!--错误信息-->
+		<result column="error_message" property="errorMessage"/>
+		<!---->
+		<result column="start_time" property="startTime"/>
+		<!---->
+		<result column="end_time" property="endTime"/>
+		<!---->
+		<result column="create_time" property="createTime"/>
+	</resultMap>
+	<!--通用测序结果列-->
+	<sql id="base_column_list">
+		task_id,video_id,user_id,source_file_id,target_quality,task_status,progress,error_message,start_time,end_time,create_time
+	</sql>
+
+
+	<!--基础条件查询-->
+	<sql id="base_query_condition">
+		<if test="query.taskId != null">
+			and task_id = #{query.taskId} 
+		</if>
+		<if test="query.videoId != null">
+			and video_id = #{query.videoId} 
+		</if>
+		<if test="query.userId != null">
+			and user_id = #{query.userId} 
+		</if>
+		<if test="query.sourceFileId != null">
+			and source_file_id = #{query.sourceFileId} 
+		</if>
+		<if test="query.targetQuality != null and query.targetQuality != ''">
+			and target_quality = #{query.targetQuality} 
+		</if>
+		<if test="query.taskStatus != null">
+			and task_status = #{query.taskStatus} 
+		</if>
+		<if test="query.progress != null">
+			and progress = #{query.progress} 
+		</if>
+		<if test="query.errorMessage != null and query.errorMessage != ''">
+			and error_message = #{query.errorMessage} 
+		</if>
+		<if test="query.startTime != null">
+			and start_time = #{query.startTime} 
+		</if>
+		<if test="query.endTime != null">
+			and end_time = #{query.endTime} 
+		</if>
+		<if test="query.createTime != null">
+			and create_time = #{query.createTime} 
+		</if>
+	</sql>
+
+	<!--扩展的条件查询-->
+	<sql id="base_query_condition_extend">
+		<if test="query.targetQualityFuzzy != null and query.targetQualityFuzzy != ''">
+			and target_quality like concat('%', #{query.targetQualityFuzzy}, '%')
+		</if>
+		<if test="query.errorMessageFuzzy != null and query.errorMessageFuzzy != ''">
+			and error_message like concat('%', #{query.errorMessageFuzzy}, '%')
+		</if>
+		<if test="query.startTimeStart != null and query.startTimeStart != ''">
+			<![CDATA[ and start_time >= str_to_date(#{query.startTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.startTimeEnd != null and query.startTimeEnd != ''">
+			<![CDATA[ and start_time < date_sub(str_to_date(#{query.startTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+		<if test="query.endTimeStart != null and query.endTimeStart != ''">
+			<![CDATA[ and end_time >= str_to_date(#{query.endTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.endTimeEnd != null and query.endTimeEnd != ''">
+			<![CDATA[ and end_time < date_sub(str_to_date(#{query.endTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+		<if test="query.createTimeStart != null and query.createTimeStart != ''">
+			<![CDATA[ and create_time >= str_to_date(#{query.createTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.createTimeEnd != null and query.createTimeEnd != ''">
+			<![CDATA[ and create_time < date_sub(str_to_date(#{query.createTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+	</sql>
+
+	<!--扩展的查询条件-->
+	<sql id="query_condition">
+		<where>
+			<include refid="base_query_condition"/>
+			<include refid="base_query_condition_extend"/>
+		</where>
+	</sql>
+
+	<!--查询列表-->
+	<select id="selectList" resultMap="base_result_map">
+		SELECT <include refid="base_column_list"/> FROM video_transcode_task <include refid="query_condition"/>
+		<if test="query.orderBy != null"> order by ${query.orderBy} </if>
+		<if test="query.simplePage != null"> limit #{query.simplePage.start},#{query.simplePage.end}</if>
+	</select>
+
+	<!--查询数量-->
+	<select id="selectCount" resultType="java.lang.Integer">
+		SELECT count(1) FROM video_transcode_task <include refid="query_condition"/>
+	</select>
+
+	<!--插入(匹配有值的字段)-->
+	<insert id="insert" parameterType="com.interlude.entity.po.video.VideoTranscodeTask">
+		<selectKey keyProperty = "bean.task_id" resultType = "Long" order="AFTER">
+			SELECT LAST_INSERT_ID()
+		</selectKey>		INSERT INTO video_transcode_task
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.taskId != null">
+				task_id,
+			</if>
+			<if test="bean.videoId != null">
+				video_id,
+			</if>
+			<if test="bean.userId != null">
+				user_id,
+			</if>
+			<if test="bean.sourceFileId != null">
+				source_file_id,
+			</if>
+			<if test="bean.targetQuality != null">
+				target_quality,
+			</if>
+			<if test="bean.taskStatus != null">
+				task_status,
+			</if>
+			<if test="bean.progress != null">
+				progress,
+			</if>
+			<if test="bean.errorMessage != null">
+				error_message,
+			</if>
+			<if test="bean.startTime != null">
+				start_time,
+			</if>
+			<if test="bean.endTime != null">
+				end_time,
+			</if>
+			<if test="bean.createTime != null">
+				create_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.taskId != null">
+				#{bean.taskId},
+			</if>
+			<if test="bean.videoId != null">
+				#{bean.videoId},
+			</if>
+			<if test="bean.userId != null">
+				#{bean.userId},
+			</if>
+			<if test="bean.sourceFileId != null">
+				#{bean.sourceFileId},
+			</if>
+			<if test="bean.targetQuality != null">
+				#{bean.targetQuality},
+			</if>
+			<if test="bean.taskStatus != null">
+				#{bean.taskStatus},
+			</if>
+			<if test="bean.progress != null">
+				#{bean.progress},
+			</if>
+			<if test="bean.errorMessage != null">
+				#{bean.errorMessage},
+			</if>
+			<if test="bean.startTime != null">
+				#{bean.startTime},
+			</if>
+			<if test="bean.endTime != null">
+				#{bean.endTime},
+			</if>
+			<if test="bean.createTime != null">
+				#{bean.createTime},
+			</if>
+		</trim>
+	</insert>
+
+	<!-- 插入或者更新 (匹配有值的字段) -->
+	<insert id="insertOrUpdate" parameterType="com.interlude.entity.po.video.VideoTranscodeTask">
+		INSERT INTO video_transcode_task
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.taskId != null">
+				task_id,
+			</if>
+			<if test="bean.videoId != null">
+				video_id,
+			</if>
+			<if test="bean.userId != null">
+				user_id,
+			</if>
+			<if test="bean.sourceFileId != null">
+				source_file_id,
+			</if>
+			<if test="bean.targetQuality != null">
+				target_quality,
+			</if>
+			<if test="bean.taskStatus != null">
+				task_status,
+			</if>
+			<if test="bean.progress != null">
+				progress,
+			</if>
+			<if test="bean.errorMessage != null">
+				error_message,
+			</if>
+			<if test="bean.startTime != null">
+				start_time,
+			</if>
+			<if test="bean.endTime != null">
+				end_time,
+			</if>
+			<if test="bean.createTime != null">
+				create_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.taskId != null">
+				#{bean.taskId},
+			</if>
+			<if test="bean.videoId != null">
+				#{bean.videoId},
+			</if>
+			<if test="bean.userId != null">
+				#{bean.userId},
+			</if>
+			<if test="bean.sourceFileId != null">
+				#{bean.sourceFileId},
+			</if>
+			<if test="bean.targetQuality != null">
+				#{bean.targetQuality},
+			</if>
+			<if test="bean.taskStatus != null">
+				#{bean.taskStatus},
+			</if>
+			<if test="bean.progress != null">
+				#{bean.progress},
+			</if>
+			<if test="bean.errorMessage != null">
+				#{bean.errorMessage},
+			</if>
+			<if test="bean.startTime != null">
+				#{bean.startTime},
+			</if>
+			<if test="bean.endTime != null">
+				#{bean.endTime},
+			</if>
+			<if test="bean.createTime != null">
+				#{bean.createTime},
+			</if>
+		</trim>
+		on DUPLICATE key update
+		<trim  prefix="" suffix="" suffixOverrides=",">
+
+			<if test="bean.videoId!=null">
+				video_id = VALUES(video_id),
+			</if>
+			<if test="bean.userId!=null">
+				user_id = VALUES(user_id),
+			</if>
+			<if test="bean.sourceFileId!=null">
+				source_file_id = VALUES(source_file_id),
+			</if>
+			<if test="bean.targetQuality!=null">
+				target_quality = VALUES(target_quality),
+			</if>
+			<if test="bean.taskStatus!=null">
+				task_status = VALUES(task_status),
+			</if>
+			<if test="bean.progress!=null">
+				progress = VALUES(progress),
+			</if>
+			<if test="bean.errorMessage!=null">
+				error_message = VALUES(error_message),
+			</if>
+			<if test="bean.startTime!=null">
+				start_time = VALUES(start_time),
+			</if>
+			<if test="bean.endTime!=null">
+				end_time = VALUES(end_time),
+			</if>
+			<if test="bean.createTime!=null">
+				create_time = VALUES(create_time),
+			</if>
+		</trim>
+	</insert>
+
+	<!--添加 (批量插入)-->
+	<insert id="insertBatch" parameterType="com.interlude.entity.po.video.VideoTranscodeTask" >
+		INSERT INTO video_transcode_task(video_id,user_id,source_file_id,target_quality,task_status,progress,error_message,start_time,end_time,create_time)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.videoId},#{item.userId},#{item.sourceFileId},#{item.targetQuality},#{item.taskStatus},#{item.progress},#{item.errorMessage},#{item.startTime},#{item.endTime},#{item.createTime})
+		</foreach>
+	</insert>
+
+	<!--批量插入或者更新-->
+	<insert id="insertOrUpdateBatch" parameterType="com.interlude.entity.po.video.VideoTranscodeTask" >
+		INSERT INTO video_transcode_task(video_id,user_id,source_file_id,target_quality,task_status,progress,error_message,start_time,end_time,create_time)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.videoId},#{item.userId},#{item.sourceFileId},#{item.targetQuality},#{item.taskStatus},#{item.progress},#{item.errorMessage},#{item.startTime},#{item.endTime},#{item.createTime})
+		</foreach>
+		on DUPLICATE key update
+		task_id = VALUES(task_id),video_id = VALUES(video_id),user_id = VALUES(user_id),source_file_id = VALUES(source_file_id),target_quality = VALUES(target_quality),task_status = VALUES(task_status),progress = VALUES(progress),error_message = VALUES(error_message),start_time = VALUES(start_time),end_time = VALUES(end_time),create_time = VALUES(create_time)
+	</insert>
+
+	<!-- 根据TaskId查询 -->
+	<select id="selectByTaskId" resultMap="base_result_map">
+		select <include refid="base_column_list"/> from video_transcode_task where task_id=#{taskId}
+	</select>
+
+	<!-- 根据TaskId更新 -->
+	<update id="updateByTaskId" parameterType="com.interlude.entity.po.video.VideoTranscodeTask">
+		update video_transcode_task
+		<set>
+			<if test="bean.taskId != null" >
+				task_id = #{bean.taskId},
+			</if>
+			<if test="bean.videoId != null" >
+				video_id = #{bean.videoId},
+			</if>
+			<if test="bean.userId != null" >
+				user_id = #{bean.userId},
+			</if>
+			<if test="bean.sourceFileId != null" >
+				source_file_id = #{bean.sourceFileId},
+			</if>
+			<if test="bean.targetQuality != null" >
+				target_quality = #{bean.targetQuality},
+			</if>
+			<if test="bean.taskStatus != null" >
+				task_status = #{bean.taskStatus},
+			</if>
+			<if test="bean.progress != null" >
+				progress = #{bean.progress},
+			</if>
+			<if test="bean.errorMessage != null" >
+				error_message = #{bean.errorMessage},
+			</if>
+			<if test="bean.startTime != null" >
+				start_time = #{bean.startTime},
+			</if>
+			<if test="bean.endTime != null" >
+				end_time = #{bean.endTime},
+			</if>
+			<if test="bean.createTime != null" >
+				create_time = #{bean.createTime},
+			</if>
+
+		</set>
+		where task_id=#{taskId}
+	</update>
+
+	<!-- 根据TaskId删除 -->
+	<delete id="deleteByTaskId">
+		delete from video_transcode_task where task_id=#{taskId}
+	</delete>
+
+</mapper>

@@ -1,0 +1,424 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.interlude.mapper.video.VideoAuditMapper">
+	<!--实体映射-->
+	<resultMap id="base_result_map" type="com.interlude.entity.po.video.VideoAudit">
+		<!---->
+		<id column="audit_id" property="auditId"/>
+		<!--正式视频ID-->
+		<result column="video_id" property="videoId"/>
+		<!---->
+		<result column="user_id" property="userId"/>
+		<!--“1:待处理”“2:已批准”“3:已拒绝”“4:已取消”-->
+		<result column="audit_status" property="auditStatus"/>
+		<!--提交时间-->
+		<result column="submit_time" property="submitTime"/>
+		<!--审核时间-->
+		<result column="audit_time" property="auditTime"/>
+		<!--审核员ID-->
+		<result column="auditor_id" property="auditorId"/>
+		<!--审核意见-->
+		<result column="audit_comment" property="auditComment"/>
+		<!--拒绝原因分类 “1:版权”、“2:内容”、“3:质量”、“4:其他”-->
+		<result column="reject_reason" property="rejectReason"/>
+		<!--重试审核次数-->
+		<result column="retry_count" property="retryCount"/>
+		<!---->
+		<result column="create_time" property="createTime"/>
+	</resultMap>
+	<!--通用测序结果列-->
+	<sql id="base_column_list">
+		audit_id,video_id,user_id,audit_status,submit_time,audit_time,auditor_id,audit_comment,reject_reason,retry_count,create_time
+	</sql>
+
+
+	<!--基础条件查询-->
+	<sql id="base_query_condition">
+		<if test="query.auditId != null">
+			and audit_id = #{query.auditId} 
+		</if>
+		<if test="query.videoId != null">
+			and video_id = #{query.videoId} 
+		</if>
+		<if test="query.userId != null">
+			and user_id = #{query.userId} 
+		</if>
+		<if test="query.auditStatus != null">
+			and audit_status = #{query.auditStatus} 
+		</if>
+		<if test="query.submitTime != null">
+			and submit_time = #{query.submitTime} 
+		</if>
+		<if test="query.auditTime != null">
+			and audit_time = #{query.auditTime} 
+		</if>
+		<if test="query.auditorId != null">
+			and auditor_id = #{query.auditorId} 
+		</if>
+		<if test="query.auditComment != null and query.auditComment != ''">
+			and audit_comment = #{query.auditComment} 
+		</if>
+		<if test="query.rejectReason != null">
+			and reject_reason = #{query.rejectReason} 
+		</if>
+		<if test="query.retryCount != null">
+			and retry_count = #{query.retryCount} 
+		</if>
+		<if test="query.createTime != null">
+			and create_time = #{query.createTime} 
+		</if>
+	</sql>
+
+	<!--扩展的条件查询-->
+	<sql id="base_query_condition_extend">
+		<if test="query.submitTimeStart != null and query.submitTimeStart != ''">
+			<![CDATA[ and submit_time >= str_to_date(#{query.submitTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.submitTimeEnd != null and query.submitTimeEnd != ''">
+			<![CDATA[ and submit_time < date_sub(str_to_date(#{query.submitTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+		<if test="query.auditTimeStart != null and query.auditTimeStart != ''">
+			<![CDATA[ and audit_time >= str_to_date(#{query.auditTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.auditTimeEnd != null and query.auditTimeEnd != ''">
+			<![CDATA[ and audit_time < date_sub(str_to_date(#{query.auditTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+		<if test="query.auditCommentFuzzy != null and query.auditCommentFuzzy != ''">
+			and audit_comment like concat('%', #{query.auditCommentFuzzy}, '%')
+		</if>
+		<if test="query.createTimeStart != null and query.createTimeStart != ''">
+			<![CDATA[ and create_time >= str_to_date(#{query.createTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.createTimeEnd != null and query.createTimeEnd != ''">
+			<![CDATA[ and create_time < date_sub(str_to_date(#{query.createTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+	</sql>
+
+	<!--扩展的查询条件-->
+	<sql id="query_condition">
+		<where>
+			<include refid="base_query_condition"/>
+			<include refid="base_query_condition_extend"/>
+		</where>
+	</sql>
+
+	<!--查询列表-->
+	<select id="selectList" resultMap="base_result_map">
+		SELECT <include refid="base_column_list"/> FROM video_audit <include refid="query_condition"/>
+		<if test="query.orderBy != null"> order by ${query.orderBy} </if>
+		<if test="query.simplePage != null"> limit #{query.simplePage.start},#{query.simplePage.end}</if>
+	</select>
+
+	<!--查询数量-->
+	<select id="selectCount" resultType="java.lang.Integer">
+		SELECT count(1) FROM video_audit <include refid="query_condition"/>
+	</select>
+
+	<!--插入(匹配有值的字段)-->
+	<insert id="insert" parameterType="com.interlude.entity.po.video.VideoAudit">
+		<selectKey keyProperty = "bean.audit_id" resultType = "Long" order="AFTER">
+			SELECT LAST_INSERT_ID()
+		</selectKey>		INSERT INTO video_audit
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.auditId != null">
+				audit_id,
+			</if>
+			<if test="bean.videoId != null">
+				video_id,
+			</if>
+			<if test="bean.userId != null">
+				user_id,
+			</if>
+			<if test="bean.auditStatus != null">
+				audit_status,
+			</if>
+			<if test="bean.submitTime != null">
+				submit_time,
+			</if>
+			<if test="bean.auditTime != null">
+				audit_time,
+			</if>
+			<if test="bean.auditorId != null">
+				auditor_id,
+			</if>
+			<if test="bean.auditComment != null">
+				audit_comment,
+			</if>
+			<if test="bean.rejectReason != null">
+				reject_reason,
+			</if>
+			<if test="bean.retryCount != null">
+				retry_count,
+			</if>
+			<if test="bean.createTime != null">
+				create_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.auditId != null">
+				#{bean.auditId},
+			</if>
+			<if test="bean.videoId != null">
+				#{bean.videoId},
+			</if>
+			<if test="bean.userId != null">
+				#{bean.userId},
+			</if>
+			<if test="bean.auditStatus != null">
+				#{bean.auditStatus},
+			</if>
+			<if test="bean.submitTime != null">
+				#{bean.submitTime},
+			</if>
+			<if test="bean.auditTime != null">
+				#{bean.auditTime},
+			</if>
+			<if test="bean.auditorId != null">
+				#{bean.auditorId},
+			</if>
+			<if test="bean.auditComment != null">
+				#{bean.auditComment},
+			</if>
+			<if test="bean.rejectReason != null">
+				#{bean.rejectReason},
+			</if>
+			<if test="bean.retryCount != null">
+				#{bean.retryCount},
+			</if>
+			<if test="bean.createTime != null">
+				#{bean.createTime},
+			</if>
+		</trim>
+	</insert>
+
+	<!-- 插入或者更新 (匹配有值的字段) -->
+	<insert id="insertOrUpdate" parameterType="com.interlude.entity.po.video.VideoAudit">
+		INSERT INTO video_audit
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.auditId != null">
+				audit_id,
+			</if>
+			<if test="bean.videoId != null">
+				video_id,
+			</if>
+			<if test="bean.userId != null">
+				user_id,
+			</if>
+			<if test="bean.auditStatus != null">
+				audit_status,
+			</if>
+			<if test="bean.submitTime != null">
+				submit_time,
+			</if>
+			<if test="bean.auditTime != null">
+				audit_time,
+			</if>
+			<if test="bean.auditorId != null">
+				auditor_id,
+			</if>
+			<if test="bean.auditComment != null">
+				audit_comment,
+			</if>
+			<if test="bean.rejectReason != null">
+				reject_reason,
+			</if>
+			<if test="bean.retryCount != null">
+				retry_count,
+			</if>
+			<if test="bean.createTime != null">
+				create_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.auditId != null">
+				#{bean.auditId},
+			</if>
+			<if test="bean.videoId != null">
+				#{bean.videoId},
+			</if>
+			<if test="bean.userId != null">
+				#{bean.userId},
+			</if>
+			<if test="bean.auditStatus != null">
+				#{bean.auditStatus},
+			</if>
+			<if test="bean.submitTime != null">
+				#{bean.submitTime},
+			</if>
+			<if test="bean.auditTime != null">
+				#{bean.auditTime},
+			</if>
+			<if test="bean.auditorId != null">
+				#{bean.auditorId},
+			</if>
+			<if test="bean.auditComment != null">
+				#{bean.auditComment},
+			</if>
+			<if test="bean.rejectReason != null">
+				#{bean.rejectReason},
+			</if>
+			<if test="bean.retryCount != null">
+				#{bean.retryCount},
+			</if>
+			<if test="bean.createTime != null">
+				#{bean.createTime},
+			</if>
+		</trim>
+		on DUPLICATE key update
+		<trim  prefix="" suffix="" suffixOverrides=",">
+
+			<if test="bean.userId!=null">
+				user_id = VALUES(user_id),
+			</if>
+			<if test="bean.auditStatus!=null">
+				audit_status = VALUES(audit_status),
+			</if>
+			<if test="bean.submitTime!=null">
+				submit_time = VALUES(submit_time),
+			</if>
+			<if test="bean.auditTime!=null">
+				audit_time = VALUES(audit_time),
+			</if>
+			<if test="bean.auditorId!=null">
+				auditor_id = VALUES(auditor_id),
+			</if>
+			<if test="bean.auditComment!=null">
+				audit_comment = VALUES(audit_comment),
+			</if>
+			<if test="bean.rejectReason!=null">
+				reject_reason = VALUES(reject_reason),
+			</if>
+			<if test="bean.retryCount!=null">
+				retry_count = VALUES(retry_count),
+			</if>
+			<if test="bean.createTime!=null">
+				create_time = VALUES(create_time),
+			</if>
+		</trim>
+	</insert>
+
+	<!--添加 (批量插入)-->
+	<insert id="insertBatch" parameterType="com.interlude.entity.po.video.VideoAudit" >
+		INSERT INTO video_audit(video_id,user_id,audit_status,submit_time,audit_time,auditor_id,audit_comment,reject_reason,retry_count,create_time)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.videoId},#{item.userId},#{item.auditStatus},#{item.submitTime},#{item.auditTime},#{item.auditorId},#{item.auditComment},#{item.rejectReason},#{item.retryCount},#{item.createTime})
+		</foreach>
+	</insert>
+
+	<!--批量插入或者更新-->
+	<insert id="insertOrUpdateBatch" parameterType="com.interlude.entity.po.video.VideoAudit" >
+		INSERT INTO video_audit(video_id,user_id,audit_status,submit_time,audit_time,auditor_id,audit_comment,reject_reason,retry_count,create_time)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.videoId},#{item.userId},#{item.auditStatus},#{item.submitTime},#{item.auditTime},#{item.auditorId},#{item.auditComment},#{item.rejectReason},#{item.retryCount},#{item.createTime})
+		</foreach>
+		on DUPLICATE key update
+		audit_id = VALUES(audit_id),video_id = VALUES(video_id),user_id = VALUES(user_id),audit_status = VALUES(audit_status),submit_time = VALUES(submit_time),audit_time = VALUES(audit_time),auditor_id = VALUES(auditor_id),audit_comment = VALUES(audit_comment),reject_reason = VALUES(reject_reason),retry_count = VALUES(retry_count),create_time = VALUES(create_time)
+	</insert>
+
+	<!-- 根据AuditId查询 -->
+	<select id="selectByAuditId" resultMap="base_result_map">
+		select <include refid="base_column_list"/> from video_audit where audit_id=#{auditId}
+	</select>
+
+	<!-- 根据AuditId更新 -->
+	<update id="updateByAuditId" parameterType="com.interlude.entity.po.video.VideoAudit">
+		update video_audit
+		<set>
+			<if test="bean.auditId != null" >
+				audit_id = #{bean.auditId},
+			</if>
+			<if test="bean.videoId != null" >
+				video_id = #{bean.videoId},
+			</if>
+			<if test="bean.userId != null" >
+				user_id = #{bean.userId},
+			</if>
+			<if test="bean.auditStatus != null" >
+				audit_status = #{bean.auditStatus},
+			</if>
+			<if test="bean.submitTime != null" >
+				submit_time = #{bean.submitTime},
+			</if>
+			<if test="bean.auditTime != null" >
+				audit_time = #{bean.auditTime},
+			</if>
+			<if test="bean.auditorId != null" >
+				auditor_id = #{bean.auditorId},
+			</if>
+			<if test="bean.auditComment != null" >
+				audit_comment = #{bean.auditComment},
+			</if>
+			<if test="bean.rejectReason != null" >
+				reject_reason = #{bean.rejectReason},
+			</if>
+			<if test="bean.retryCount != null" >
+				retry_count = #{bean.retryCount},
+			</if>
+			<if test="bean.createTime != null" >
+				create_time = #{bean.createTime},
+			</if>
+
+		</set>
+		where audit_id=#{auditId}
+	</update>
+
+	<!-- 根据AuditId删除 -->
+	<delete id="deleteByAuditId">
+		delete from video_audit where audit_id=#{auditId}
+	</delete>
+
+
+	<!-- 根据VideoId查询 -->
+	<select id="selectByVideoId" resultMap="base_result_map">
+		select <include refid="base_column_list"/> from video_audit where video_id=#{videoId}
+	</select>
+
+	<!-- 根据VideoId更新 -->
+	<update id="updateByVideoId" parameterType="com.interlude.entity.po.video.VideoAudit">
+		update video_audit
+		<set>
+			<if test="bean.auditId != null" >
+				audit_id = #{bean.auditId},
+			</if>
+			<if test="bean.videoId != null" >
+				video_id = #{bean.videoId},
+			</if>
+			<if test="bean.userId != null" >
+				user_id = #{bean.userId},
+			</if>
+			<if test="bean.auditStatus != null" >
+				audit_status = #{bean.auditStatus},
+			</if>
+			<if test="bean.submitTime != null" >
+				submit_time = #{bean.submitTime},
+			</if>
+			<if test="bean.auditTime != null" >
+				audit_time = #{bean.auditTime},
+			</if>
+			<if test="bean.auditorId != null" >
+				auditor_id = #{bean.auditorId},
+			</if>
+			<if test="bean.auditComment != null" >
+				audit_comment = #{bean.auditComment},
+			</if>
+			<if test="bean.rejectReason != null" >
+				reject_reason = #{bean.rejectReason},
+			</if>
+			<if test="bean.retryCount != null" >
+				retry_count = #{bean.retryCount},
+			</if>
+			<if test="bean.createTime != null" >
+				create_time = #{bean.createTime},
+			</if>
+
+		</set>
+		where video_id=#{videoId}
+	</update>
+
+	<!-- 根据VideoId删除 -->
+	<delete id="deleteByVideoId">
+		delete from video_audit where video_id=#{videoId}
+	</delete>
+
+</mapper>

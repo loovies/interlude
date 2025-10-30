@@ -1,0 +1,504 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.interlude.mapper.video.VideoDraftMapper">
+	<!--实体映射-->
+	<resultMap id="base_result_map" type="com.interlude.entity.po.video.VideoDraft">
+		<!--草稿ID-->
+		<id column="draft_id" property="draftId"/>
+		<!--用户Id-->
+		<result column="user_id" property="userId"/>
+		<!--视频名称-->
+		<result column="video_name" property="videoName"/>
+		<!--视频封面-->
+		<result column="video_cover" property="videoCover"/>
+		<!--视频描述-->
+		<result column="description" property="description"/>
+		<!--一级分类-->
+		<result column="p_category_id" property="pCategoryId"/>
+		<!--二级分类-->
+		<result column="category_id" property="categoryId"/>
+		<!--“1:原创”、“2:转发”-->
+		<result column="video_type" property="videoType"/>
+		<!--原作者(转载时使用)-->
+		<result column="origin_author" property="originAuthor"/>
+		<!--原视频链接-->
+		<result column="origin_url" property="originUrl"/>
+		<!--标签列表JSON-->
+		<result column="tags" property="tags"/>
+		<!--交互设置-->
+		<result column="interaction_settings" property="interactionSettings"/>
+		<!--关联的文件ID列表-->
+		<result column="file_ids" property="fileIds"/>
+		<!--“1:草稿”、“2:已提交”-->
+		<result column="draft_status" property="draftStatus"/>
+		<!---->
+		<result column="create_time" property="createTime"/>
+		<!---->
+		<result column="update_time" property="updateTime"/>
+	</resultMap>
+	<!--通用测序结果列-->
+	<sql id="base_column_list">
+		draft_id,user_id,video_name,video_cover,description,p_category_id,category_id,video_type,origin_author,origin_url,tags,interaction_settings,file_ids,draft_status,create_time,update_time
+	</sql>
+
+
+	<!--基础条件查询-->
+	<sql id="base_query_condition">
+		<if test="query.draftId != null">
+			and draft_id = #{query.draftId} 
+		</if>
+		<if test="query.userId != null">
+			and user_id = #{query.userId} 
+		</if>
+		<if test="query.videoName != null and query.videoName != ''">
+			and video_name = #{query.videoName} 
+		</if>
+		<if test="query.videoCover != null and query.videoCover != ''">
+			and video_cover = #{query.videoCover} 
+		</if>
+		<if test="query.description != null and query.description != ''">
+			and description = #{query.description} 
+		</if>
+		<if test="query.pCategoryId != null">
+			and p_category_id = #{query.pCategoryId} 
+		</if>
+		<if test="query.categoryId != null">
+			and category_id = #{query.categoryId} 
+		</if>
+		<if test="query.videoType != null">
+			and video_type = #{query.videoType} 
+		</if>
+		<if test="query.originAuthor != null and query.originAuthor != ''">
+			and origin_author = #{query.originAuthor} 
+		</if>
+		<if test="query.originUrl != null and query.originUrl != ''">
+			and origin_url = #{query.originUrl} 
+		</if>
+		<if test="query.tags != null and query.tags != ''">
+			and tags = #{query.tags} 
+		</if>
+		<if test="query.interactionSettings != null and query.interactionSettings != ''">
+			and interaction_settings = #{query.interactionSettings} 
+		</if>
+		<if test="query.fileIds != null and query.fileIds != ''">
+			and file_ids = #{query.fileIds} 
+		</if>
+		<if test="query.draftStatus != null">
+			and draft_status = #{query.draftStatus} 
+		</if>
+		<if test="query.createTime != null">
+			and create_time = #{query.createTime} 
+		</if>
+		<if test="query.updateTime != null">
+			and update_time = #{query.updateTime} 
+		</if>
+	</sql>
+
+	<!--扩展的条件查询-->
+	<sql id="base_query_condition_extend">
+		<if test="query.videoNameFuzzy != null and query.videoNameFuzzy != ''">
+			and video_name like concat('%', #{query.videoNameFuzzy}, '%')
+		</if>
+		<if test="query.videoCoverFuzzy != null and query.videoCoverFuzzy != ''">
+			and video_cover like concat('%', #{query.videoCoverFuzzy}, '%')
+		</if>
+		<if test="query.descriptionFuzzy != null and query.descriptionFuzzy != ''">
+			and description like concat('%', #{query.descriptionFuzzy}, '%')
+		</if>
+		<if test="query.originAuthorFuzzy != null and query.originAuthorFuzzy != ''">
+			and origin_author like concat('%', #{query.originAuthorFuzzy}, '%')
+		</if>
+		<if test="query.originUrlFuzzy != null and query.originUrlFuzzy != ''">
+			and origin_url like concat('%', #{query.originUrlFuzzy}, '%')
+		</if>
+		<if test="query.tagsFuzzy != null and query.tagsFuzzy != ''">
+			and tags like concat('%', #{query.tagsFuzzy}, '%')
+		</if>
+		<if test="query.interactionSettingsFuzzy != null and query.interactionSettingsFuzzy != ''">
+			and interaction_settings like concat('%', #{query.interactionSettingsFuzzy}, '%')
+		</if>
+		<if test="query.fileIdsFuzzy != null and query.fileIdsFuzzy != ''">
+			and file_ids like concat('%', #{query.fileIdsFuzzy}, '%')
+		</if>
+		<if test="query.createTimeStart != null and query.createTimeStart != ''">
+			<![CDATA[ and create_time >= str_to_date(#{query.createTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.createTimeEnd != null and query.createTimeEnd != ''">
+			<![CDATA[ and create_time < date_sub(str_to_date(#{query.createTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+		<if test="query.updateTimeStart != null and query.updateTimeStart != ''">
+			<![CDATA[ and update_time >= str_to_date(#{query.updateTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.updateTimeEnd != null and query.updateTimeEnd != ''">
+			<![CDATA[ and update_time < date_sub(str_to_date(#{query.updateTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+	</sql>
+
+	<!--扩展的查询条件-->
+	<sql id="query_condition">
+		<where>
+			<include refid="base_query_condition"/>
+			<include refid="base_query_condition_extend"/>
+		</where>
+	</sql>
+
+	<!--查询列表-->
+	<select id="selectList" resultMap="base_result_map">
+		SELECT <include refid="base_column_list"/> FROM video_draft <include refid="query_condition"/>
+		<if test="query.orderBy != null"> order by ${query.orderBy} </if>
+		<if test="query.simplePage != null"> limit #{query.simplePage.start},#{query.simplePage.end}</if>
+	</select>
+
+	<!--查询数量-->
+	<select id="selectCount" resultType="java.lang.Integer">
+		SELECT count(1) FROM video_draft <include refid="query_condition"/>
+	</select>
+
+	<!--插入(匹配有值的字段)-->
+	<insert id="insert" parameterType="com.interlude.entity.po.video.VideoDraft">
+		<selectKey keyProperty = "bean.draft_id" resultType = "Long" order="AFTER">
+			SELECT LAST_INSERT_ID()
+		</selectKey>		INSERT INTO video_draft
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.draftId != null">
+				draft_id,
+			</if>
+			<if test="bean.userId != null">
+				user_id,
+			</if>
+			<if test="bean.videoName != null">
+				video_name,
+			</if>
+			<if test="bean.videoCover != null">
+				video_cover,
+			</if>
+			<if test="bean.description != null">
+				description,
+			</if>
+			<if test="bean.pCategoryId != null">
+				p_category_id,
+			</if>
+			<if test="bean.categoryId != null">
+				category_id,
+			</if>
+			<if test="bean.videoType != null">
+				video_type,
+			</if>
+			<if test="bean.originAuthor != null">
+				origin_author,
+			</if>
+			<if test="bean.originUrl != null">
+				origin_url,
+			</if>
+			<if test="bean.tags != null">
+				tags,
+			</if>
+			<if test="bean.interactionSettings != null">
+				interaction_settings,
+			</if>
+			<if test="bean.fileIds != null">
+				file_ids,
+			</if>
+			<if test="bean.draftStatus != null">
+				draft_status,
+			</if>
+			<if test="bean.createTime != null">
+				create_time,
+			</if>
+			<if test="bean.updateTime != null">
+				update_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.draftId != null">
+				#{bean.draftId},
+			</if>
+			<if test="bean.userId != null">
+				#{bean.userId},
+			</if>
+			<if test="bean.videoName != null">
+				#{bean.videoName},
+			</if>
+			<if test="bean.videoCover != null">
+				#{bean.videoCover},
+			</if>
+			<if test="bean.description != null">
+				#{bean.description},
+			</if>
+			<if test="bean.pCategoryId != null">
+				#{bean.pCategoryId},
+			</if>
+			<if test="bean.categoryId != null">
+				#{bean.categoryId},
+			</if>
+			<if test="bean.videoType != null">
+				#{bean.videoType},
+			</if>
+			<if test="bean.originAuthor != null">
+				#{bean.originAuthor},
+			</if>
+			<if test="bean.originUrl != null">
+				#{bean.originUrl},
+			</if>
+			<if test="bean.tags != null">
+				#{bean.tags},
+			</if>
+			<if test="bean.interactionSettings != null">
+				#{bean.interactionSettings},
+			</if>
+			<if test="bean.fileIds != null">
+				#{bean.fileIds},
+			</if>
+			<if test="bean.draftStatus != null">
+				#{bean.draftStatus},
+			</if>
+			<if test="bean.createTime != null">
+				#{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null">
+				#{bean.updateTime},
+			</if>
+		</trim>
+	</insert>
+
+	<!-- 插入或者更新 (匹配有值的字段) -->
+	<insert id="insertOrUpdate" parameterType="com.interlude.entity.po.video.VideoDraft">
+		INSERT INTO video_draft
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.draftId != null">
+				draft_id,
+			</if>
+			<if test="bean.userId != null">
+				user_id,
+			</if>
+			<if test="bean.videoName != null">
+				video_name,
+			</if>
+			<if test="bean.videoCover != null">
+				video_cover,
+			</if>
+			<if test="bean.description != null">
+				description,
+			</if>
+			<if test="bean.pCategoryId != null">
+				p_category_id,
+			</if>
+			<if test="bean.categoryId != null">
+				category_id,
+			</if>
+			<if test="bean.videoType != null">
+				video_type,
+			</if>
+			<if test="bean.originAuthor != null">
+				origin_author,
+			</if>
+			<if test="bean.originUrl != null">
+				origin_url,
+			</if>
+			<if test="bean.tags != null">
+				tags,
+			</if>
+			<if test="bean.interactionSettings != null">
+				interaction_settings,
+			</if>
+			<if test="bean.fileIds != null">
+				file_ids,
+			</if>
+			<if test="bean.draftStatus != null">
+				draft_status,
+			</if>
+			<if test="bean.createTime != null">
+				create_time,
+			</if>
+			<if test="bean.updateTime != null">
+				update_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.draftId != null">
+				#{bean.draftId},
+			</if>
+			<if test="bean.userId != null">
+				#{bean.userId},
+			</if>
+			<if test="bean.videoName != null">
+				#{bean.videoName},
+			</if>
+			<if test="bean.videoCover != null">
+				#{bean.videoCover},
+			</if>
+			<if test="bean.description != null">
+				#{bean.description},
+			</if>
+			<if test="bean.pCategoryId != null">
+				#{bean.pCategoryId},
+			</if>
+			<if test="bean.categoryId != null">
+				#{bean.categoryId},
+			</if>
+			<if test="bean.videoType != null">
+				#{bean.videoType},
+			</if>
+			<if test="bean.originAuthor != null">
+				#{bean.originAuthor},
+			</if>
+			<if test="bean.originUrl != null">
+				#{bean.originUrl},
+			</if>
+			<if test="bean.tags != null">
+				#{bean.tags},
+			</if>
+			<if test="bean.interactionSettings != null">
+				#{bean.interactionSettings},
+			</if>
+			<if test="bean.fileIds != null">
+				#{bean.fileIds},
+			</if>
+			<if test="bean.draftStatus != null">
+				#{bean.draftStatus},
+			</if>
+			<if test="bean.createTime != null">
+				#{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null">
+				#{bean.updateTime},
+			</if>
+		</trim>
+		on DUPLICATE key update
+		<trim  prefix="" suffix="" suffixOverrides=",">
+
+			<if test="bean.userId!=null">
+				user_id = VALUES(user_id),
+			</if>
+			<if test="bean.videoName!=null">
+				video_name = VALUES(video_name),
+			</if>
+			<if test="bean.videoCover!=null">
+				video_cover = VALUES(video_cover),
+			</if>
+			<if test="bean.description!=null">
+				description = VALUES(description),
+			</if>
+			<if test="bean.pCategoryId!=null">
+				p_category_id = VALUES(p_category_id),
+			</if>
+			<if test="bean.categoryId!=null">
+				category_id = VALUES(category_id),
+			</if>
+			<if test="bean.videoType!=null">
+				video_type = VALUES(video_type),
+			</if>
+			<if test="bean.originAuthor!=null">
+				origin_author = VALUES(origin_author),
+			</if>
+			<if test="bean.originUrl!=null">
+				origin_url = VALUES(origin_url),
+			</if>
+			<if test="bean.tags!=null">
+				tags = VALUES(tags),
+			</if>
+			<if test="bean.interactionSettings!=null">
+				interaction_settings = VALUES(interaction_settings),
+			</if>
+			<if test="bean.fileIds!=null">
+				file_ids = VALUES(file_ids),
+			</if>
+			<if test="bean.draftStatus!=null">
+				draft_status = VALUES(draft_status),
+			</if>
+			<if test="bean.createTime!=null">
+				create_time = VALUES(create_time),
+			</if>
+			<if test="bean.updateTime!=null">
+				update_time = VALUES(update_time),
+			</if>
+		</trim>
+	</insert>
+
+	<!--添加 (批量插入)-->
+	<insert id="insertBatch" parameterType="com.interlude.entity.po.video.VideoDraft" >
+		INSERT INTO video_draft(user_id,video_name,video_cover,description,p_category_id,category_id,video_type,origin_author,origin_url,tags,interaction_settings,file_ids,draft_status,create_time,update_time)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.userId},#{item.videoName},#{item.videoCover},#{item.description},#{item.pCategoryId},#{item.categoryId},#{item.videoType},#{item.originAuthor},#{item.originUrl},#{item.tags},#{item.interactionSettings},#{item.fileIds},#{item.draftStatus},#{item.createTime},#{item.updateTime})
+		</foreach>
+	</insert>
+
+	<!--批量插入或者更新-->
+	<insert id="insertOrUpdateBatch" parameterType="com.interlude.entity.po.video.VideoDraft" >
+		INSERT INTO video_draft(user_id,video_name,video_cover,description,p_category_id,category_id,video_type,origin_author,origin_url,tags,interaction_settings,file_ids,draft_status,create_time,update_time)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.userId},#{item.videoName},#{item.videoCover},#{item.description},#{item.pCategoryId},#{item.categoryId},#{item.videoType},#{item.originAuthor},#{item.originUrl},#{item.tags},#{item.interactionSettings},#{item.fileIds},#{item.draftStatus},#{item.createTime},#{item.updateTime})
+		</foreach>
+		on DUPLICATE key update
+		draft_id = VALUES(draft_id),user_id = VALUES(user_id),video_name = VALUES(video_name),video_cover = VALUES(video_cover),description = VALUES(description),p_category_id = VALUES(p_category_id),category_id = VALUES(category_id),video_type = VALUES(video_type),origin_author = VALUES(origin_author),origin_url = VALUES(origin_url),tags = VALUES(tags),interaction_settings = VALUES(interaction_settings),file_ids = VALUES(file_ids),draft_status = VALUES(draft_status),create_time = VALUES(create_time),update_time = VALUES(update_time)
+	</insert>
+
+	<!-- 根据DraftId查询 -->
+	<select id="selectByDraftId" resultMap="base_result_map">
+		select <include refid="base_column_list"/> from video_draft where draft_id=#{draftId}
+	</select>
+
+	<!-- 根据DraftId更新 -->
+	<update id="updateByDraftId" parameterType="com.interlude.entity.po.video.VideoDraft">
+		update video_draft
+		<set>
+			<if test="bean.draftId != null" >
+				draft_id = #{bean.draftId},
+			</if>
+			<if test="bean.userId != null" >
+				user_id = #{bean.userId},
+			</if>
+			<if test="bean.videoName != null" >
+				video_name = #{bean.videoName},
+			</if>
+			<if test="bean.videoCover != null" >
+				video_cover = #{bean.videoCover},
+			</if>
+			<if test="bean.description != null" >
+				description = #{bean.description},
+			</if>
+			<if test="bean.pCategoryId != null" >
+				p_category_id = #{bean.pCategoryId},
+			</if>
+			<if test="bean.categoryId != null" >
+				category_id = #{bean.categoryId},
+			</if>
+			<if test="bean.videoType != null" >
+				video_type = #{bean.videoType},
+			</if>
+			<if test="bean.originAuthor != null" >
+				origin_author = #{bean.originAuthor},
+			</if>
+			<if test="bean.originUrl != null" >
+				origin_url = #{bean.originUrl},
+			</if>
+			<if test="bean.tags != null" >
+				tags = #{bean.tags},
+			</if>
+			<if test="bean.interactionSettings != null" >
+				interaction_settings = #{bean.interactionSettings},
+			</if>
+			<if test="bean.fileIds != null" >
+				file_ids = #{bean.fileIds},
+			</if>
+			<if test="bean.draftStatus != null" >
+				draft_status = #{bean.draftStatus},
+			</if>
+			<if test="bean.createTime != null" >
+				create_time = #{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null" >
+				update_time = #{bean.updateTime},
+			</if>
+
+		</set>
+		where draft_id=#{draftId}
+	</update>
+
+	<!-- 根据DraftId删除 -->
+	<delete id="deleteByDraftId">
+		delete from video_draft where draft_id=#{draftId}
+	</delete>
+
+</mapper>

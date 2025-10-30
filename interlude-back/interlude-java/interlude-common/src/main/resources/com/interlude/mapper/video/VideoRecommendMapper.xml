@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.interlude.mapper.video.VideoRecommendMapper">
+	<!--实体映射-->
+	<resultMap id="base_result_map" type="com.interlude.entity.po.video.VideoRecommend">
+		<!---->
+		<id column="id" property="id"/>
+		<!--视频ID-->
+		<result column="video_id" property="videoId"/>
+		<!--推荐类型（如：0-首页推荐，1-热门推荐等）-->
+		<result column="recommend_type" property="recommendType"/>
+		<!--推荐权重，越大越靠前-->
+		<result column="recommend_weight" property="recommendWeight"/>
+		<!--推荐开始时间-->
+		<result column="start_time" property="startTime"/>
+		<!--推荐结束时间-->
+		<result column="end_time" property="endTime"/>
+		<!--操作员ID-->
+		<result column="operator_id" property="operatorId"/>
+		<!---->
+		<result column="create_time" property="createTime"/>
+		<!---->
+		<result column="update_time" property="updateTime"/>
+	</resultMap>
+	<!--通用测序结果列-->
+	<sql id="base_column_list">
+		id,video_id,recommend_type,recommend_weight,start_time,end_time,operator_id,create_time,update_time
+	</sql>
+
+
+	<!--基础条件查询-->
+	<sql id="base_query_condition">
+		<if test="query.id != null">
+			and id = #{query.id} 
+		</if>
+		<if test="query.videoId != null">
+			and video_id = #{query.videoId} 
+		</if>
+		<if test="query.recommendType != null">
+			and recommend_type = #{query.recommendType} 
+		</if>
+		<if test="query.recommendWeight != null">
+			and recommend_weight = #{query.recommendWeight} 
+		</if>
+		<if test="query.startTime != null">
+			and start_time = #{query.startTime} 
+		</if>
+		<if test="query.endTime != null">
+			and end_time = #{query.endTime} 
+		</if>
+		<if test="query.operatorId != null">
+			and operator_id = #{query.operatorId} 
+		</if>
+		<if test="query.createTime != null">
+			and create_time = #{query.createTime} 
+		</if>
+		<if test="query.updateTime != null">
+			and update_time = #{query.updateTime} 
+		</if>
+	</sql>
+
+	<!--扩展的条件查询-->
+	<sql id="base_query_condition_extend">
+		<if test="query.startTimeStart != null and query.startTimeStart != ''">
+			<![CDATA[ and start_time >= str_to_date(#{query.startTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.startTimeEnd != null and query.startTimeEnd != ''">
+			<![CDATA[ and start_time < date_sub(str_to_date(#{query.startTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+		<if test="query.endTimeStart != null and query.endTimeStart != ''">
+			<![CDATA[ and end_time >= str_to_date(#{query.endTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.endTimeEnd != null and query.endTimeEnd != ''">
+			<![CDATA[ and end_time < date_sub(str_to_date(#{query.endTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+		<if test="query.createTimeStart != null and query.createTimeStart != ''">
+			<![CDATA[ and create_time >= str_to_date(#{query.createTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.createTimeEnd != null and query.createTimeEnd != ''">
+			<![CDATA[ and create_time < date_sub(str_to_date(#{query.createTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+		<if test="query.updateTimeStart != null and query.updateTimeStart != ''">
+			<![CDATA[ and update_time >= str_to_date(#{query.updateTimeStart}, '%Y-%m-%d') ]]>
+		</if>
+		<if test="query.updateTimeEnd != null and query.updateTimeEnd != ''">
+			<![CDATA[ and update_time < date_sub(str_to_date(#{query.updateTimeEnd}, '%Y-%m-%d'),interval -1 day) ]]>
+		</if>
+	</sql>
+
+	<!--扩展的查询条件-->
+	<sql id="query_condition">
+		<where>
+			<include refid="base_query_condition"/>
+			<include refid="base_query_condition_extend"/>
+		</where>
+	</sql>
+
+	<!--查询列表-->
+	<select id="selectList" resultMap="base_result_map">
+		SELECT <include refid="base_column_list"/> FROM video_recommend <include refid="query_condition"/>
+		<if test="query.orderBy != null"> order by ${query.orderBy} </if>
+		<if test="query.simplePage != null"> limit #{query.simplePage.start},#{query.simplePage.end}</if>
+	</select>
+
+	<!--查询数量-->
+	<select id="selectCount" resultType="java.lang.Integer">
+		SELECT count(1) FROM video_recommend <include refid="query_condition"/>
+	</select>
+
+	<!--插入(匹配有值的字段)-->
+	<insert id="insert" parameterType="com.interlude.entity.po.video.VideoRecommend">
+		<selectKey keyProperty = "bean.id" resultType = "Long" order="AFTER">
+			SELECT LAST_INSERT_ID()
+		</selectKey>		INSERT INTO video_recommend
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.id != null">
+				id,
+			</if>
+			<if test="bean.videoId != null">
+				video_id,
+			</if>
+			<if test="bean.recommendType != null">
+				recommend_type,
+			</if>
+			<if test="bean.recommendWeight != null">
+				recommend_weight,
+			</if>
+			<if test="bean.startTime != null">
+				start_time,
+			</if>
+			<if test="bean.endTime != null">
+				end_time,
+			</if>
+			<if test="bean.operatorId != null">
+				operator_id,
+			</if>
+			<if test="bean.createTime != null">
+				create_time,
+			</if>
+			<if test="bean.updateTime != null">
+				update_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.id != null">
+				#{bean.id},
+			</if>
+			<if test="bean.videoId != null">
+				#{bean.videoId},
+			</if>
+			<if test="bean.recommendType != null">
+				#{bean.recommendType},
+			</if>
+			<if test="bean.recommendWeight != null">
+				#{bean.recommendWeight},
+			</if>
+			<if test="bean.startTime != null">
+				#{bean.startTime},
+			</if>
+			<if test="bean.endTime != null">
+				#{bean.endTime},
+			</if>
+			<if test="bean.operatorId != null">
+				#{bean.operatorId},
+			</if>
+			<if test="bean.createTime != null">
+				#{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null">
+				#{bean.updateTime},
+			</if>
+		</trim>
+	</insert>
+
+	<!-- 插入或者更新 (匹配有值的字段) -->
+	<insert id="insertOrUpdate" parameterType="com.interlude.entity.po.video.VideoRecommend">
+		INSERT INTO video_recommend
+		<trim  prefix="(" suffix=")" suffixOverrides=",">
+			<if test="bean.id != null">
+				id,
+			</if>
+			<if test="bean.videoId != null">
+				video_id,
+			</if>
+			<if test="bean.recommendType != null">
+				recommend_type,
+			</if>
+			<if test="bean.recommendWeight != null">
+				recommend_weight,
+			</if>
+			<if test="bean.startTime != null">
+				start_time,
+			</if>
+			<if test="bean.endTime != null">
+				end_time,
+			</if>
+			<if test="bean.operatorId != null">
+				operator_id,
+			</if>
+			<if test="bean.createTime != null">
+				create_time,
+			</if>
+			<if test="bean.updateTime != null">
+				update_time,
+			</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="bean.id != null">
+				#{bean.id},
+			</if>
+			<if test="bean.videoId != null">
+				#{bean.videoId},
+			</if>
+			<if test="bean.recommendType != null">
+				#{bean.recommendType},
+			</if>
+			<if test="bean.recommendWeight != null">
+				#{bean.recommendWeight},
+			</if>
+			<if test="bean.startTime != null">
+				#{bean.startTime},
+			</if>
+			<if test="bean.endTime != null">
+				#{bean.endTime},
+			</if>
+			<if test="bean.operatorId != null">
+				#{bean.operatorId},
+			</if>
+			<if test="bean.createTime != null">
+				#{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null">
+				#{bean.updateTime},
+			</if>
+		</trim>
+		on DUPLICATE key update
+		<trim  prefix="" suffix="" suffixOverrides=",">
+
+			<if test="bean.recommendWeight!=null">
+				recommend_weight = VALUES(recommend_weight),
+			</if>
+			<if test="bean.startTime!=null">
+				start_time = VALUES(start_time),
+			</if>
+			<if test="bean.endTime!=null">
+				end_time = VALUES(end_time),
+			</if>
+			<if test="bean.operatorId!=null">
+				operator_id = VALUES(operator_id),
+			</if>
+			<if test="bean.createTime!=null">
+				create_time = VALUES(create_time),
+			</if>
+			<if test="bean.updateTime!=null">
+				update_time = VALUES(update_time),
+			</if>
+		</trim>
+	</insert>
+
+	<!--添加 (批量插入)-->
+	<insert id="insertBatch" parameterType="com.interlude.entity.po.video.VideoRecommend" >
+		INSERT INTO video_recommend(video_id,recommend_type,recommend_weight,start_time,end_time,operator_id,create_time,update_time)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.videoId},#{item.recommendType},#{item.recommendWeight},#{item.startTime},#{item.endTime},#{item.operatorId},#{item.createTime},#{item.updateTime})
+		</foreach>
+	</insert>
+
+	<!--批量插入或者更新-->
+	<insert id="insertOrUpdateBatch" parameterType="com.interlude.entity.po.video.VideoRecommend" >
+		INSERT INTO video_recommend(video_id,recommend_type,recommend_weight,start_time,end_time,operator_id,create_time,update_time)values
+		<foreach collection="list" item="item" separator=",">
+			(#{item.videoId},#{item.recommendType},#{item.recommendWeight},#{item.startTime},#{item.endTime},#{item.operatorId},#{item.createTime},#{item.updateTime})
+		</foreach>
+		on DUPLICATE key update
+		id = VALUES(id),video_id = VALUES(video_id),recommend_type = VALUES(recommend_type),recommend_weight = VALUES(recommend_weight),start_time = VALUES(start_time),end_time = VALUES(end_time),operator_id = VALUES(operator_id),create_time = VALUES(create_time),update_time = VALUES(update_time)
+	</insert>
+
+	<!-- 根据Id查询 -->
+	<select id="selectById" resultMap="base_result_map">
+		select <include refid="base_column_list"/> from video_recommend where id=#{id}
+	</select>
+
+	<!-- 根据Id更新 -->
+	<update id="updateById" parameterType="com.interlude.entity.po.video.VideoRecommend">
+		update video_recommend
+		<set>
+			<if test="bean.id != null" >
+				id = #{bean.id},
+			</if>
+			<if test="bean.videoId != null" >
+				video_id = #{bean.videoId},
+			</if>
+			<if test="bean.recommendType != null" >
+				recommend_type = #{bean.recommendType},
+			</if>
+			<if test="bean.recommendWeight != null" >
+				recommend_weight = #{bean.recommendWeight},
+			</if>
+			<if test="bean.startTime != null" >
+				start_time = #{bean.startTime},
+			</if>
+			<if test="bean.endTime != null" >
+				end_time = #{bean.endTime},
+			</if>
+			<if test="bean.operatorId != null" >
+				operator_id = #{bean.operatorId},
+			</if>
+			<if test="bean.createTime != null" >
+				create_time = #{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null" >
+				update_time = #{bean.updateTime},
+			</if>
+
+		</set>
+		where id=#{id}
+	</update>
+
+	<!-- 根据Id删除 -->
+	<delete id="deleteById">
+		delete from video_recommend where id=#{id}
+	</delete>
+
+
+	<!-- 根据VideoIdAndRecommendType查询 -->
+	<select id="selectByVideoIdAndRecommendType" resultMap="base_result_map">
+		select <include refid="base_column_list"/> from video_recommend where video_id=#{videoId} and recommend_type=#{recommendType}
+	</select>
+
+	<!-- 根据VideoIdAndRecommendType更新 -->
+	<update id="updateByVideoIdAndRecommendType" parameterType="com.interlude.entity.po.video.VideoRecommend">
+		update video_recommend
+		<set>
+			<if test="bean.id != null" >
+				id = #{bean.id},
+			</if>
+			<if test="bean.videoId != null" >
+				video_id = #{bean.videoId},
+			</if>
+			<if test="bean.recommendType != null" >
+				recommend_type = #{bean.recommendType},
+			</if>
+			<if test="bean.recommendWeight != null" >
+				recommend_weight = #{bean.recommendWeight},
+			</if>
+			<if test="bean.startTime != null" >
+				start_time = #{bean.startTime},
+			</if>
+			<if test="bean.endTime != null" >
+				end_time = #{bean.endTime},
+			</if>
+			<if test="bean.operatorId != null" >
+				operator_id = #{bean.operatorId},
+			</if>
+			<if test="bean.createTime != null" >
+				create_time = #{bean.createTime},
+			</if>
+			<if test="bean.updateTime != null" >
+				update_time = #{bean.updateTime},
+			</if>
+
+		</set>
+		where video_id=#{videoId} and recommend_type=#{recommendType}
+	</update>
+
+	<!-- 根据VideoIdAndRecommendType删除 -->
+	<delete id="deleteByVideoIdAndRecommendType">
+		delete from video_recommend where video_id=#{videoId} and recommend_type=#{recommendType}
+	</delete>
+
+</mapper>
