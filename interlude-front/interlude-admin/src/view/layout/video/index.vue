@@ -96,6 +96,7 @@
           :http-request="addFile"
           :before-upload="startUpload"
           :accept="proxy.videoAccept"
+          :limit="3"
         >
         </el-upload>
         <div class="iconfont icon-jia"></div>
@@ -141,7 +142,11 @@
       </el-card>
     </div>
   </div>
-  <videoEdit v-if="isUploadvideo" ref="videoEditRef"></videoEdit>
+  <videoEdit
+    v-if="isUploadvideo"
+    ref="videoEditRef"
+    @closeVideoEdit="changeUploadvideo"
+  ></videoEdit>
 </template>
 
 <script setup lang="ts">
@@ -239,11 +244,11 @@ const addFile = (file: Object) => {
   })
 }
 
-const startUpload = (file: Object) => {
-  console.log('12312223')
-
-  console.log(file)
+const changeUploadvideo = () => {
+  isUploadvideo.value = !isUploadvideo.value
 }
+
+const startUpload = (file: Object) => {}
 
 // 用户信息表格数据
 const tableData = ref([])

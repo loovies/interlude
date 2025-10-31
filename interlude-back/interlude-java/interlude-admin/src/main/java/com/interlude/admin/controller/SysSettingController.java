@@ -16,6 +16,7 @@ public class SysSettingController extends ABaseController{
     @Resource
     private RedisComponent redisComponent;
 
+    @RequestMapping("/loadSysSetting")
     public ResponseVO getSysSettingInfo(){
         return getSuccessResponseVO(redisComponent.getSysSetting());
     }

@@ -6,6 +6,34 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "792206",
+      "name": "uploading-上传",
+      "font_class": "uploadingshangchuan",
+      "unicode": "e61a",
+      "unicode_decimal": 58906
+    },
+    {
+      "icon_id": "4766953",
+      "name": "error",
+      "font_class": "error",
+      "unicode": "e7df",
+      "unicode_decimal": 59359
+    },
+    {
+      "icon_id": "15838532",
+      "name": "success",
+      "font_class": "success",
+      "unicode": "e67f",
+      "unicode_decimal": 59007
+    },
+    {
+      "icon_id": "33307984",
+      "name": "icon_wating",
+      "font_class": "icon_wating",
+      "unicode": "e6d4",
+      "unicode_decimal": 59092
+    },
+    {
       "icon_id": "39881016",
       "name": "视频管理",
       "font_class": "shipinguanli",

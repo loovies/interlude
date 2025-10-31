@@ -54,6 +54,12 @@ app.config.globalProperties.imageAccept = '.jpg,.png,.gif,.bmp,.webp'
 //视频后缀
 app.config.globalProperties.videoAccept = '.mp4,.avi,.rmvb,.mkv,.mov'
 
+//最多同时上传的数量
+app.config.globalProperties.maxUploading = 3
+
+//最大分片大小 2MB
+app.config.globalProperties.chunkSize = 2 * 1024 * 1024
+
 app.use(ElementPlus)
 
 const pinia = createPinia()

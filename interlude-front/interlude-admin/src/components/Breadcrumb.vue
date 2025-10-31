@@ -30,7 +30,7 @@ const router = useRouter()
 
 const { proxy } = getCurrentInstance()
 
-import { useBreadcrumbListStore } from '../stores/breadcrumb'
+import { useBreadcrumbListStore } from '../stores/breadcrumbStore'
 const breadcrumbStore: any = useBreadcrumbListStore()
 
 const props: any = defineProps({

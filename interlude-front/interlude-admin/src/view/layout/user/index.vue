@@ -227,9 +227,6 @@ const { proxy } = getCurrentInstance()
 const route = useRoute()
 const router = useRouter()
 
-import { useBreadcrumbListStore } from '../../../stores/breadcrumb'
-const breadcrumbStore: any = useBreadcrumbListStore()
-
 const formData = ref<Record<string, any>>({}) // 键值对象
 const formDataRef = ref()
 

@@ -23,6 +23,9 @@ const Api = {
   //file
   uploadImage: '/file/uploadImage',
   sourcePath: '/api/file/getResource?sourceName=',
+
+  //系统
+  getSysSetting: '/sysSetting/loadSysSetting',
 }
 
 //上传图片

@@ -73,8 +73,11 @@ const { proxy } = getCurrentInstance()
 import { useLoginStore } from '../../stores/loginStore'
 const loginStore = useLoginStore()
 
-import { useBreadcrumbListStore } from '../../stores/breadcrumb'
+import { useBreadcrumbListStore } from '../../stores/breadcrumbStore'
 const breadcrumbStore: any = useBreadcrumbListStore()
+
+import { useSysSettingStore } from '../../stores/sysSettingStore'
+const sysSettingStore: any = useSysSettingStore()
 
 const route = useRoute()
 const router = useRouter()
@@ -116,7 +119,19 @@ const submitFrom = (): void => {
     VueCookies.set('account', res.data.phone)
     loginStore.saveUserInfo(res.data)
     breadcrumbStore.saveBreadcrumbList([])
+    //
+    saveSysSettingInfo()
   })
+}
+
+const saveSysSettingInfo = async (): Promise<void> => {
+  let result = await proxy.$Request({
+    url: proxy.$Api.getSysSetting,
+  })
+  if (!result) {
+    return
+  }
+  sysSettingStore.saveSettingList(result.data)
 }
 
 const changeCheckCode = async (): Promise<void> => {
