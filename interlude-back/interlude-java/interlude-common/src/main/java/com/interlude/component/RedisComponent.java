@@ -1,13 +1,20 @@
 package com.interlude.component;
 
+import com.interlude.entity.config.AppConfig;
 import com.interlude.entity.constants.Constants;
 import com.interlude.entity.dto.SysSettingDto;
 import com.interlude.entity.dto.TokenUserInfoDto;
+import com.interlude.entity.dto.UploadResultDto;
 import com.interlude.entity.po.CategoryInfo;
+import com.interlude.enums.DateTimePatterEnum;
 import com.interlude.redis.RedisUtils;
+import com.interlude.utils.DateUtils;
+import com.interlude.utils.StringTools;
 import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.Resource;
+import java.io.File;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,6 +23,9 @@ public class RedisComponent {
 
     @Resource
     private RedisUtils redisUtils;
+
+    @Resource
+    private AppConfig appConfig;
 
     // 保存验证码 保存6分钟
     public String saveCheckCode(String code){
@@ -72,5 +82,26 @@ public class RedisComponent {
             settingDto = new SysSettingDto();
         }
         return  settingDto;
+    }
+
+    public String savePreVideoFileInfo(String userId, String fileName, Integer chunks) {
+
+        String uploadId = StringTools.getRandomString(15);
+        UploadResultDto uploadResultDto = new UploadResultDto();
+        uploadResultDto.setUploadId(uploadId);
+        uploadResultDto.setFileName(fileName);
+        uploadResultDto.setChunks(chunks);
+        uploadResultDto.setChunkIndex(0);
+
+        String day = DateUtils.format(new Date(), DateTimePatterEnum.YYYYMMDD.getPattern());
+        String filePath = day + "/"+userId + uploadId;
+        String folder = appConfig.getProjectFolder() + Constants.FILE_FOLDER + Constants.FILE_FOLDER_TEMP + filePath;
+        File file = new File(folder);
+        if(!file.exists()){
+            file.mkdirs();
+        }
+        uploadResultDto.setFilePath(filePath);
+        redisUtils.setex(Constants.REDIS_KEY_UPLOADING_FILE + userId + uploadId,uploadResultDto,Constants.REDIS_TIME_ONE_DAY);
+        return uploadId;
     }
 }

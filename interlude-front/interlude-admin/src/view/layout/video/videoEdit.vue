@@ -1,5 +1,5 @@
 <template>
-  <div>faseufuseafhioashfiosehfioase</div>
+  <div></div>
 </template>
 
 <script setup lang="ts">
@@ -120,7 +120,13 @@ const uploadVideo4Draft = (uid: number, chunkIndex: number): Promise<void> => {
   // 设置分片索引
   chunkIndex = chunkIndex ? chunkIndex : 0
   const file = currentFile.file
-  console.log(file)
+  const fileSize = currentFile.totalSize
+  // 用 文件大小 除 每个分片的规定大小 向上取整得总分片得数量
+  const chunks = Math.ceil(fileSize / CHUNK_SIZE) // 当前视频的分片数量
+
+  // 如果文件没上传id 就上传视频, 并保存草稿表
+  if (!currentFile.uploadId) {
+  }
 }
 
 defineExpose({

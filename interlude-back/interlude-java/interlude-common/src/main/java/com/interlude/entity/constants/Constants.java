@@ -30,4 +30,5 @@ public class Constants {
 
     // 系统
     public static final String REDIS_SYS_SETTING_KEY = REDIS_PREFIX_NAME + "setting:";
+    public static final String REDIS_KEY_UPLOADING_FILE = REDIS_PREFIX_NAME + "uploading:";
 }

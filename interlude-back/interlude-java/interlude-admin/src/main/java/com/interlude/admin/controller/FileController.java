@@ -1,7 +1,9 @@
 package com.interlude.admin.controller;
 
+import com.interlude.component.RedisComponent;
 import com.interlude.entity.config.AppConfig;
 import com.interlude.entity.constants.Constants;
+import com.interlude.entity.dto.TokenUserInfoDto;
 import com.interlude.entity.vo.ResponseVO;
 import com.interlude.enums.DateTimePatterEnum;
 import com.interlude.enums.ResponseCodeEnum;
@@ -9,6 +11,7 @@ import com.interlude.exception.BusinessException;
 import com.interlude.utils.DateUtils;
 import com.interlude.utils.StringTools;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,6 +34,8 @@ public class FileController extends ABaseController{
 
     @Resource
     private AppConfig appConfig;
+    @Autowired
+    private RedisComponent redisComponent;
 
     /**
      * 获取资源
@@ -68,5 +73,13 @@ public class FileController extends ABaseController{
             // TODO 生成缩略图
         }
         return getSuccessResponseVO(Constants.FILE_COVER + month + "/" + realFileName);
+    }
+
+    // 视频预上传
+    @RequestMapping("/preUploadVideo")
+    public ResponseVO preUploadVideo(@NotNull String fileName,@NotNull Integer chunks){
+        TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
+        String uploadId = redisComponent.savePreVideoFileInfo(tokenUserInfo.getUserId(),fileName,chunks);
+        return getSuccessResponseVO(uploadId);
     }
 }
