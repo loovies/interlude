@@ -1,5 +1,5 @@
 <template>
-  <div class="video-panel" v-if="isUploadvideo">
+  <div class="video-panel" v-if="!isUploadvideo">
     <div class="user-search" v-if="userSearchDisplay">
       <el-card :class="['user-search-card', isShrink ? 'user-shrink-show' : 'user-shrink']">
         <el-form
@@ -87,7 +87,7 @@
           </div>
         </el-form>
       </el-card>
-      <el-card class="box-card">
+      <el-card class="box-card" v-if="fileList.length <= 0">
         <el-upload
           class="uploader-start"
           multiple
@@ -99,6 +99,9 @@
           :limit="3"
         >
         </el-upload>
+        <div class="iconfont icon-jia"></div>
+      </el-card>
+      <el-card v-else class="box-card" @click="editVideo()">
         <div class="iconfont icon-jia"></div>
       </el-card>
     </div>
@@ -143,9 +146,10 @@
     </div>
   </div>
   <videoEdit
-    v-if="!isUploadvideo"
+    v-if="isUploadvideo"
     ref="videoEditRef"
     @closeVideoEdit="changeUploadvideo"
+    :videoInfo="fileList"
   ></videoEdit>
 </template>
 
@@ -235,6 +239,7 @@ const columns = [
 
 // 判断是否为视频编辑页面
 let isUploadvideo: Ref<boolean> = ref(false)
+let fileList = ref([])
 let videoEditRef = ref()
 
 const addFile = (file: Object) => {
@@ -244,8 +249,25 @@ const addFile = (file: Object) => {
   })
 }
 
+const editVideo = () => {
+  isUploadvideo.value = true
+}
+
 const changeUploadvideo = () => {
   isUploadvideo.value = !isUploadvideo.value
+  selectDarftInfo()
+}
+
+onMounted(() => {
+  selectDarftInfo()
+})
+
+const selectDarftInfo = async (): Promise<void> => {
+  let res = await proxy.$Request({
+    url: proxy.$Api.getDraftInfoByUserId,
+  })
+  if (!res) return
+  fileList.value = res.data ? res.data : []
 }
 
 const startUpload = (file: Object) => {}
@@ -263,7 +285,6 @@ const loadUserInfoList = async (): Promise<void> => {
 }
 
 const MaxHeight: Ref<number> = ref(565)
-
 const isShrink: Ref<boolean> = ref(false)
 
 // 收起/展开搜索框

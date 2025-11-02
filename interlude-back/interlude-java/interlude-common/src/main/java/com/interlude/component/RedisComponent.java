@@ -111,8 +111,18 @@ public class RedisComponent {
         return (UploadResultDto) redisUtils.get(Constants.REDIS_KEY_UPLOADING_FILE+userId+uploadId);
     }
 
+    // 获取上传的文件信息by key
+    public UploadResultDto getUploadVideoFileInfoByKey(String key) {
+        return (UploadResultDto) redisUtils.get(key);
+    }
+
     // 更新上传文件信息
     public void uploadVideoFileInfo(String userId, UploadResultDto uploadResultDto) {
         redisUtils.setex(Constants.REDIS_KEY_UPLOADING_FILE+userId+uploadResultDto.getUploadId(),uploadResultDto,Constants.REDIS_TIME_ONE_DAY);
+    }
+
+    // 删除上传文件信息
+    public void delVideoFileInfo(String userId,String uploadId){
+        redisUtils.delete(Constants.REDIS_KEY_UPLOADING_FILE + userId + uploadId);
     }
 }

@@ -25,9 +25,14 @@ const Api = {
   sourcePath: '/api/file/getResource?sourceName=',
   preUploadVideo: '/file/preUploadVideo',
   uploadVideo: '/file/uploadVideo',
+  delUploadVideo: '/file/delUploadVideo',
 
   //系统
   getSysSetting: '/sysSetting/loadSysSetting',
+
+  //草稿
+  getDraftInfoByUserId: '/draft/getDraftInfoByUserId',
+  updateDraftInfo: '/draft/updateDraftInfo',
 }
 
 //上传图片

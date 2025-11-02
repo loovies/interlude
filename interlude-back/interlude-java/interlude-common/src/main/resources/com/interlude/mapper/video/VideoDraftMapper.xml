@@ -372,6 +372,10 @@
 		select <include refid="base_column_list"/> from video_draft where draft_key=#{draftKey}
 	</select>
 
+	<select id="selectByUserId" resultMap="base_result_map">
+		select <include refid="base_column_list"/> from video_draft where user_id=#{userId}
+	</select>
+
 	<!-- 根据DraftKey更新 -->
 	<update id="updateByDraftKey" parameterType="com.interlude.entity.po.video.VideoDraft">
 		update video_draft

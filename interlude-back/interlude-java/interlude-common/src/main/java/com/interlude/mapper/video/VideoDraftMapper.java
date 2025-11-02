@@ -1,7 +1,10 @@
 package com.interlude.mapper.video;
 
+import com.interlude.entity.po.video.VideoDraft;
 import com.interlude.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * @Description:视频草稿表 Mapper
@@ -39,4 +42,5 @@ public interface VideoDraftMapper<T, P> extends BaseMapper {
 	 */
 	Integer deleteByDraftKey(@Param("draftKey") String draftKey);
 
+	List<VideoDraft> selectByUserId(@Param("userId") String userId);
 }

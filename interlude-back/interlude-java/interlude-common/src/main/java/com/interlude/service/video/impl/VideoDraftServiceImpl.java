@@ -117,4 +117,9 @@ public class VideoDraftServiceImpl implements VideoDraftService{
 	public Integer deleteVideoDraftByDraftKey(String draftKey) {
 		return this.videoDraftMapper.deleteByDraftKey(draftKey);
 	}
+
+	@Override
+	public  List<VideoDraft> getVideoDraftByUserId(String userId) {
+		return this.videoDraftMapper.selectByUserId(userId);
+	}
 }

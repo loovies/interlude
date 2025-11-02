@@ -14,10 +14,13 @@ public class UploadResultDto implements Serializable {
 
     private String fileName;
     private String uploadId;    // 文件上传id
+    private Long uid;
     private String filePath;
     private Integer chunkIndex; // 分片索引
     private Integer chunks; // 总分片数量
     private Long fileSize = 0L;
+    private Long uploadSize = 0L;
+    private String status;
 
     // 内容相关
     private String description;  //视频描述内容
@@ -30,11 +33,35 @@ public class UploadResultDto implements Serializable {
     private String interactionSettings;
 
     //上传进度
-    private Integer uploadProgress = 0;
+    private Integer uploadPercent = 0;
 
     // 临时数据
     private String tempData;    // 临时存储的编辑数据
     private String last_edit_content;  // 最后一次编辑的未保存内容
+
+    public Long getUploadSize() {
+        return uploadSize;
+    }
+
+    public void setUploadSize(Long uploadSize) {
+        this.uploadSize = uploadSize;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Long getUid() {
+        return uid;
+    }
+
+    public void setUid(Long uid) {
+        this.uid = uid;
+    }
 
     public String getFileName() {
         return fileName;
@@ -132,12 +159,12 @@ public class UploadResultDto implements Serializable {
         this.interactionSettings = interactionSettings;
     }
 
-    public Integer getUploadProgress() {
-        return uploadProgress;
+    public Integer getUploadPercent() {
+        return uploadPercent;
     }
 
-    public void setUploadProgress(Integer uploadProgress) {
-        this.uploadProgress = uploadProgress;
+    public void setUploadPercent(Integer uploadPercent) {
+        this.uploadPercent = uploadPercent;
     }
 
     public String getTempData() {

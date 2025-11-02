@@ -72,4 +72,5 @@ public interface VideoDraftService{
 	 */
 	Integer deleteVideoDraftByDraftKey(String draftKey);
 
+	List<VideoDraft> getVideoDraftByUserId(String userId);
 }

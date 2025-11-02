@@ -1,11 +1,88 @@
 <template>
   <div class="videoEditContantor">
-    <el-button type="primary">
+    <el-button type="primary" @click="returnVideoEdit()">
       <i class="iconfont icon-fanhui"></i>
       返回视频管理</el-button
     >
     <div class="file-list" v-draggable="[fileList, { animation: 150, handle: '.video-p' }]">
-      <div class="file-item" v-for="(item, index) in fileList" :key="index"></div>
+      <div class="file-item" v-for="(item, index) in fileList" :key="index">
+        <el-card class="file-box-card">
+          <div class="video-p">
+            <div class="iconfont icon-video"></div>
+          </div>
+          <div class="video-info">
+            <div class="video-title">
+              <div class="upload-info">
+                <div class="title">
+                  <el-input
+                    v-show="item.edit"
+                    v-model="item.fileName"
+                    :id="'file-input' + item.uid"
+                    class="title-input"
+                    size="small"
+                    @blur="endEdit(index)"
+                  ></el-input>
+                  <div v-show="!item.edit" class="title-show" @click="editFileName(index)">
+                    {{ item.fileName }}
+                  </div>
+                  <div class="upload-status">
+                    <span v-if="item.status == 'uploading'">
+                      已上传: {{ proxy.$Utils.size2Str(item.uploadSize) }}/{{
+                        proxy.$Utils.size2Str(item.fileSize)
+                      }}
+                    </span>
+                    <span
+                      v-else
+                      :class="['iconfont', 'icon-' + STATUS[item.status].icon]"
+                      :style="{ color: STATUS[item.status].color }"
+                      >{{ STATUS[item.status].desc }}</span
+                    >
+                  </div>
+                </div>
+                <div class="op">
+                  <div class="item percent" v-if="item.status == 'uploading'">
+                    {{ item.uploadPercent }}%
+                  </div>
+                  <template v-if="item.status == 'uploading'">
+                    <div
+                      v-if="item.pause"
+                      class="item iconfont icon-play"
+                      @click="restartUpload(item.uid)"
+                    ></div>
+                    <div
+                      v-else
+                      class="item iconfont icon-pause"
+                      @click="pauseUpload(item.uid)"
+                    ></div>
+                  </template>
+                  <div class="item iconfont icon-guanbi close" @click="delFile(index)"></div>
+                </div>
+                <div
+                  class="video-propgress"
+                  v-if="item.status == 'uploading' || item.status == 'success'"
+                >
+                  <el-progress
+                    :percentage="item.uploadPercent"
+                    :show-text="false"
+                    :stroke-width="3"
+                    :status="item.status == 'uploading' ? '' : 'success'"
+                  ></el-progress>
+                </div>
+              </div>
+            </div>
+          </div>
+        </el-card>
+      </div>
+    </div>
+    <div class="add-video-btn" v-if="fileList.length < MAX_UPLOADING">
+      <el-upload
+        multiple
+        :show-file-list="false"
+        :http-request="addFile"
+        :accept="proxy.videoAccept"
+      >
+        <el-button type="primary" class="addVideo">添加分P</el-button>
+      </el-upload>
     </div>
   </div>
 </template>
@@ -35,13 +112,13 @@ const STATUS = {
     value: 'wating',
     desc: '等待上传',
     color: '#e6a23c',
-    icon: 'wating',
+    icon: 'icon_wating',
   },
   uploading: {
     value: 'uploading',
     desc: '上传中',
     color: '#409eff',
-    icon: 'upload',
+    icon: 'uploadingshangchuan',
   },
   fail: {
     value: 'fail',
@@ -57,16 +134,28 @@ const STATUS = {
   },
 }
 
+const props = defineProps({
+  videoInfo: {
+    type: Array,
+    default: [],
+  },
+})
+
 // 文件列表
-let fileList: Ref<Array<any>> = ref([])
+let fileList: Ref<Array<any>> = ref(props.videoInfo?.length == 0 ? [] : props.videoInfo)
 
 // 分片大小
 const CHUNK_SIZE = proxy.chunkSize
 
 // 同时最大上传数量
 const MAX_UPLOADING = proxy.maxUploading
+const MAX_FILELIST = proxy.maxFileListNumber
 
 const emit = defineEmits(['closeVideoEdit'])
+
+const returnVideoEdit = () => {
+  emit('closeVideoEdit')
+}
 
 const uploadFile = (file: Object) => {
   file = file.file
@@ -80,21 +169,25 @@ const uploadFile = (file: Object) => {
     fileName: fileName,
     status: STATUS.wating.value,
     uploadSize: 0, // 上传大小
-    totalSize: file.size,
+    fileSize: file.size,
     uploadPercent: 0, // 上传百分比
     pause: false,
     chunkIndex: 0, // 分片索引
     errorMsg: null,
   }
+  if (fileList.value.length == MAX_FILELIST) {
+    proxy.$Message.warning('超出最大上传文件数量' + MAX_FILELIST)
+    return
+  }
   fileList.value.push(fileItem)
   // 判断文件大小是否为0
-  if (fileItem.totalSize == 0) {
+  if (fileItem.fileSize == 0) {
     proxy.$Message.error(STATUS.emptyfile.desc)
     emit('closeVideoEdit')
     return
   }
   //判断文件大小是否超过设定最大值
-  if (fileItem.totalSize > sysSettingStore.sysSetting.videoSize * 1024 * 1024) {
+  if (fileItem.fileSize > sysSettingStore.sysSetting.videoSize * 1024 * 1024) {
     proxy.$Message.error(STATUS.largefile.desc)
     emit('closeVideoEdit')
     return
@@ -128,7 +221,7 @@ const uploadVideo4Draft = async (uid: number, chunkIndex: number): Promise<void>
   // 设置分片索引
   chunkIndex = chunkIndex ? chunkIndex : 0
   const file = currentFile.file
-  const fileSize = currentFile.totalSize
+  const fileSize = currentFile.fileSize
   // 用 文件大小 除 每个分片的规定大小 向上取整得总分片得数量
   const chunks = Math.ceil(fileSize / CHUNK_SIZE) // 当前视频的分片数量
 
@@ -175,6 +268,9 @@ const uploadVideo4Draft = async (uid: number, chunkIndex: number): Promise<void>
         file: chunkFile,
         chunksIndex: i,
         uploadId: currentFile.uploadId,
+        uid: file.uid,
+        status: currentFile.status,
+        uploadSize: currentFile.uploadSize,
       },
       showError: false,
       errorCallback: (errorMsg) => {
@@ -219,9 +315,189 @@ const uploadVideo4Draft = async (uid: number, chunkIndex: number): Promise<void>
   }
 }
 
+// 添加视频
+const addFile = (file: Object) => {
+  uploadFile(file)
+}
+
+// 重命名
+const endEdit = async (index): Promise<void> => {
+  const currentFile = fileList.value[index]
+  console.log(currentFile)
+  const res = await proxy.$Request({
+    url: proxy.$Api.updateDraftInfo,
+    params: {
+      fileName: currentFile.fileName,
+      uploadId: currentFile.uploadId,
+    },
+  })
+  currentFile.edit = false
+}
+
+const editFileName = (index) => {
+  const currentFile = fileList.value[index]
+  currentFile.edit = true
+
+  nextTick(() => {
+    const input = document.getElementById('file-input' + currentFile.uid)
+    input.focus()
+  })
+}
+
+// 暂停上传
+const pauseUpload = (uid: number) => {
+  const currentFile = getFileByuid(uid)
+  currentFile.pause = true
+}
+
+// 开始上传
+const restartUpload = (uid: number) => {
+  const currentFile = getFileByuid(uid)
+  currentFile.pause = false
+  uploadVideo4Draft(uid, currentFile.chunkIndex)
+}
+
+const delFile = async (index): Promise<void> => {
+  const currentFile = fileList.value[index]
+  currentFile.del = true
+  fileList.value.splice(index, 1)
+  // if (currentFile.fileId) {
+  //   return
+  // }
+  await proxy.$Request({
+    url: proxy.$Api.delUploadVideo,
+    params: {
+      uploadId: currentFile.uploadId,
+    },
+    showError: false,
+  })
+}
+
 defineExpose({
   uploadFile,
 })
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.videoEditContantor {
+  .file-list {
+    width: 100%;
+    //background-color: #f6f7f8;
+    border-radius: 5px;
+    .file-item {
+      margin: 20px 40px 20px 40px;
+      .file-box-card {
+        .video-p {
+          flex-shrink: 0;
+          position: relative;
+          width: 44px;
+          height: 40px;
+          cursor: pointer;
+          margin-top: 12px;
+          .icon-video {
+            font-size: 40px;
+            color: #a6def1;
+            padding: 0px;
+          }
+          .video-p-info {
+            width: 35px;
+            line-height: 40px;
+            text-align: center;
+            color: #fff;
+            top: 0px;
+            left: 0px;
+            z-index: 1;
+            position: absolute;
+          }
+        }
+
+        .video-info {
+          flex: 1;
+          min-width: 0;
+          padding-left: 10px;
+          width: 400px;
+          .video-title {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            position: relative;
+
+            .upload-info {
+              width: 100%;
+              min-width: 0;
+              flex: 1;
+
+              .title {
+                width: 100%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                .title-show {
+                  line-height: 35px;
+                  padding-left: 7px;
+                  font-size: 12px;
+                }
+                .title-input {
+                  width: 1400px;
+                  margin: 10px 0px;
+                }
+              }
+              .upload-status {
+                margin-top: 2px;
+                margin-bottom: 6px;
+                color: #999;
+                font-size: 12px;
+                .iconfont {
+                  font-size: 12px;
+                  &::before {
+                    font-size: 16px;
+                    margin-left: 2px;
+                  }
+                }
+              }
+            }
+            .op {
+              margin-left: 10px;
+              display: flex;
+              align-items: center;
+              color: #909090;
+              position: absolute;
+              right: 0;
+              top: 0;
+              .item {
+                margin-right: 10px;
+                font-size: 13px;
+                margin-top: 10px;
+              }
+              .percent {
+                width: 30px;
+              }
+              .iconfont {
+                cursor: pointer;
+                font-size: 20px;
+                color: #909090;
+              }
+            }
+          }
+          .video-progress {
+            margin-top: 5px;
+          }
+        }
+      }
+    }
+  }
+  .add-video-btn {
+    margin-left: 40px;
+    .addVideo {
+      color: #666;
+      background-color: #f5f7f9;
+    }
+  }
+}
+
+:deep(.el-card__body) {
+  width: 100%;
+  display: flex;
+  padding-top: 10px;
+}
+</style>
