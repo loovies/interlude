@@ -7,7 +7,7 @@ import com.interlude.entity.query.video.VideoDraftQuery;
 /**
  * @Description:视频草稿表Service
  * @auther:dazhi
- * @date:2025/10/30
+ * @date:2025/11/01
  */
 
 public interface VideoDraftService{
@@ -56,5 +56,20 @@ public interface VideoDraftService{
 	 * 根据DraftId删除
 	 */
 	Integer deleteVideoDraftByDraftId(Long draftId);
+
+	/**
+	 * 根据DraftKey查询
+	 */
+	VideoDraft getVideoDraftByDraftKey(String draftKey);
+
+	/**
+	 * 根据DraftKey更新
+	 */
+	Integer updateVideoDraftByDraftKey(VideoDraft bean, String draftKey);
+
+	/**
+	 * 根据DraftKey删除
+	 */
+	Integer deleteVideoDraftByDraftKey(String draftKey);
 
 }

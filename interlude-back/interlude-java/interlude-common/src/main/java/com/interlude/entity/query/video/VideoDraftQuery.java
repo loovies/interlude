@@ -8,9 +8,9 @@ import java.util.Date;
 /**
  * @Description:视频草稿表查询对象
  * @auther:dazhi
- * @date:2025/10/30
+ * @date:2025/11/01
  */
-public class VideoDraftQuery extends BaseParam {
+public class VideoDraftQuery extends BaseParam{
 	/**
 	 * 草稿ID
 	 */
@@ -22,25 +22,18 @@ public class VideoDraftQuery extends BaseParam {
 	private Long userId;
 
 	/**
+	 * Redis草稿key
+	 */
+	private String draftKey;
+
+	private String draftKeyFuzzy;
+
+	/**
 	 * 视频名称
 	 */
 	private String videoName;
 
 	private String videoNameFuzzy;
-
-	/**
-	 * 视频封面
-	 */
-	private String videoCover;
-
-	private String videoCoverFuzzy;
-
-	/**
-	 * 视频描述
-	 */
-	private String description;
-
-	private String descriptionFuzzy;
 
 	/**
 	 * 一级分类
@@ -53,52 +46,22 @@ public class VideoDraftQuery extends BaseParam {
 	private Integer categoryId;
 
 	/**
-	 * “1:原创”、“2:转发”
+	 * 1:原创、2:转发
 	 */
 	private Integer videoType;
 
 	/**
-	 * 原作者(转载时使用)
-	 */
-	private String originAuthor;
-
-	private String originAuthorFuzzy;
-
-	/**
-	 * 原视频链接
-	 */
-	private String originUrl;
-
-	private String originUrlFuzzy;
-
-	/**
-	 * 标签列表JSON
-	 */
-	private String tags;
-
-	private String tagsFuzzy;
-
-	/**
-	 * 交互设置
-	 */
-	private String interactionSettings;
-
-	private String interactionSettingsFuzzy;
-
-	/**
-	 * 关联的文件ID列表
-	 */
-	private String fileIds;
-
-	private String fileIdsFuzzy;
-
-	/**
-	 * “1:草稿”、“2:已提交”
+	 * 1:草稿、2:已提交
 	 */
 	private Integer draftStatus;
 
 	/**
-	 * 
+	 * 0:未开始、1:上传中、2:成功、3:失败
+	 */
+	private Integer uploadStatus;
+
+	/**
+	 *
 	 */
 	private Date createTime;
 
@@ -107,7 +70,7 @@ public class VideoDraftQuery extends BaseParam {
 	private String createTimeEnd;
 
 	/**
-	 * 
+	 *
 	 */
 	private Date updateTime;
 
@@ -131,28 +94,20 @@ public class VideoDraftQuery extends BaseParam {
 		return this.userId;
 	}
 
+	public void setDraftKey(String draftKey) {
+		this.draftKey = draftKey;
+	}
+
+	public String getDraftKey() {
+		return this.draftKey;
+	}
+
 	public void setVideoName(String videoName) {
 		this.videoName = videoName;
 	}
 
 	public String getVideoName() {
 		return this.videoName;
-	}
-
-	public void setVideoCover(String videoCover) {
-		this.videoCover = videoCover;
-	}
-
-	public String getVideoCover() {
-		return this.videoCover;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public String getDescription() {
-		return this.description;
 	}
 
 	public void setPCategoryId(Integer pCategoryId) {
@@ -179,52 +134,20 @@ public class VideoDraftQuery extends BaseParam {
 		return this.videoType;
 	}
 
-	public void setOriginAuthor(String originAuthor) {
-		this.originAuthor = originAuthor;
-	}
-
-	public String getOriginAuthor() {
-		return this.originAuthor;
-	}
-
-	public void setOriginUrl(String originUrl) {
-		this.originUrl = originUrl;
-	}
-
-	public String getOriginUrl() {
-		return this.originUrl;
-	}
-
-	public void setTags(String tags) {
-		this.tags = tags;
-	}
-
-	public String getTags() {
-		return this.tags;
-	}
-
-	public void setInteractionSettings(String interactionSettings) {
-		this.interactionSettings = interactionSettings;
-	}
-
-	public String getInteractionSettings() {
-		return this.interactionSettings;
-	}
-
-	public void setFileIds(String fileIds) {
-		this.fileIds = fileIds;
-	}
-
-	public String getFileIds() {
-		return this.fileIds;
-	}
-
 	public void setDraftStatus(Integer draftStatus) {
 		this.draftStatus = draftStatus;
 	}
 
 	public Integer getDraftStatus() {
 		return this.draftStatus;
+	}
+
+	public void setUploadStatus(Integer uploadStatus) {
+		this.uploadStatus = uploadStatus;
+	}
+
+	public Integer getUploadStatus() {
+		return this.uploadStatus;
 	}
 
 	public void setCreateTime(Date createTime) {
@@ -243,68 +166,20 @@ public class VideoDraftQuery extends BaseParam {
 		return this.updateTime;
 	}
 
+	public void setDraftKeyFuzzy(String draftKeyFuzzy) {
+		this.draftKeyFuzzy = draftKeyFuzzy;
+	}
+
+	public String getDraftKeyFuzzy() {
+		return this.draftKeyFuzzy;
+	}
+
 	public void setVideoNameFuzzy(String videoNameFuzzy) {
 		this.videoNameFuzzy = videoNameFuzzy;
 	}
 
 	public String getVideoNameFuzzy() {
 		return this.videoNameFuzzy;
-	}
-
-	public void setVideoCoverFuzzy(String videoCoverFuzzy) {
-		this.videoCoverFuzzy = videoCoverFuzzy;
-	}
-
-	public String getVideoCoverFuzzy() {
-		return this.videoCoverFuzzy;
-	}
-
-	public void setDescriptionFuzzy(String descriptionFuzzy) {
-		this.descriptionFuzzy = descriptionFuzzy;
-	}
-
-	public String getDescriptionFuzzy() {
-		return this.descriptionFuzzy;
-	}
-
-	public void setOriginAuthorFuzzy(String originAuthorFuzzy) {
-		this.originAuthorFuzzy = originAuthorFuzzy;
-	}
-
-	public String getOriginAuthorFuzzy() {
-		return this.originAuthorFuzzy;
-	}
-
-	public void setOriginUrlFuzzy(String originUrlFuzzy) {
-		this.originUrlFuzzy = originUrlFuzzy;
-	}
-
-	public String getOriginUrlFuzzy() {
-		return this.originUrlFuzzy;
-	}
-
-	public void setTagsFuzzy(String tagsFuzzy) {
-		this.tagsFuzzy = tagsFuzzy;
-	}
-
-	public String getTagsFuzzy() {
-		return this.tagsFuzzy;
-	}
-
-	public void setInteractionSettingsFuzzy(String interactionSettingsFuzzy) {
-		this.interactionSettingsFuzzy = interactionSettingsFuzzy;
-	}
-
-	public String getInteractionSettingsFuzzy() {
-		return this.interactionSettingsFuzzy;
-	}
-
-	public void setFileIdsFuzzy(String fileIdsFuzzy) {
-		this.fileIdsFuzzy = fileIdsFuzzy;
-	}
-
-	public String getFileIdsFuzzy() {
-		return this.fileIdsFuzzy;
 	}
 
 	public void setCreateTimeStart(String createTimeStart) {

@@ -96,4 +96,25 @@ public class VideoDraftServiceImpl implements VideoDraftService{
 	public Integer deleteVideoDraftByDraftId(Long draftId) {
 		return this.videoDraftMapper.deleteByDraftId(draftId);
 	}
+
+	/**
+	 * 根据DraftKey查询
+	 */
+	public VideoDraft getVideoDraftByDraftKey(String draftKey) {
+		return this.videoDraftMapper.selectByDraftKey(draftKey);
+	}
+
+	/**
+	 * 根据DraftKey更新
+	 */
+	public Integer updateVideoDraftByDraftKey(VideoDraft bean, String draftKey) {
+		return this.videoDraftMapper.updateByDraftKey(bean, draftKey);
+	}
+
+	/**
+	 * 根据DraftKey删除
+	 */
+	public Integer deleteVideoDraftByDraftKey(String draftKey) {
+		return this.videoDraftMapper.deleteByDraftKey(draftKey);
+	}
 }

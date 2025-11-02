@@ -84,7 +84,8 @@ public class RedisComponent {
         return  settingDto;
     }
 
-    public String savePreVideoFileInfo(String userId, String fileName, Integer chunks) {
+    // 保存预上传文件
+    public UploadResultDto savePreVideoFileInfo(String userId, String fileName, Integer chunks) {
 
         String uploadId = StringTools.getRandomString(15);
         UploadResultDto uploadResultDto = new UploadResultDto();
@@ -102,6 +103,16 @@ public class RedisComponent {
         }
         uploadResultDto.setFilePath(filePath);
         redisUtils.setex(Constants.REDIS_KEY_UPLOADING_FILE + userId + uploadId,uploadResultDto,Constants.REDIS_TIME_ONE_DAY);
-        return uploadId;
+        return uploadResultDto;
+    }
+
+    // 获取上传的文件信息
+    public UploadResultDto getUploadVideoFileInfo(String userId, String uploadId) {
+        return (UploadResultDto) redisUtils.get(Constants.REDIS_KEY_UPLOADING_FILE+userId+uploadId);
+    }
+
+    // 更新上传文件信息
+    public void uploadVideoFileInfo(String userId, UploadResultDto uploadResultDto) {
+        redisUtils.setex(Constants.REDIS_KEY_UPLOADING_FILE+userId+uploadResultDto.getUploadId(),uploadResultDto,Constants.REDIS_TIME_ONE_DAY);
     }
 }

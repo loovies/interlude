@@ -1,5 +1,5 @@
 <template>
-  <div class="video-panel" v-if="!isUploadvideo">
+  <div class="video-panel" v-if="isUploadvideo">
     <div class="user-search" v-if="userSearchDisplay">
       <el-card :class="['user-search-card', isShrink ? 'user-shrink-show' : 'user-shrink']">
         <el-form
@@ -143,7 +143,7 @@
     </div>
   </div>
   <videoEdit
-    v-if="isUploadvideo"
+    v-if="!isUploadvideo"
     ref="videoEditRef"
     @closeVideoEdit="changeUploadvideo"
   ></videoEdit>

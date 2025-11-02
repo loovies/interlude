@@ -24,5 +24,19 @@ public interface VideoDraftMapper<T, P> extends BaseMapper {
 	 */
 	Integer deleteByDraftId(@Param("draftId") Long draftId);
 
+	/**
+	 * 根据DraftKey查询
+	 */
+	T selectByDraftKey(@Param("draftKey") String draftKey);
+
+	/**
+	 * 根据DraftKey更新
+	 */
+	Integer updateByDraftKey(@Param("bean") T t, @Param("draftKey") String draftKey);
+
+	/**
+	 * 根据DraftKey删除
+	 */
+	Integer deleteByDraftKey(@Param("draftKey") String draftKey);
 
 }

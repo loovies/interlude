@@ -3,11 +3,15 @@ package com.interlude.admin.controller;
 import com.interlude.component.RedisComponent;
 import com.interlude.entity.config.AppConfig;
 import com.interlude.entity.constants.Constants;
+import com.interlude.entity.dto.SysSettingDto;
 import com.interlude.entity.dto.TokenUserInfoDto;
+import com.interlude.entity.dto.UploadResultDto;
+import com.interlude.entity.po.video.VideoDraft;
 import com.interlude.entity.vo.ResponseVO;
 import com.interlude.enums.DateTimePatterEnum;
 import com.interlude.enums.ResponseCodeEnum;
 import com.interlude.exception.BusinessException;
+import com.interlude.service.video.VideoDraftService;
 import com.interlude.utils.DateUtils;
 import com.interlude.utils.StringTools;
 import lombok.extern.slf4j.Slf4j;
@@ -34,8 +38,12 @@ public class FileController extends ABaseController{
 
     @Resource
     private AppConfig appConfig;
-    @Autowired
+
+    @Resource
     private RedisComponent redisComponent;
+
+    @Resource
+    private VideoDraftService videoDraftService;
 
     /**
      * 获取资源
@@ -79,7 +87,46 @@ public class FileController extends ABaseController{
     @RequestMapping("/preUploadVideo")
     public ResponseVO preUploadVideo(@NotNull String fileName,@NotNull Integer chunks){
         TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
-        String uploadId = redisComponent.savePreVideoFileInfo(tokenUserInfo.getUserId(),fileName,chunks);
-        return getSuccessResponseVO(uploadId);
+        // 存上传的视频文件到redis
+        UploadResultDto uploadData = redisComponent.savePreVideoFileInfo(tokenUserInfo.getUserId(),fileName,chunks);
+        VideoDraft videoDraft = new VideoDraft();
+        // 保存上传的视频文件到 草稿表
+        if(uploadData != null){
+            videoDraft.setDraftKey(Constants.REDIS_KEY_UPLOADING_FILE+tokenUserInfo.getUserId()+uploadData.getUploadId());
+            videoDraft.setVideoName(uploadData.getFileName());
+            videoDraft.setUserId(tokenUserInfo.getUserId());
+            videoDraftService.add(videoDraft);
+        }
+        return getSuccessResponseVO(uploadData.getUploadId());
+    }
+
+    // 视频上传
+    @RequestMapping("uploadVideo")
+    public ResponseVO uploadVideo(@NotNull MultipartFile file,@NotNull Integer chunksIndex, @NotNull String uploadId) throws IOException {
+        TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
+
+        UploadResultDto uploadResultDto = redisComponent.getUploadVideoFileInfo(tokenUserInfo.getUserId(), uploadId);
+
+        if(uploadResultDto == null){
+            throw new BusinessException("视频不存在请重新上传");
+        }
+        SysSettingDto settingDto = redisComponent.getSysSetting();
+        if(uploadResultDto.getFileSize() > settingDto.getVideoSize() * Constants.MB_SIZE){
+            throw new BusinessException("文件超过大小限制");
+        }
+        // 第一个条件 防止分片乱序上传  当前分片的前一个分片必须已经上传成功 例如3号分片还没上传，不能直接上传4号分片
+        // 第二个条件： 防止超出总分片数,当前分片索引不能超过最大有效索引
+        if((chunksIndex -1) > uploadResultDto.getChunkIndex() || chunksIndex > uploadResultDto.getChunks()-1){
+            throw new BusinessException(ResponseCodeEnum.CODE_600);
+        }
+
+        String folder = appConfig.getProjectFolder() + Constants.FILE_FOLDER + Constants.FILE_FOLDER_TEMP + uploadResultDto.getFilePath();
+        File targetFile = new File(folder + File.separator + chunksIndex);
+        file.transferTo(targetFile);
+        uploadResultDto.setChunkIndex(chunksIndex);
+        uploadResultDto.setFileSize(uploadResultDto.getFileSize() + file.getSize());
+
+        redisComponent.uploadVideoFileInfo(tokenUserInfo.getUserId(),uploadResultDto);
+        return getSuccessResponseVO(null);
     }
 }

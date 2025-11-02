@@ -23,6 +23,8 @@ const Api = {
   //file
   uploadImage: '/file/uploadImage',
   sourcePath: '/api/file/getResource?sourceName=',
+  preUploadVideo: '/file/preUploadVideo',
+  uploadVideo: '/file/uploadVideo',
 
   //系统
   getSysSetting: '/sysSetting/loadSysSetting',
