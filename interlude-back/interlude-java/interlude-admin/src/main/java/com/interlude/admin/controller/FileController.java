@@ -85,25 +85,37 @@ public class FileController extends ABaseController{
 
     // 视频预上传
     @RequestMapping("/preUploadVideo")
-    public ResponseVO preUploadVideo(@NotNull String fileName,@NotNull Integer chunks){
+    public ResponseVO preUploadVideo(@NotNull String fileName,@NotNull Integer chunks, @NotNull String fileIdentifier){
         TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
-        // 存上传的视频文件到redis
-        UploadResultDto uploadData = redisComponent.savePreVideoFileInfo(tokenUserInfo.getUserId(),fileName,chunks);
-        VideoDraft videoDraft = new VideoDraft();
-        // 保存上传的视频文件到 草稿表
-        if(uploadData != null){
-            videoDraft.setDraftKey(Constants.REDIS_KEY_UPLOADING_FILE+tokenUserInfo.getUserId()+uploadData.getUploadId());
-            videoDraft.setVideoName(uploadData.getFileName());
-            videoDraft.setUserId(tokenUserInfo.getUserId());
-            videoDraftService.add(videoDraft);
+
+        VideoDraft idAndFileName = videoDraftService.getVideoDraftByUserIdAndFileName(tokenUserInfo.getUserId(), fileName);
+        if(idAndFileName != null && idAndFileName.getUploadStatus() == 1){
+            UploadResultDto info = redisComponent.getUploadVideoFileInfoByKey(idAndFileName.getDraftKey());
+            if(info != null){
+                if(info.getFileIdentifier().equals(fileIdentifier)){
+                    return getSuccessResponseVO(info);
+                }
+            }
+        }else{
+            // 存上传的视频文件到redis
+            UploadResultDto uploadData = redisComponent.savePreVideoFileInfo(tokenUserInfo.getUserId(),fileName,fileIdentifier,chunks);
+            VideoDraft videoDraft = new VideoDraft();
+            // 保存上传的视频文件到 草稿表
+            if(uploadData != null){
+                videoDraft.setDraftKey(Constants.REDIS_KEY_UPLOADING_FILE+tokenUserInfo.getUserId()+uploadData.getUploadId());
+                videoDraft.setVideoName(uploadData.getFileName());
+                videoDraft.setUserId(tokenUserInfo.getUserId());
+                videoDraftService.add(videoDraft);
+            }
+            return getSuccessResponseVO(uploadData);
         }
-        return getSuccessResponseVO(uploadData.getUploadId());
+        return getSuccessResponseVO(null);
     }
 
     // 视频上传
     @RequestMapping("uploadVideo")
     public ResponseVO uploadVideo(@NotNull MultipartFile file, @NotNull Integer chunksIndex, @NotNull Long uploadSize,
-                                  @NotNull String uploadId, @NotNull Long uid , @NotNull String status) throws IOException {
+                                  @NotNull String uploadId, @NotNull Long uid , @NotNull String status,@NotNull Long fileSize, @NotNull Integer uploadPercent) throws IOException {
         TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
         VideoDraft videoDraft = new VideoDraft();
         UploadResultDto uploadResultDto = redisComponent.getUploadVideoFileInfo(tokenUserInfo.getUserId(), uploadId);
@@ -128,15 +140,16 @@ public class FileController extends ABaseController{
         File targetFile = new File(folder + File.separator + chunksIndex);
         file.transferTo(targetFile);
         uploadResultDto.setChunkIndex(chunksIndex);
-        uploadResultDto.setFileSize(uploadResultDto.getFileSize() + file.getSize());
+        uploadResultDto.setFileSize(fileSize);
         uploadResultDto.setUploadId(uploadId);
         uploadResultDto.setUid(uid);
         uploadResultDto.setStatus(status);
-        uploadResultDto.setUploadPercent(100);
+        uploadResultDto.setUploadPercent(uploadPercent);
         uploadResultDto.setUploadSize(uploadSize);
 
         videoDraft.setUploadStatus(1);
         if(chunksIndex == uploadResultDto.getChunks() - 1){
+            uploadResultDto.setUploadPercent(100);
             uploadResultDto.setStatus("success");
             videoDraft.setUploadStatus(2);
         }

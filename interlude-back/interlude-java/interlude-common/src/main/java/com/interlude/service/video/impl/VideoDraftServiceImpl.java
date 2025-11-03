@@ -83,6 +83,12 @@ public class VideoDraftServiceImpl implements VideoDraftService{
 		return this.videoDraftMapper.selectByDraftId(draftId);
 	}
 
+
+	@Override
+	public VideoDraft getVideoDraftByUserIdAndFileName(String userId, String fileName) {
+		return this.videoDraftMapper.selectByUserIdAndFileName(userId,fileName);
+	}
+
 	/**
 	 * 根据DraftId更新
 	 */

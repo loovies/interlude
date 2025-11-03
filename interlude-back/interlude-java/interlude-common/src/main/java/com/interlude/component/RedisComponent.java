@@ -85,12 +85,13 @@ public class RedisComponent {
     }
 
     // 保存预上传文件
-    public UploadResultDto savePreVideoFileInfo(String userId, String fileName, Integer chunks) {
+    public UploadResultDto savePreVideoFileInfo(String userId, String fileName,String fileIdentifier, Integer chunks) {
 
         String uploadId = StringTools.getRandomString(15);
         UploadResultDto uploadResultDto = new UploadResultDto();
         uploadResultDto.setUploadId(uploadId);
         uploadResultDto.setFileName(fileName);
+        uploadResultDto.setFileIdentifier(fileIdentifier);
         uploadResultDto.setChunks(chunks);
         uploadResultDto.setChunkIndex(0);
 

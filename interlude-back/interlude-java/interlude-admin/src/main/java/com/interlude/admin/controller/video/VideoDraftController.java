@@ -37,7 +37,7 @@ public class VideoDraftController extends ABaseController {
         List<VideoDraft> videoDraftList = videoDraftService.getVideoDraftByUserId(tokenUserInfo.getUserId());
         if (videoDraftList != null && videoDraftList.size() > 0) {
             videoDraftList.stream().forEach(videoDraft -> {
-                if(videoDraft.getDraftStatus() == 1 && videoDraft.getUploadStatus() != 3){
+                if(videoDraft.getDraftStatus() == 1 && videoDraft.getUploadStatus() == 2){
                     UploadResultDto uploadVideoFileInfoByKey = redisComponent.getUploadVideoFileInfoByKey(videoDraft.getDraftKey());
                     resultDtoList.add(uploadVideoFileInfoByKey);
                 }
@@ -74,6 +74,4 @@ public class VideoDraftController extends ABaseController {
         videoDraftService.updateVideoDraftByDraftKey(videoDraft,draftKey);
         return getSuccessResponseVO(null);
     }
-
-
 }

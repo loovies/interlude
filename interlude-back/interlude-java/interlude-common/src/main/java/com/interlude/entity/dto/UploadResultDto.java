@@ -22,6 +22,9 @@ public class UploadResultDto implements Serializable {
     private Long uploadSize = 0L;
     private String status;
 
+    // 文件唯一标识
+    private String fileIdentifier;
+
     // 内容相关
     private String description;  //视频描述内容
     private String videoCover;  // 视频封面
@@ -38,6 +41,14 @@ public class UploadResultDto implements Serializable {
     // 临时数据
     private String tempData;    // 临时存储的编辑数据
     private String last_edit_content;  // 最后一次编辑的未保存内容
+
+    public String getFileIdentifier() {
+        return fileIdentifier;
+    }
+
+    public void setFileIdentifier(String fileIdentifier) {
+        this.fileIdentifier = fileIdentifier;
+    }
 
     public Long getUploadSize() {
         return uploadSize;

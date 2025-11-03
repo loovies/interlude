@@ -74,14 +74,14 @@
         </el-card>
       </div>
     </div>
-    <div class="add-video-btn" v-if="fileList.length < MAX_UPLOADING">
+    <div class="add-video-btn" v-if="fileList.length < MAX_FILELIST">
       <el-upload
         multiple
         :show-file-list="false"
         :http-request="addFile"
         :accept="proxy.videoAccept"
       >
-        <el-button type="primary" class="addVideo">添加分P</el-button>
+        <el-button type="primary" class="addVideo">添加视频</el-button>
       </el-upload>
     </div>
   </div>
@@ -143,6 +143,7 @@ const props = defineProps({
 
 // 文件列表
 let fileList: Ref<Array<any>> = ref(props.videoInfo?.length == 0 ? [] : props.videoInfo)
+// let fileList: Ref<Array<any>> = ref([])
 
 // 分片大小
 const CHUNK_SIZE = proxy.chunkSize
@@ -159,7 +160,6 @@ const returnVideoEdit = () => {
 
 const uploadFile = (file: Object) => {
   file = file.file
-
   // 文件名
   let fileName = proxy.$Utils.getFileName(file.name)
   // 文件的基本信息
@@ -174,6 +174,7 @@ const uploadFile = (file: Object) => {
     pause: false,
     chunkIndex: 0, // 分片索引
     errorMsg: null,
+    fileIdentifier: generateFileIdentifier(file),
   }
   if (fileList.value.length == MAX_FILELIST) {
     proxy.$Message.warning('超出最大上传文件数量' + MAX_FILELIST)
@@ -230,6 +231,7 @@ const uploadVideo4Draft = async (uid: number, chunkIndex: number): Promise<void>
     let result = await proxy.$Request({
       url: proxy.$Api.preUploadVideo,
       params: {
+        fileIdentifier: currentFile.fileIdentifier,
         fileName: currentFile.fileName,
         chunks,
       },
@@ -241,7 +243,14 @@ const uploadVideo4Draft = async (uid: number, chunkIndex: number): Promise<void>
     if (!result) {
       return
     }
-    currentFile.uploadId = result.data // 上传成功获得 上传id
+    // 上传成功获得 上传id
+    if (result.data.status == STATUS.uploading.value) {
+      Object.assign(currentFile, result.data)
+      chunkIndex = result.data.chunkIndex
+    } else {
+      currentFile.uploadId = result.data.uploadId
+    }
+    console.log(currentFile)
   }
 
   // 循环分片数量
@@ -271,6 +280,9 @@ const uploadVideo4Draft = async (uid: number, chunkIndex: number): Promise<void>
         uid: file.uid,
         status: currentFile.status,
         uploadSize: currentFile.uploadSize,
+        uploadPercent: currentFile.uploadPercent,
+        fileSize: currentFile.fileSize,
+        pause: currentFile.pause,
       },
       showError: false,
       errorCallback: (errorMsg) => {
@@ -320,6 +332,10 @@ const addFile = (file: Object) => {
   uploadFile(file)
 }
 
+const generateFileIdentifier = (file) => {
+  return `${file.name}-${file.size}-${file.lastModified}`
+}
+
 // 重命名
 const endEdit = async (index): Promise<void> => {
   const currentFile = fileList.value[index]
@@ -336,6 +352,9 @@ const endEdit = async (index): Promise<void> => {
 
 const editFileName = (index) => {
   const currentFile = fileList.value[index]
+  if (currentFile.status == STATUS.uploading.value) {
+    return
+  }
   currentFile.edit = true
 
   nextTick(() => {
@@ -489,6 +508,7 @@ defineExpose({
   .add-video-btn {
     margin-left: 40px;
     .addVideo {
+      margin-top: 10px;
       color: #666;
       background-color: #f5f7f9;
     }

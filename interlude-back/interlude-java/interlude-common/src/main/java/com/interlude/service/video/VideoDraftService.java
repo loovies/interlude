@@ -47,6 +47,12 @@ public interface VideoDraftService{
 	 */
 	VideoDraft getVideoDraftByDraftId(Long draftId);
 
+
+	/**
+	 * 根据userId 和 fileName查询
+	 */
+	VideoDraft getVideoDraftByUserIdAndFileName(String userId, String fileName);
+
 	/**
 	 * 根据DraftId更新
 	 */

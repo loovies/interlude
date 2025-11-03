@@ -43,4 +43,6 @@ public interface VideoDraftMapper<T, P> extends BaseMapper {
 	Integer deleteByDraftKey(@Param("draftKey") String draftKey);
 
 	List<VideoDraft> selectByUserId(@Param("userId") String userId);
+
+	T selectByUserIdAndFileName(@Param("userId") String userId, @Param("fileName") String fileName);
 }
