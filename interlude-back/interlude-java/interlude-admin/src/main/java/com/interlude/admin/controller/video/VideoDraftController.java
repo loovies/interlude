@@ -25,6 +25,7 @@ import java.util.List;
 public class VideoDraftController extends ABaseController {
 
     @Resource
+
     private VideoDraftService videoDraftService;
 
     @Resource

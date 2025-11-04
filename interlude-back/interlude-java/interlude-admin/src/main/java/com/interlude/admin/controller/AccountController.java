@@ -1,6 +1,8 @@
 package com.interlude.admin.controller;
 
 import com.interlude.component.RedisComponent;
+import com.interlude.entity.constants.Constants;
+import com.interlude.entity.dto.TokenUserInfoDto;
 import com.interlude.entity.po.UserInfo;
 import com.interlude.entity.vo.ResponseVO;
 
@@ -75,6 +77,24 @@ public class AccountController extends ABaseController{
 		}finally {
 			redisComponent.delCheckCode(checkCodeKey);
 		}
+	}
+
+	@RequestMapping("/" +
+			"" +
+			"")
+	public ResponseVO autologin(HttpServletResponse response){
+		TokenUserInfoDto tokenUserInfoDto = getTokenUserInfo();
+
+		if(tokenUserInfoDto == null){
+			return getSuccessResponseVO(null);
+		}
+
+		if(tokenUserInfoDto.getExpireAt() - System.currentTimeMillis() < Constants.REDIS_TIME_ONE_DAY){
+			redisComponent.saveAdmin4Token(tokenUserInfoDto);
+			saveTokenAdminCookie(response, tokenUserInfoDto.getToken());
+		}
+		saveTokenAdminCookie(response, tokenUserInfoDto.getToken());
+		return getSuccessResponseVO(tokenUserInfoDto);
 	}
 
 	@RequestMapping("/logout")

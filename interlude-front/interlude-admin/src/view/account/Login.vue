@@ -119,7 +119,6 @@ const submitFrom = (): void => {
     VueCookies.set('account', res.data.phone)
     loginStore.saveUserInfo(res.data)
     breadcrumbStore.saveBreadcrumbList([])
-    //
     saveSysSettingInfo()
   })
 }

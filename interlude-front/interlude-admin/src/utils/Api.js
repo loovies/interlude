@@ -5,6 +5,7 @@ const Api = {
   checkCode: '/account/checkCode',
   login: '/account/login',
   logout: '/account/logout',
+  autoLogin: '/account/autoLogin',
   // user
   getLoadDataList: '/user/loadDataList',
   getaddOrUpdateBatch: '/user/addOrUpdateBatch',

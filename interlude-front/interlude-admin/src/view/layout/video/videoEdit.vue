@@ -85,9 +85,11 @@
       </el-upload>
     </div>
   </div>
+  <videoInput :fileList="fileList"></videoInput>
 </template>
 
 <script setup lang="ts">
+import videoInput from './videoInput.vue'
 import { ref, reactive, getCurrentInstance, nextTick } from 'vue'
 const { proxy } = getCurrentInstance()
 import { vDraggable } from 'vue-draggable-plus'
@@ -243,11 +245,12 @@ const uploadVideo4Draft = async (uid: number, chunkIndex: number): Promise<void>
     if (!result) {
       return
     }
-    // 上传成功获得 上传id
+    // 如果时上传中的视频
     if (result.data.status == STATUS.uploading.value) {
       Object.assign(currentFile, result.data)
       chunkIndex = result.data.chunkIndex
     } else {
+      // 如果时上传成功的视频
       currentFile.uploadId = result.data.uploadId
     }
     console.log(currentFile)
@@ -332,6 +335,7 @@ const addFile = (file: Object) => {
   uploadFile(file)
 }
 
+// 定义视频唯一标识符
 const generateFileIdentifier = (file) => {
   return `${file.name}-${file.size}-${file.lastModified}`
 }

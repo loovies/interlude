@@ -178,6 +178,7 @@ const logout = async (): Promise<void> => {
 
 <style lang="scss" scoped>
 .container {
+  height: 100vh;
   .ElAsideStyle {
     width: 200px;
     transition: width 1s ease 0s;
@@ -258,9 +259,9 @@ const logout = async (): Promise<void> => {
     }
     .main-style {
       padding: 10px;
-
       .page-content {
         padding: 10px;
+        overflow-y: auto;
       }
     }
   }

@@ -262,6 +262,7 @@ onMounted(() => {
   selectDarftInfo()
 })
 
+// 查询草稿信息
 const selectDarftInfo = async (): Promise<void> => {
   let res = await proxy.$Request({
     url: proxy.$Api.getDraftInfoByUserId,
