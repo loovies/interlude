@@ -67,7 +67,7 @@ public class FileController extends ABaseController{
     @RequestMapping("/uploadImage")
     public ResponseVO uploadImage(@NotNull MultipartFile file,@NotNull Boolean createThumbnail) throws IOException {
         String month = DateUtils.format(new Date(), DateTimePatterEnum.YYYY_MM.getPattern());
-        String folder = appConfig.getProjectFolder() + Constants.FILE_FOLDER + Constants.FILE_COVER + month;
+        String folder = appConfig.getProjectFolder() + Constants.FILE_FOLDER + Constants.FILE_AVATAR + month;
         File folderFile = new File(folder);
         if (!folderFile.exists()){
             folderFile.mkdirs();
@@ -80,7 +80,7 @@ public class FileController extends ABaseController{
         if(createThumbnail){
             // TODO 生成缩略图
         }
-        return getSuccessResponseVO(Constants.FILE_COVER + month + "/" + realFileName);
+        return getSuccessResponseVO(Constants.FILE_AVATAR + month + "/" + realFileName);
     }
 
     // 视频预上传

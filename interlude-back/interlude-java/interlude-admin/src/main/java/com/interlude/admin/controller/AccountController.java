@@ -12,6 +12,7 @@ import java.util.Map;
 import com.interlude.entity.query.UserInfoQuery;
 import com.interlude.exception.BusinessException;
 import com.interlude.service.UserInfoService;
+import com.interlude.utils.StringTools;
 import com.wf.captcha.ArithmeticCaptcha;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotEmpty;
 
@@ -62,6 +65,7 @@ public class AccountController extends ABaseController{
 	@RequestMapping("/login")
 	public ResponseVO login(
 							HttpServletResponse response,
+							HttpServletRequest request,
 							@NotEmpty String account,
 							@NotEmpty String password,
 							@NotEmpty String checkCodeKey,
@@ -76,12 +80,22 @@ public class AccountController extends ABaseController{
 			throw new RuntimeException(e);
 		}finally {
 			redisComponent.delCheckCode(checkCodeKey);
+			Cookie[] cookies = request.getCookies();
+			if (cookies != null){
+				String token = null;
+				for (Cookie cookie : cookies) {
+					if(cookie.getName().equals(Constants.REDIS_ADMIN_TOKEN)){
+						token = cookie.getValue();
+					}
+				}
+				if(!StringTools.isEmpty(token)){
+					redisComponent.cleanToken(token);;
+				}
+			}
 		}
 	}
 
-	@RequestMapping("/" +
-			"" +
-			"")
+	@RequestMapping("/autoLogin")
 	public ResponseVO autologin(HttpServletResponse response){
 		TokenUserInfoDto tokenUserInfoDto = getTokenUserInfo();
 

@@ -28,24 +28,25 @@
 </template>
 
 <script setup>
-import { ref, reactive, getCurrentInstance, nextTick, provide } from 'vue'
+import { ref, getCurrentInstance } from 'vue'
+
 const { proxy } = getCurrentInstance()
-import { useRoute, useRouter } from 'vue-router'
-const route = useRoute()
-const router = useRouter()
 
 const props = defineProps({
   modelValue: {
     type: Array,
-    default: [],
+    default: () => [],
   },
 })
 
+const emit = defineEmits(['update:modelValue'])
+
 const handleDeltag = (tag) => {
-  props.modelValue.splice(props.modelValue.indexOf(tag), 1)
+  const newTags = props.modelValue.filter((item) => item !== tag)
+  emit('update:modelValue', newTags)
 }
 
-const inputValue = ref()
+const inputValue = ref('')
 const changeInput = () => {
   if (!inputValue.value) {
     return
@@ -55,22 +56,15 @@ const changeInput = () => {
     inputValue.value = ''
     return
   }
-  let flag = true
-  if (props.modelValue.length != 0) {
-    for (let item in props.modelValue) {
-      if (props.modelValue[item] == inputValue.value) {
-        flag = false
-        break
-      } else {
-        flag = true
-      }
-    }
-  }
-  if (flag) {
-    props.modelValue.push(inputValue.value)
-  } else {
+  // 检查是否重复
+  if (props.modelValue.includes(inputValue.value)) {
     proxy.Message.warning('设置的标签重复了')
+    inputValue.value = ''
+    return
   }
+  // 不重复，则添加
+  const newTags = [...props.modelValue, inputValue.value]
+  emit('update:modelValue', newTags)
   inputValue.value = ''
 }
 </script>

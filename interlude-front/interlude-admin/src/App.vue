@@ -36,30 +36,8 @@ const saveLoginInfo = (loginInfo) => {
   }
 }
 
-let categoryList = []
-let categoryMap = {}
-
-const loadCategory = async () => {
-  const result = await proxy.Request({
-    url: proxy.Api.loadDataList,
-  })
-  if (!result) {
-    return
-  }
-  categoryList = result.data
-  result.data.forEach((element) => {
-    categoryMap[element.categoryCode] = element
-    element.children.forEach((sub) => {
-      categoryMap[sub.categoryCode] = sub
-    })
-  })
-  categoryStore.saveCategoryMap(categoryMap)
-  categoryStore.saveCategoryList(categoryList)
-}
-
 onMounted(() => {
   autoLogin()
-  loadCategory()
 })
 
 const config = ref({

@@ -1,6 +1,7 @@
 package com.interlude.entity.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.Serializable;
 
@@ -13,6 +14,7 @@ public class UploadResultDto implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String fileName;
+    private String videoName;
     private String uploadId;    // 文件上传id
     private Long uid;
     private String filePath;
@@ -41,6 +43,14 @@ public class UploadResultDto implements Serializable {
     // 临时数据
     private String tempData;    // 临时存储的编辑数据
     private String last_edit_content;  // 最后一次编辑的未保存内容
+
+    public String getVideoName() {
+        return videoName;
+    }
+
+    public void setVideoName(String videoName) {
+        this.videoName = videoName;
+    }
 
     public String getFileIdentifier() {
         return fileIdentifier;

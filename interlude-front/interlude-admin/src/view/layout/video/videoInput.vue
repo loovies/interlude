@@ -23,7 +23,7 @@
         label-width="80px"
         @submit.prevent
       >
-        <el-form-item label="封面" prop="videoCover">
+        <el-form-item label="封面:" prop="videoCover">
           <ImageCoverSelect
             :coverWidth="200"
             :cutWidth="680"
@@ -31,7 +31,7 @@
             :coverImage="formData.videoCover"
           ></ImageCoverSelect>
         </el-form-item>
-        <el-form-item label="标题" prop="videoName" class="input">
+        <el-form-item label="标题:" prop="videoName" class="input">
           <el-input
             v-model="formData.videoName"
             clearable
@@ -40,7 +40,7 @@
             show-word-limit
           ></el-input>
         </el-form-item>
-        <el-form-item label="类型" prop="postType" class="input">
+        <el-form-item label="类型:" prop="postType" class="input">
           <el-radio-group v-model="formData.postType">
             <el-radio :value="0">自制</el-radio>
             <el-radio :value="1">转载</el-radio>
@@ -60,8 +60,38 @@
             show-word-limit
           ></el-input>
         </el-form-item>
-        <el-form-item label="标签" prop="tags" class="input">
+        <el-form-item label="标签:" prop="tags" class="input">
           <TagInput v-model="formData.tags"></TagInput>
+        </el-form-item>
+        <el-form-item label="分区:" prop="categoryArray" class="input">
+          <el-cascader
+            :options="categoryStore.categoryList"
+            v-model="formData.categoryArray"
+            :props="{ value: 'categoryId', label: 'categoryName' }"
+          ></el-cascader>
+        </el-form-item>
+        <el-form-item label="简介:" prop="description" class="input">
+          <!--input输入-->
+          <el-input
+            clearable
+            placeholder="填写更全面的相关信息,让更多的人能找到你的视频(:"
+            type="textarea"
+            :rows="5"
+            resize="none"
+            :maxlength="2000"
+            show-word-limit
+            v-model="formData.description"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="互动设置:" prop="interaction" class="input">
+          <el-checkbox-group v-model="formData.interactionArray">
+            <el-checkbox label="0">关闭弹幕</el-checkbox>
+            <el-checkbox label="1">关闭评论</el-checkbox>
+          </el-checkbox-group>
+        </el-form-item>
+        <el-form-item label="" class="inputbtn">
+          <el-button type="primary" @click="submitForm" size="large">立即投稿</el-button>
+          <el-button type="primary" size="large">保存</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -77,6 +107,9 @@ const { proxy } = getCurrentInstance()
 import { useRoute, useRouter } from 'vue-router'
 const route = useRoute()
 const router = useRouter()
+
+import { useCategoryStore } from '../../../stores/CategoryStore'
+const categoryStore = useCategoryStore()
 
 const props = defineProps({
   fileList: {
@@ -103,13 +136,17 @@ const rules = {
   tags: [{ required: true, message: '标签不能为空' }],
 }
 
+const init = () => {}
+
+const submitForm = () => {
+  console.log(formData.value)
+}
+
 provide('cutImageCallback', ({ coverImage }) => {
   formData.value.videoCover = coverImage
 })
 
-onMounted(() => {
-  nextTick(() => {})
-})
+onMounted(() => {})
 </script>
 
 <style lang="scss" scoped>
@@ -141,7 +178,7 @@ h1 {
   padding: 0;
   margin-bottom: 30px;
   overflow: hidden;
-  margin: 100px 40px 20px 40px;
+  margin: 60px 40px 20px 40px;
 }
 
 .horizontal-menu {
@@ -192,6 +229,9 @@ h1 {
     width: 100%;
     .input {
       margin: 30px 50px 0px 0px;
+    }
+    .inputbtn {
+      margin: 30px 50px 0px 40%;
     }
   }
 }

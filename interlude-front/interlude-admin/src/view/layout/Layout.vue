@@ -96,6 +96,9 @@ import { useLoginStore } from '../../stores/loginStore'
 const loginStore = useLoginStore()
 const { userInfo } = storeToRefs(loginStore)
 
+import { useCategoryStore } from '../../stores/CategoryStore'
+const categoryStore = useCategoryStore()
+
 const currentUserId = computed(() => {
   return userInfo.value.userId
 })
@@ -174,6 +177,31 @@ const logout = async (): Promise<void> => {
   proxy.$Message.success('退出成功')
   router.push('/')
 }
+
+let categoryList = []
+let categoryMap = {}
+
+const loadCategory = async () => {
+  const result = await proxy.$Request({
+    url: proxy.$Api.getLoadCategoryInfo,
+  })
+  if (!result) {
+    return
+  }
+  categoryList = result.data
+  result.data.forEach((element) => {
+    categoryMap[element.categoryCode] = element
+    element.children.forEach((sub) => {
+      categoryMap[sub.categoryCode] = sub
+    })
+  })
+  categoryStore.saveCategoryMap(categoryMap)
+  categoryStore.saveCategoryList(categoryList)
+}
+
+onMounted(() => {
+  loadCategory()
+})
 </script>
 
 <style lang="scss" scoped>

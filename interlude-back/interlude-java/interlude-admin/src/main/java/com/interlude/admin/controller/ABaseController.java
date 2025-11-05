@@ -46,7 +46,7 @@ public class ABaseController {
     }
 
     protected void saveTokenAdminCookie(HttpServletResponse response, String token){
-        Cookie cookie = new Cookie(REDIS_ADMIN_TOKEN, token);
+        Cookie cookie = new Cookie(Constants.REDIS_ADMIN_TOKEN, token);
         cookie.setPath("/");
         cookie.setMaxAge(Constants.REDIS_TIME_ONE_DAY * 7);
         response.addCookie(cookie);
@@ -76,7 +76,7 @@ public class ABaseController {
     // 获取当前登录信息
     protected TokenUserInfoDto getTokenUserInfo(){
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
-        String token = request.getHeader(REDIS_ADMIN_TOKEN);
+        String token = request.getHeader(Constants.REDIS_ADMIN_TOKEN);
         return redisComponent.getAdmin4Token(token);
     }
 
@@ -87,7 +87,7 @@ public class ABaseController {
             return;
         }
         for (Cookie cookie : cookies) {
-            if (cookie.getName().equals(REDIS_ADMIN_TOKEN)){
+            if (cookie.getName().equals(Constants.REDIS_ADMIN_TOKEN)){
                 redisComponent.cleanToken(cookie.getValue());
                 cookie.setMaxAge(0);
                 cookie.setPath("/");

@@ -290,7 +290,7 @@ public class UserInfoServiceImpl implements UserInfoService{
 	}
 
 	protected void saveTokenAdminCookie(HttpServletResponse response, String token){
-		Cookie cookie = new Cookie(REDIS_ADMIN_TOKEN, token);
+		Cookie cookie = new Cookie(Constants.REDIS_ADMIN_TOKEN, token);
 		cookie.setPath("/");
 		cookie.setMaxAge(Constants.REDIS_TIME_ONE_DAY * 7);
 		response.addCookie(cookie);

@@ -2,19 +2,27 @@ package com.interlude.admin.controller.video;
 
 import com.interlude.admin.controller.ABaseController;
 import com.interlude.component.RedisComponent;
+import com.interlude.entity.config.AppConfig;
 import com.interlude.entity.constants.Constants;
 import com.interlude.entity.dto.TokenUserInfoDto;
 import com.interlude.entity.dto.UploadResultDto;
 import com.interlude.entity.po.video.VideoDraft;
 import com.interlude.entity.vo.ResponseVO;
+import com.interlude.enums.DateTimePatterEnum;
 import com.interlude.exception.BusinessException;
 import com.interlude.service.video.VideoDraftService;
+import com.interlude.utils.DateUtils;
+import com.interlude.utils.StringTools;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -31,6 +39,9 @@ public class VideoDraftController extends ABaseController {
     @Resource
     private RedisComponent redisComponent;
 
+    @Resource
+    private AppConfig appConfig;
+
     @RequestMapping("getDraftInfoByUserId")
     public ResponseVO getDraftInfoByUserId() {
         TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
@@ -40,7 +51,12 @@ public class VideoDraftController extends ABaseController {
             videoDraftList.stream().forEach(videoDraft -> {
                 if(videoDraft.getDraftStatus() == 1 && videoDraft.getUploadStatus() == 2){
                     UploadResultDto uploadVideoFileInfoByKey = redisComponent.getUploadVideoFileInfoByKey(videoDraft.getDraftKey());
-                    resultDtoList.add(uploadVideoFileInfoByKey);
+                    if (uploadVideoFileInfoByKey != null){
+                        resultDtoList.add(uploadVideoFileInfoByKey);
+                    }else{
+                        // 如果 redis的已过期或者不存在, 但是数据库的有就删除数据库对应的数据
+                        videoDraftService.deleteVideoDraftByDraftKey(videoDraft.getDraftKey());
+                    }
                 }
             });
             return getSuccessResponseVO(resultDtoList);
@@ -50,7 +66,7 @@ public class VideoDraftController extends ABaseController {
 
     // 更新草稿
     @RequestMapping("updateDraftInfo")
-    public ResponseVO updateDraftInfo(UploadResultDto uploadResultDto) {
+    public ResponseVO updateDraftInfo(UploadResultDto uploadResultDto,@NotNull MultipartFile videoCover) {
         TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
         String draftKey = Constants.REDIS_KEY_UPLOADING_FILE+tokenUserInfo.getUserId()+uploadResultDto.getUploadId();
 
@@ -74,5 +90,22 @@ public class VideoDraftController extends ABaseController {
         }
         videoDraftService.updateVideoDraftByDraftKey(videoDraft,draftKey);
         return getSuccessResponseVO(null);
+    }
+
+
+    public ResponseVO uploadCover(@NotNull MultipartFile file) throws IOException {
+        String month = DateUtils.format(new Date(), DateTimePatterEnum.YYYYMMDD.getPattern());
+        String folder = appConfig.getProjectFolder() + Constants.FILE_FOLDER + Constants.FILE_COVER + month;
+        File folderFile = new File(folder);
+        if (!folderFile.exists()){
+            folderFile.mkdirs();
+        }
+        String filename = file.getOriginalFilename();
+        String fileSuffix = StringTools.getFileSuffix(filename);
+        String realFileName = StringTools.getRandomString(30) + fileSuffix;
+        String filePath = folder + File.separator + realFileName;
+        file.transferTo(new File(filePath));
+        String videoCover = Constants.FILE_COVER + month + "/" + realFileName;
+        return getSuccessResponseVO(videoCover);
     }
 }

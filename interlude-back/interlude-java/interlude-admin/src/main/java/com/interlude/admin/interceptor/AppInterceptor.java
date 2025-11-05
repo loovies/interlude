@@ -37,16 +37,16 @@ public class AppInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        String token = "";
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                // 查找名为"admintoken"的cookie
-                if (Constants.REDIS_ADMIN_TOKEN.equals(cookie.getName())) {
-                    token = cookie.getValue();
-                }
-            }
-        }
+        String token = request.getHeader(Constants.REDIS_ADMIN_TOKEN);
+//        Cookie[] cookies = request.getCookies();
+//        if (cookies != null) {
+//            for (Cookie cookie : cookies) {
+//                // 查找名为"admintoken"的cookie
+//                if (Constants.REDIS_ADMIN_TOKEN.equals(cookie.getName())) {
+//                    token = cookie.getValue();
+//                }
+//            }
+//        }
 
         // 获取图片
         if(request.getRequestURI().contains(URL_FILE)){

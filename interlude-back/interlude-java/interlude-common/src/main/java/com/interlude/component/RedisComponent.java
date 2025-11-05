@@ -103,7 +103,7 @@ public class RedisComponent {
             file.mkdirs();
         }
         uploadResultDto.setFilePath(filePath);
-        redisUtils.setex(Constants.REDIS_KEY_UPLOADING_FILE + userId + uploadId,uploadResultDto,Constants.REDIS_TIME_ONE_DAY);
+        redisUtils.setex(Constants.REDIS_KEY_UPLOADING_FILE + userId + uploadId,uploadResultDto,Constants.REDIS_TIME_ONE_DAY * 3);
         return uploadResultDto;
     }
 
@@ -119,7 +119,7 @@ public class RedisComponent {
 
     // 更新上传文件信息
     public void uploadVideoFileInfo(String userId, UploadResultDto uploadResultDto) {
-        redisUtils.setex(Constants.REDIS_KEY_UPLOADING_FILE+userId+uploadResultDto.getUploadId(),uploadResultDto,Constants.REDIS_TIME_ONE_DAY);
+        redisUtils.setex(Constants.REDIS_KEY_UPLOADING_FILE+userId+uploadResultDto.getUploadId(),uploadResultDto,Constants.REDIS_TIME_ONE_DAY * 3);
     }
 
     // 删除上传文件信息
