@@ -32,6 +32,10 @@ public class UploadResultDto implements Serializable {
     private String videoCover;  // 视频封面
     private String originAuthor; // 原作者名称
     private String originUrl;   // 原作者地址
+    private Integer postType = 0; // 自制 或者转载
+    private Integer pCategoryId;  // 一级分类
+    private Integer categoryId;  // 一级分类
+
 
     // JSON格式数据
     private String tags;
@@ -43,6 +47,30 @@ public class UploadResultDto implements Serializable {
     // 临时数据
     private String tempData;    // 临时存储的编辑数据
     private String last_edit_content;  // 最后一次编辑的未保存内容
+
+    public Integer getpCategoryId() {
+        return pCategoryId;
+    }
+
+    public void setpCategoryId(Integer pCategoryId) {
+        this.pCategoryId = pCategoryId;
+    }
+
+    public Integer getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(Integer categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public Integer getPostType() {
+        return postType;
+    }
+
+    public void setPostType(Integer postType) {
+        this.postType = postType;
+    }
 
     public String getVideoName() {
         return videoName;

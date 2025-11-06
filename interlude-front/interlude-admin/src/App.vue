@@ -14,7 +14,7 @@ import VueCookies from 'vue-cookies'
 import { useLoginStore } from './stores/loginStore'
 const loginStore = useLoginStore()
 
-const autoLogin = async () => {
+const autoLogin = async (): Promise<void> => {
   const token = VueCookies.get('adminToken')
   if (!token) {
     return
@@ -22,6 +22,7 @@ const autoLogin = async () => {
   let result = await proxy.$Request({
     url: proxy.$Api.autoLogin,
   })
+
   if (!result) {
     return
   }

@@ -66,7 +66,7 @@ public class VideoDraftController extends ABaseController {
 
     // 更新草稿
     @RequestMapping("updateDraftInfo")
-    public ResponseVO updateDraftInfo(UploadResultDto uploadResultDto,@NotNull MultipartFile videoCover) {
+    public ResponseVO updateDraftInfo(UploadResultDto uploadResultDto,MultipartFile videoCoverFile) throws IOException {
         TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
         String draftKey = Constants.REDIS_KEY_UPLOADING_FILE+tokenUserInfo.getUserId()+uploadResultDto.getUploadId();
 
@@ -75,8 +75,19 @@ public class VideoDraftController extends ABaseController {
         if(resultDto == null){
             throw new BusinessException("当前文件不存在");
         }
-        resultDto.setFileName(uploadResultDto.getFileName());
-        resultDto.setUploadId(uploadResultDto.getUploadId());
+        if(videoCoverFile != null){
+            resultDto.setVideoCover(uploadCover(videoCoverFile)); // 保存封面
+        }
+        resultDto.setpCategoryId(uploadResultDto.getpCategoryId());
+        resultDto.setCategoryId(uploadResultDto.getCategoryId());
+        resultDto.setInteractionSettings(uploadResultDto.getInteractionSettings());
+        resultDto.setVideoName(uploadResultDto.getVideoName());
+        if(!uploadResultDto.getFileName().equals("") && uploadResultDto.getFileName() != null){
+            resultDto.setFileName(uploadResultDto.getFileName());
+        }
+        if(!uploadResultDto.getUploadId().equals("") && uploadResultDto.getUploadId() != null){
+            resultDto.setUploadId(uploadResultDto.getUploadId());
+        }
         redisComponent.uploadVideoFileInfo(tokenUserInfo.getUserId(), resultDto);
 
         // 更新数据库
@@ -93,9 +104,9 @@ public class VideoDraftController extends ABaseController {
     }
 
 
-    public ResponseVO uploadCover(@NotNull MultipartFile file) throws IOException {
-        String month = DateUtils.format(new Date(), DateTimePatterEnum.YYYYMMDD.getPattern());
-        String folder = appConfig.getProjectFolder() + Constants.FILE_FOLDER + Constants.FILE_COVER + month;
+    public String uploadCover(MultipartFile file) throws IOException {
+        String monthDD = DateUtils.format(new Date(), DateTimePatterEnum.YYYYMMDD.getPattern());
+        String folder = appConfig.getProjectFolder() + Constants.FILE_FOLDER + Constants.FILE_COVER + monthDD;
         File folderFile = new File(folder);
         if (!folderFile.exists()){
             folderFile.mkdirs();
@@ -105,7 +116,7 @@ public class VideoDraftController extends ABaseController {
         String realFileName = StringTools.getRandomString(30) + fileSuffix;
         String filePath = folder + File.separator + realFileName;
         file.transferTo(new File(filePath));
-        String videoCover = Constants.FILE_COVER + month + "/" + realFileName;
-        return getSuccessResponseVO(videoCover);
+        String videoCover = Constants.FILE_COVER + monthDD + "/" + realFileName;
+        return videoCover;
     }
 }
