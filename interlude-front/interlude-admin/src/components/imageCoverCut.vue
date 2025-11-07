@@ -126,16 +126,17 @@ const dialogConfig = reactive({
 })
 
 const cutImageCallback = inject('cutImageCallback')
+const emit = defineEmits(['change'])
 
 const cutImage = () => {
   const cropW = Math.round(cropperRef.value.cropW)
   const cropH = Math.round(cropperRef.value.cropH)
   if (cropW == 0 || cropH == 0) {
-    props.Message.warning('请选择图片')
+    proxy.$Message.warning('请选择图片')
     return
   }
   if (cropW < props.cutWidth || cropH < Math.round(props.cutWidth * props.scale)) {
-    proxy.Message.warning(
+    proxy.$Message.warning(
       `图片尺寸至少满足(${props.cutWidth}*${Math.round(props.cutWidth * props.scale)})`
     )
     return
@@ -145,6 +146,7 @@ const cutImage = () => {
       type: blob.type,
     })
     dialogConfig.show = false
+    emit('change', file)
     cutImageCallback({
       coverImage: file,
     })

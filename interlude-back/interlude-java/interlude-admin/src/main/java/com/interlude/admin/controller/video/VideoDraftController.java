@@ -13,6 +13,7 @@ import com.interlude.exception.BusinessException;
 import com.interlude.service.video.VideoDraftService;
 import com.interlude.utils.DateUtils;
 import com.interlude.utils.StringTools;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -82,10 +83,12 @@ public class VideoDraftController extends ABaseController {
         resultDto.setCategoryId(uploadResultDto.getCategoryId());
         resultDto.setInteractionSettings(uploadResultDto.getInteractionSettings());
         resultDto.setVideoName(uploadResultDto.getVideoName());
-        if(!uploadResultDto.getFileName().equals("") && uploadResultDto.getFileName() != null){
+        resultDto.setTags(uploadResultDto.getTags());
+        resultDto.setDescription(uploadResultDto.getDescription());
+        if(StringUtils.isNotBlank(uploadResultDto.getFileName())){
             resultDto.setFileName(uploadResultDto.getFileName());
         }
-        if(!uploadResultDto.getUploadId().equals("") && uploadResultDto.getUploadId() != null){
+        if(StringUtils.isNotBlank(uploadResultDto.getUploadId())){
             resultDto.setUploadId(uploadResultDto.getUploadId());
         }
         redisComponent.uploadVideoFileInfo(tokenUserInfo.getUserId(), resultDto);

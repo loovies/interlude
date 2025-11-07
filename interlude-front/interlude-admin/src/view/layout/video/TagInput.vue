@@ -39,11 +39,12 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'change'])
 
 const handleDeltag = (tag) => {
   const newTags = props.modelValue.filter((item) => item !== tag)
   emit('update:modelValue', newTags)
+  emit('change', newTags)
 }
 
 const inputValue = ref('')
@@ -65,6 +66,7 @@ const changeInput = () => {
   // 不重复，则添加
   const newTags = [...props.modelValue, inputValue.value]
   emit('update:modelValue', newTags)
+  emit('change', newTags)
   inputValue.value = ''
 }
 </script>

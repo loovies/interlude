@@ -15,7 +15,7 @@
       {{ coverImage ? '重新上传' : '上传' }}
     </div>
   </div>
-  <imageCoverCut ref="imageCoverCurRef"></imageCoverCut>
+  <imageCoverCut ref="imageCoverCurRef" @change="handleCoverChange"></imageCoverCut>
 </template>
 
 <script setup>
@@ -47,13 +47,14 @@ const props = defineProps({
 })
 
 const imageCoverCurRef = ref()
+const emit = defineEmits(['change'])
 
 const coverFile = asyncComputed(async () => {
   if (!props.coverImage) {
     return null
   }
   if (typeof props.coverImage == 'string') {
-    return proxy.Api.sourcePath + props.coverImage
+    return proxy.$Api.sourcePath + props.coverImage
   } else if (props.coverImage instanceof File) {
     const base64 = await coverFile2Base64(props.coverImage)
     return base64
@@ -73,6 +74,10 @@ const coverFile2Base64 = (file) => {
 const selectImage = () => {
   imageCoverCurRef.value.show()
 }
+
+const handleCoverChange = () => {
+  emit('change')
+}
 </script>
 
 <style lang="scss" scoped>
@@ -84,7 +89,7 @@ const selectImage = () => {
     position: absolute;
     left: 0px;
     bottom: 0px;
-    height: 30px;
+    height: 26px;
     background: rgba(0, 0, 0, 0.7);
     opacity: 0.8;
     z-index: 1;

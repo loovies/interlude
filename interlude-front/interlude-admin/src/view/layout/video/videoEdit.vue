@@ -85,7 +85,11 @@
       </el-upload>
     </div>
   </div>
-  <videoInput :fileList="fileList"></videoInput>
+  <videoInput
+    v-if="fileList.length > 0"
+    :fileList="fileList"
+    @update:fileList="fileList = $event"
+  ></videoInput>
 </template>
 
 <script setup lang="ts">

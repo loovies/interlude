@@ -23,12 +23,13 @@
         label-width="80px"
         @submit.prevent
       >
-        <el-form-item label="封面:" prop="videoCover">
+        <el-form-item label="封面:" prop="videoCoverFile">
           <ImageCoverSelect
             :coverWidth="200"
             :cutWidth="680"
             :scale="0.6"
-            :coverImage="formData.videoCover"
+            :coverImage="formData.videoCoverFile"
+            @change="handleChange"
           ></ImageCoverSelect>
         </el-form-item>
         <el-form-item label="标题:" prop="videoName" class="input">
@@ -38,10 +39,11 @@
             placeholder="请输入标题"
             maxlength="100"
             show-word-limit
+            @change="handleChange"
           ></el-input>
         </el-form-item>
         <el-form-item label="类型:" prop="postType" class="input">
-          <el-radio-group v-model="formData.postType">
+          <el-radio-group v-model="formData.postType" @change="handleChange">
             <el-radio :value="0">自制</el-radio>
             <el-radio :value="1">转载</el-radio>
           </el-radio-group>
@@ -58,13 +60,15 @@
             placeholder="转载视频请注明来源,时间,地点(例: 转自https://www.xxxx.com/yyyy). 注明来源更快的通过审核哦"
             maxlength="200"
             show-word-limit
+            @change="handleChange"
           ></el-input>
         </el-form-item>
         <el-form-item label="标签:" prop="tags" class="input">
-          <TagInput v-model="formData.tags"></TagInput>
+          <TagInput v-model="formData.tags" @change="handleChange"></TagInput>
         </el-form-item>
         <el-form-item label="分区:" prop="categoryArray" class="input">
           <el-cascader
+            @change="handleChange"
             :options="categoryStore.categoryList"
             v-model="formData.categoryArray"
             :props="{ value: 'categoryId', label: 'categoryName' }"
@@ -73,6 +77,7 @@
         <el-form-item label="简介:" prop="description" class="input">
           <!--input输入-->
           <el-input
+            @change="handleChange"
             clearable
             placeholder="填写更全面的相关信息,让更多的人能找到你的视频(:"
             type="textarea"
@@ -84,14 +89,14 @@
           ></el-input>
         </el-form-item>
         <el-form-item label="互动设置:" prop="interaction" class="input">
-          <el-checkbox-group v-model="formData.interactionArray">
+          <el-checkbox-group v-model="formData.interactionArray" @change="handleChange">
             <el-checkbox label="0">关闭弹幕</el-checkbox>
             <el-checkbox label="1">关闭评论</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
         <el-form-item label="" class="inputbtn">
           <el-button type="primary" @click="submitForm" size="large">立即投稿</el-button>
-          <el-button type="primary" size="large">保存</el-button>
+          <el-button type="primary" size="large" @click="saveDraftInfo()">保存</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -102,11 +107,12 @@
 import ImageCoverSelect from '../../../components/ImageCoverSelect.vue'
 import TagInput from './TagInput.vue'
 
-import { ref, provide, reactive, getCurrentInstance, onMounted, nextTick } from 'vue'
+import { ref, watch, provide, reactive, getCurrentInstance, onMounted, nextTick } from 'vue'
 const { proxy } = getCurrentInstance()
 import { useRoute, useRouter } from 'vue-router'
 const route = useRoute()
 const router = useRouter()
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 import { useCategoryStore } from '../../../stores/CategoryStore'
 const categoryStore = useCategoryStore()
@@ -119,16 +125,70 @@ const props = defineProps({
 })
 
 const activeIndex = ref(0)
+const isSaveVideoInfo = ref(true)
 
-const setActive = (index: number) => {
-  activeIndex.value = index
+const handleChange = () => {
+  isSaveVideoInfo.value = false
+}
+
+const setActive = async (index: number): Promise<void> => {
+  if (!isSaveVideoInfo.value) {
+    ElMessageBox.confirm('有未保存的草稿,是否保存?', 'Warning', {
+      confirmButtonText: '保存',
+      cancelButtonText: '取消',
+      type: 'warning',
+    }).then(async () => {
+      await saveDraftInfo()
+      formDataRef.value.resetFields()
+      formData.value.interactionSettings = []
+      activeIndex.value = index
+      await loadDraftInfo()
+      showVideoInput(index)
+    })
+  } else {
+    formDataRef.value.resetFields()
+    formData.value.interactionSettings = []
+    activeIndex.value = index
+    await loadDraftInfo()
+    showVideoInput(index)
+  }
+}
+
+const showVideoInput = (index: number) => {
+  // formData.value = props.fileList[index]
+  if (props.fileList[index].videoCover) {
+    formData.value.videoCoverFile = props.fileList[index].videoCover
+  }
+
+  formData.value.videoName = props.fileList[index].videoName
+  formData.value.postType = props.fileList[index].postType
+  if (props.fileList[index].tags) {
+    formData.value.tags = props.fileList[index].tags.split(',')
+  }
+
+  formData.value.categoryArray = []
+  if (props.fileList[index].pCategoryId) {
+    formData.value.categoryArray = [
+      props.fileList[index].pCategoryId,
+      props.fileList[index].categoryId,
+    ]
+  } else {
+    formData.value.categoryArray = [props.fileList[index].categoryId]
+  }
+  formData.value.description = props.fileList[index].description
+  if (props.fileList[index].tags) {
+    formData.value.tags = props.fileList[index].tags.split(',')
+  }
+  if (props.fileList[index].interactionSettings) {
+    formData.value.interactionArray = props.fileList[index].interactionSettings.split(',')
+  }
 }
 
 const formData = ref({})
 const formDataRef = ref()
 
 const rules = {
-  videoCover: [{ required: true, message: '封面不能为空' }],
+  videoCoverFile: [{ required: true, message: '封面不能为空' }],
   videoName: [{ required: true, message: '标题不能为空' }],
   postType: [{ required: true, message: '类型不能为空' }],
   originInfo: [{ required: true, message: '转载说明不能为空' }],
@@ -136,17 +196,57 @@ const rules = {
   tags: [{ required: true, message: '标签不能为空' }],
 }
 
-const init = () => {}
+const emit = defineEmits(['update:fileList'])
+const loadDraftInfo = async (): Promise<void> => {
+  let res = await proxy.$Request({
+    url: proxy.$Api.getDraftInfoByUserId,
+  })
+  if (!res) return
+  emit('update:fileList', res.data ? res.data : [])
+  await nextTick()
+}
 
 const submitForm = () => {
   console.log(formData.value)
 }
 
+const saveDraftInfo = async (): Promise<void> => {
+  let params = {}
+  Object.assign(params, formData.value)
+  console.log(params)
+  // 判断是否有文件
+  if (props.fileList[activeIndex.value]) {
+    params.uploadId = props.fileList[activeIndex.value].uploadId
+  }
+  params.pCategoryId = params.categoryArray[0]
+  if (params.categoryArray.length > 1) {
+    params.categoryId = params.categoryArray[1]
+  }
+  if (params.interactionArray) {
+    params.interactionSettings = params.interactionArray.join(',')
+  }
+  if (params.tags) {
+    params.tags = params.tags.join(',')
+  }
+  let res = await proxy.$Request({
+    url: proxy.$Api.updateDraftInfo,
+    params,
+  })
+
+  if (!res) {
+    return
+  }
+  proxy.$Message.success('保存成功')
+  isSaveVideoInfo.value = true
+}
+
 provide('cutImageCallback', ({ coverImage }) => {
-  formData.value.videoCover = coverImage
+  formData.value.videoCoverFile = coverImage
 })
 
-onMounted(() => {})
+onMounted(() => {
+  showVideoInput(activeIndex.value)
+})
 </script>
 
 <style lang="scss" scoped>

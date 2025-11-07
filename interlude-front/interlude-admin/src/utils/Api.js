@@ -48,6 +48,18 @@ const uploadImage = async (file, createThumbnail = true) => {
   return result.data
 }
 
+// 上传封面
+// const uploadImage = async (file, createThumbnail = true) => {
+//   let result = await Ruquest({
+//     url: Api.uploadImage,
+//     params: { file, createThumbnail },
+//   })
+//   if (!result) {
+//     return
+//   }
+//   return result.data
+// }
+
 // 根据userId获取用户角色
 const getRoleByUserId = async (userId) => {
   let res = await Ruquest({
