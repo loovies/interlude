@@ -24,7 +24,7 @@ public class VideoInfo implements Serializable {
 	/**
 	 * 用户ID
 	 */
-	private Long userId;
+	private String userId;
 
 	/**
 	 * 视频标题
@@ -145,11 +145,11 @@ public class VideoInfo implements Serializable {
 		return this.videoId;
 	}
 
-	public void setUserId(Long userId) {
+	public void setUserId(String userId) {
 		this.userId = userId;
 	}
 
-	public Long getUserId() {
+	public String getUserId() {
 		return this.userId;
 	}
 

@@ -85,6 +85,7 @@ public class VideoDraftController extends ABaseController {
         resultDto.setVideoName(uploadResultDto.getVideoName());
         resultDto.setTags(uploadResultDto.getTags());
         resultDto.setDescription(uploadResultDto.getDescription());
+        resultDto.setVisibility(uploadResultDto.getVisibility());
         if(StringUtils.isNotBlank(uploadResultDto.getFileName())){
             resultDto.setFileName(uploadResultDto.getFileName());
         }
@@ -106,7 +107,7 @@ public class VideoDraftController extends ABaseController {
         return getSuccessResponseVO(null);
     }
 
-
+    // 上传封面
     public String uploadCover(MultipartFile file) throws IOException {
         String monthDD = DateUtils.format(new Date(), DateTimePatterEnum.YYYYMMDD.getPattern());
         String folder = appConfig.getProjectFolder() + Constants.FILE_FOLDER + Constants.FILE_COVER + monthDD;

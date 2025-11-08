@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 /**
  * @Description:视频文件表
  * @auther:dazhi
- * @date:2025/10/30
+ * @date:2025/11/08
  */
 public class VideoFile implements Serializable {
 	/**
@@ -27,9 +27,15 @@ public class VideoFile implements Serializable {
 	private Long videoId;
 
 	/**
+	 * 草稿ID
+
+	 */
+	private Long draftId;
+
+	/**
 	 * 用户ID
 	 */
-	private Long userId;
+	private String userId;
 
 	/**
 	 * 文件名
@@ -136,11 +142,19 @@ public class VideoFile implements Serializable {
 		return this.videoId;
 	}
 
-	public void setUserId(Long userId) {
+	public void setDraftId(Long draftId) {
+		this.draftId = draftId;
+	}
+
+	public Long getDraftId() {
+		return this.draftId;
+	}
+
+	public void setUserId(String userId) {
 		this.userId = userId;
 	}
 
-	public Long getUserId() {
+	public String getUserId() {
 		return this.userId;
 	}
 
@@ -280,8 +294,4 @@ public class VideoFile implements Serializable {
 		return this.updateTime;
 	}
 
-	@Override
-	public String toString() {
-		return "文件ID:" + (fileId == null ? "空" : fileId) + ",视频ID:" + (videoId == null ? "空" : videoId) + ",用户ID:" + (userId == null ? "空" : userId) + ",文件名:" + (fileName == null ? "空" : fileName) + ",文件大小:" + (fileSize == null ? "空" : fileSize) + ",文件路径:" + (filePath == null ? "空" : filePath) + ",CDN访问地址:" + (fileUrl == null ? "空" : fileUrl) + ",持续时长:" + (duration == null ? "空" : duration) + ",清晰度 1:LD 2:SD 3:HD 4:FHD 5:2K 6:4K:" + (quality == null ? "空" : quality) + ",:" + (format == null ? "空" : format) + ",:" + (width == null ? "空" : width) + ",:" + (height == null ? "空" : height) + ",码率(bps):" + (bitrate == null ? "空" : bitrate) + ",:" + (videoCodec == null ? "空" : videoCodec) + ",:" + (audioCodec == null ? "空" : audioCodec) + ",“1:上传”、“2:已上传”、“3:转码”、“4:准备就绪”、“5:失败”、“6:已删除”:" + (fileStatus == null ? "空" : fileStatus) + ",是否主文件:" + (isPrimary == null ? "空" : isPrimary) + ",上传会话ID:" + (uploadId == null ? "空" : uploadId) + ",:" + (createTime == null ? "空" : DateUtils.format(createTime, DateTimePatterEnum.YYYY_MM_DD_HH_MM_SS.getPattern())) + ",:" + (updateTime == null ? "空" : DateUtils.format(updateTime, DateTimePatterEnum.YYYY_MM_DD_HH_MM_SS.getPattern()));
-	}
 }

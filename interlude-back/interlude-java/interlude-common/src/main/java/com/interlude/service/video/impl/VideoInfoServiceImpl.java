@@ -96,4 +96,9 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 	public Integer deleteVideoInfoByVideoId(Long videoId) {
 		return this.videoInfoMapper.deleteByVideoId(videoId);
 	}
+
+	@Override
+	public void saveVideoInfo(VideoInfo videoInfo) {
+
+	}
 }

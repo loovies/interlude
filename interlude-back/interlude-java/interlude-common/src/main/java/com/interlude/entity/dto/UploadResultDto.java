@@ -23,6 +23,7 @@ public class UploadResultDto implements Serializable {
     private Long fileSize = 0L;
     private Long uploadSize = 0L;
     private String status;
+    private Integer visibility;
 
     // 文件唯一标识
     private String fileIdentifier;
@@ -47,6 +48,14 @@ public class UploadResultDto implements Serializable {
     // 临时数据
     private String tempData;    // 临时存储的编辑数据
     private String last_edit_content;  // 最后一次编辑的未保存内容
+
+    public Integer getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(Integer visibility) {
+        this.visibility = visibility;
+    }
 
     public Integer getpCategoryId() {
         return pCategoryId;

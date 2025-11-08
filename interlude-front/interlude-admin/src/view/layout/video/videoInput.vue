@@ -88,12 +88,20 @@
             v-model="formData.description"
           ></el-input>
         </el-form-item>
-        <el-form-item label="互动设置:" prop="interaction" class="input">
+        <el-form-item label="可见性:" prop="visibility" class="input">
+          <el-radio-group v-model="formData.visibility" @change="handleChange">
+            <el-radio :value="1">公共</el-radio>
+            <el-radio :value="2">私人</el-radio>
+            <el-radio :value="3">仅限好友</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="互动设置:" prop="interactionArray" class="input">
           <el-checkbox-group v-model="formData.interactionArray" @change="handleChange">
             <el-checkbox label="0">关闭弹幕</el-checkbox>
             <el-checkbox label="1">关闭评论</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
+
         <el-form-item label="" class="inputbtn">
           <el-button type="primary" @click="submitForm" size="large">立即投稿</el-button>
           <el-button type="primary" size="large" @click="saveDraftInfo()">保存</el-button>
@@ -140,14 +148,16 @@ const setActive = async (index: number): Promise<void> => {
     }).then(async () => {
       await saveDraftInfo()
       formDataRef.value.resetFields()
-      formData.value.interactionSettings = []
+      formData.value.interactionArray = []
+      formData.value.visibility = []
       activeIndex.value = index
       await loadDraftInfo()
       showVideoInput(index)
     })
   } else {
     formDataRef.value.resetFields()
-    formData.value.interactionSettings = []
+    formData.value.interactionArray = []
+    formData.value.visibility = []
     activeIndex.value = index
     await loadDraftInfo()
     showVideoInput(index)
@@ -156,6 +166,7 @@ const setActive = async (index: number): Promise<void> => {
 
 const showVideoInput = (index: number) => {
   // formData.value = props.fileList[index]
+  if (!props.fileList[index]) return
   if (props.fileList[index].videoCover) {
     formData.value.videoCoverFile = props.fileList[index].videoCover
   }
@@ -182,6 +193,7 @@ const showVideoInput = (index: number) => {
   if (props.fileList[index].interactionSettings) {
     formData.value.interactionArray = props.fileList[index].interactionSettings.split(',')
   }
+  formData.value.visibility = props.fileList[index].visibility
 }
 
 const formData = ref({})
@@ -194,6 +206,7 @@ const rules = {
   originInfo: [{ required: true, message: '转载说明不能为空' }],
   categoryArray: [{ required: true, message: '分区不能为空' }],
   tags: [{ required: true, message: '标签不能为空' }],
+  visibility: [{ required: true, message: '可见性不能为空' }],
 }
 
 const emit = defineEmits(['update:fileList'])
@@ -207,7 +220,7 @@ const loadDraftInfo = async (): Promise<void> => {
 }
 
 const submitForm = () => {
-  console.log(formData.value)
+  console.log(props.fileList[activeIndex.value])
 }
 
 const saveDraftInfo = async (): Promise<void> => {

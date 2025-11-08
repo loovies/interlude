@@ -60,16 +60,16 @@ public interface VideoFileService{
 	/**
 	 * 根据UploadIdAndUserId查询
 	 */
-	VideoFile getVideoFileByUploadIdAndUserId(String uploadId, Long userId);
+	VideoFile getVideoFileByUploadIdAndUserId(String uploadId, String userId);
 
 	/**
 	 * 根据UploadIdAndUserId更新
 	 */
-	Integer updateVideoFileByUploadIdAndUserId(VideoFile bean, String uploadId, Long userId);
+	Integer updateVideoFileByUploadIdAndUserId(VideoFile bean, String uploadId, String userId);
 
 	/**
 	 * 根据UploadIdAndUserId删除
 	 */
-	Integer deleteVideoFileByUploadIdAndUserId(String uploadId, Long userId);
+	Integer deleteVideoFileByUploadIdAndUserId(String uploadId, String userId);
 
 }

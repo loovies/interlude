@@ -7,16 +7,19 @@ import com.interlude.entity.dto.SysSettingDto;
 import com.interlude.entity.dto.TokenUserInfoDto;
 import com.interlude.entity.dto.UploadResultDto;
 import com.interlude.entity.po.video.VideoDraft;
+import com.interlude.entity.po.video.VideoFile;
 import com.interlude.entity.vo.ResponseVO;
 import com.interlude.enums.DateTimePatterEnum;
 import com.interlude.enums.ResponseCodeEnum;
 import com.interlude.exception.BusinessException;
 import com.interlude.service.video.VideoDraftService;
+import com.interlude.service.video.VideoFileService;
 import com.interlude.utils.DateUtils;
 import com.interlude.utils.StringTools;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.hibernate.validator.constraints.Range;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,6 +47,9 @@ public class FileController extends ABaseController{
 
     @Resource
     private VideoDraftService videoDraftService;
+
+    @Resource
+    private VideoFileService videoFileService;
 
     /**
      * 获取资源
@@ -89,7 +95,7 @@ public class FileController extends ABaseController{
         TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
 
         VideoDraft idAndFileName = videoDraftService.getVideoDraftByUserIdAndFileName(tokenUserInfo.getUserId(), fileName);
-        if(idAndFileName != null && idAndFileName.getUploadStatus() == 1){
+        if(idAndFileName != null && idAndFileName.getUploadStatus() == 1){ // 判断草稿表是否存在, 且 上传状态为 上传中
             UploadResultDto info = redisComponent.getUploadVideoFileInfoByKey(idAndFileName.getDraftKey());
             if(info != null){
                 if(info.getFileIdentifier().equals(fileIdentifier)){
@@ -107,6 +113,21 @@ public class FileController extends ABaseController{
                 videoDraft.setUserId(tokenUserInfo.getUserId());
                 videoDraftService.add(videoDraft);
             }
+            // 保存文件信息到文件视频表
+            VideoDraft videoTemp = videoDraftService.getVideoDraftByDraftKey(Constants.REDIS_KEY_UPLOADING_FILE+tokenUserInfo.getUserId()+uploadData.getUploadId());
+
+            VideoFile videoFile = new VideoFile();
+            videoFile.setFileId(Long.parseLong(StringTools.getRandomNumber(Constants.NUMBER_10)));
+            videoFile.setVideoId(0L);
+            videoFile.setUserId(tokenUserInfo.getUserId());
+            videoFile.setDraftId(videoTemp.getDraftId());
+            videoFile.setFileName(videoTemp.getVideoName());
+
+            videoFile.setFilePath(uploadData.getFilePath());
+            videoFile.setUploadId(uploadData.getUploadId());
+            videoFile.setFileStatus(1);     // 状态上传
+
+            videoFileService.add(videoFile);
             return getSuccessResponseVO(uploadData);
         }
         return getSuccessResponseVO(null);
@@ -118,21 +139,26 @@ public class FileController extends ABaseController{
                                   @NotNull String uploadId, @NotNull Long uid , @NotNull String status,@NotNull Long fileSize, @NotNull Integer uploadPercent) throws IOException {
         TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
         VideoDraft videoDraft = new VideoDraft();
+        VideoFile videoFile = new VideoFile();
+        videoFile.setFileStatus(1);
         UploadResultDto uploadResultDto = redisComponent.getUploadVideoFileInfo(tokenUserInfo.getUserId(), uploadId);
 
         if(uploadResultDto == null){
             videoDraft.setUploadStatus(3);
+            videoFile.setFileStatus(5);
             throw new BusinessException("视频不存在请重新上传");
         }
         SysSettingDto settingDto = redisComponent.getSysSetting();
         if(uploadResultDto.getFileSize() > settingDto.getVideoSize() * Constants.MB_SIZE){
             videoDraft.setUploadStatus(3);
+            videoFile.setFileStatus(5);
             throw new BusinessException("文件超过大小限制");
         }
         // 第一个条件 防止分片乱序上传  当前分片的前一个分片必须已经上传成功 例如3号分片还没上传，不能直接上传4号分片
         // 第二个条件： 防止超出总分片数,当前分片索引不能超过最大有效索引
         if((chunksIndex -1) > uploadResultDto.getChunkIndex() || chunksIndex > uploadResultDto.getChunks()-1){
             videoDraft.setUploadStatus(3);
+            videoFile.setFileStatus(5);
             throw new BusinessException(ResponseCodeEnum.CODE_600);
         }
 
@@ -152,15 +178,18 @@ public class FileController extends ABaseController{
             uploadResultDto.setUploadPercent(100);
             uploadResultDto.setStatus("success");
             videoDraft.setUploadStatus(2);
+            videoFile.setFileStatus(2);
+            videoFile.setFileSize(fileSize);
         }
         videoDraftService.updateVideoDraftByDraftKey(videoDraft,Constants.REDIS_KEY_UPLOADING_FILE+tokenUserInfo.getUserId()+uploadResultDto.getUploadId());
-
+        videoFileService.updateVideoFileByUploadIdAndUserId(videoFile,uploadId,tokenUserInfo.getUserId());
         redisComponent.uploadVideoFileInfo(tokenUserInfo.getUserId(),uploadResultDto);
         return getSuccessResponseVO(null);
     }
 
     // 删除上传
     @RequestMapping("delUploadVideo")
+    @Transactional(rollbackFor = Exception.class)
     public ResponseVO delUploadVideo(@NotEmpty String uploadId) throws IOException{
         TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
         UploadResultDto fileInfo = redisComponent.getUploadVideoFileInfo(tokenUserInfo.getUserId(), uploadId);
@@ -174,12 +203,18 @@ public class FileController extends ABaseController{
 
         // 删除数据库中的草稿表数据
         String draftKey = Constants.REDIS_KEY_UPLOADING_FILE+tokenUserInfo.getUserId()+uploadId;
-
         VideoDraft videoDraftByDraftKey = videoDraftService.getVideoDraftByDraftKey(draftKey);
         if (videoDraftByDraftKey == null){
             throw new BusinessException("当前文件不存在");
         }
         videoDraftService.deleteVideoDraftByDraftKey(draftKey);
+
+        // 上传视频文件表中的文件信息
+        VideoFile videoFileByUploadIdAndUserId = videoFileService.getVideoFileByUploadIdAndUserId(uploadId, tokenUserInfo.getUserId());
+        if (videoFileByUploadIdAndUserId == null){
+            throw new BusinessException("当前文件不存在");
+        }
+        videoFileService.deleteVideoFileByUploadIdAndUserId(uploadId, tokenUserInfo.getUserId());
         return  getSuccessResponseVO(null);
     }
 }

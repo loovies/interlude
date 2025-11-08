@@ -27,17 +27,17 @@ public interface VideoFileMapper<T, P> extends BaseMapper {
 	/**
 	 * 根据UploadIdAndUserId查询
 	 */
-	T selectByUploadIdAndUserId(@Param("uploadId") String uploadId, @Param("userId") Long userId);
+	T selectByUploadIdAndUserId(@Param("uploadId") String uploadId, @Param("userId") String userId);
 
 	/**
 	 * 根据UploadIdAndUserId更新
 	 */
-	Integer updateByUploadIdAndUserId(@Param("bean") T t, @Param("uploadId") String uploadId, @Param("userId") Long userId);
+	Integer updateByUploadIdAndUserId(@Param("bean") T t, @Param("uploadId") String uploadId, @Param("userId") String userId);
 
 	/**
 	 * 根据UploadIdAndUserId删除
 	 */
-	Integer deleteByUploadIdAndUserId(@Param("uploadId") String uploadId, @Param("userId") Long userId);
+	Integer deleteByUploadIdAndUserId(@Param("uploadId") String uploadId, @Param("userId") String userId);
 
 
 }

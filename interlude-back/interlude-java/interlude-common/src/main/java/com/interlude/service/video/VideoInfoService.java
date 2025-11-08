@@ -57,4 +57,5 @@ public interface VideoInfoService{
 	 */
 	Integer deleteVideoInfoByVideoId(Long videoId);
 
+    void saveVideoInfo(VideoInfo videoInfo);
 }

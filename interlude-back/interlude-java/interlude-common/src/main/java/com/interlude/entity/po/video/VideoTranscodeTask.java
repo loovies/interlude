@@ -29,7 +29,7 @@ public class VideoTranscodeTask implements Serializable {
 	/**
 	 * 用户ID
 	 */
-	private Long userId;
+	private String userId;
 
 	/**
 	 * 源文件ID
@@ -93,11 +93,11 @@ public class VideoTranscodeTask implements Serializable {
 		return this.videoId;
 	}
 
-	public void setUserId(Long userId) {
+	public void setUserId(String userId) {
 		this.userId = userId;
 	}
 
-	public Long getUserId() {
+	public String getUserId() {
 		return this.userId;
 	}
 

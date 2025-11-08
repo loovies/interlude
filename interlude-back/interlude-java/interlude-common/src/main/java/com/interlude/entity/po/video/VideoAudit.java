@@ -29,7 +29,7 @@ public class VideoAudit implements Serializable {
 	/**
 	 * 
 	 */
-	private Long userId;
+	private String userId;
 
 	/**
 	 * “1:待处理”“2:已批准”“3:已拒绝”“4:已取消”
@@ -93,11 +93,11 @@ public class VideoAudit implements Serializable {
 		return this.videoId;
 	}
 
-	public void setUserId(Long userId) {
+	public void setUserId(String userId) {
 		this.userId = userId;
 	}
 
-	public Long getUserId() {
+	public String getUserId() {
 		return this.userId;
 	}
 

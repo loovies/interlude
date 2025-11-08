@@ -8,6 +8,9 @@
 		<id column="file_id" property="fileId"/>
 		<!--视频ID-->
 		<result column="video_id" property="videoId"/>
+		<!--草稿ID
+-->
+		<result column="draft_id" property="draftId"/>
 		<!--用户ID-->
 		<result column="user_id" property="userId"/>
 		<!--文件名-->
@@ -47,71 +50,74 @@
 	</resultMap>
 	<!--通用测序结果列-->
 	<sql id="base_column_list">
-		file_id,video_id,user_id,file_name,file_size,file_path,file_url,duration,quality,format,width,height,bitrate,video_codec,audio_codec,file_status,is_primary,upload_id,create_time,update_time
+		file_id,video_id,draft_id,user_id,file_name,file_size,file_path,file_url,duration,quality,format,width,height,bitrate,video_codec,audio_codec,file_status,is_primary,upload_id,create_time,update_time
 	</sql>
 
 
 	<!--基础条件查询-->
 	<sql id="base_query_condition">
 		<if test="query.fileId != null">
-			and file_id = #{query.fileId} 
+			and file_id = #{query.fileId}
 		</if>
 		<if test="query.videoId != null">
-			and video_id = #{query.videoId} 
+			and video_id = #{query.videoId}
+		</if>
+		<if test="query.draftId != null">
+			and draft_id = #{query.draftId}
 		</if>
 		<if test="query.userId != null">
-			and user_id = #{query.userId} 
+			and user_id = #{query.userId}
 		</if>
 		<if test="query.fileName != null and query.fileName != ''">
-			and file_name = #{query.fileName} 
+			and file_name = #{query.fileName}
 		</if>
 		<if test="query.fileSize != null">
-			and file_size = #{query.fileSize} 
+			and file_size = #{query.fileSize}
 		</if>
 		<if test="query.filePath != null and query.filePath != ''">
-			and file_path = #{query.filePath} 
+			and file_path = #{query.filePath}
 		</if>
 		<if test="query.fileUrl != null and query.fileUrl != ''">
-			and file_url = #{query.fileUrl} 
+			and file_url = #{query.fileUrl}
 		</if>
 		<if test="query.duration != null">
-			and duration = #{query.duration} 
+			and duration = #{query.duration}
 		</if>
 		<if test="query.quality != null">
-			and quality = #{query.quality} 
+			and quality = #{query.quality}
 		</if>
 		<if test="query.format != null and query.format != ''">
-			and format = #{query.format} 
+			and format = #{query.format}
 		</if>
 		<if test="query.width != null">
-			and width = #{query.width} 
+			and width = #{query.width}
 		</if>
 		<if test="query.height != null">
-			and height = #{query.height} 
+			and height = #{query.height}
 		</if>
 		<if test="query.bitrate != null">
-			and bitrate = #{query.bitrate} 
+			and bitrate = #{query.bitrate}
 		</if>
 		<if test="query.videoCodec != null and query.videoCodec != ''">
-			and video_codec = #{query.videoCodec} 
+			and video_codec = #{query.videoCodec}
 		</if>
 		<if test="query.audioCodec != null and query.audioCodec != ''">
-			and audio_codec = #{query.audioCodec} 
+			and audio_codec = #{query.audioCodec}
 		</if>
 		<if test="query.fileStatus != null">
-			and file_status = #{query.fileStatus} 
+			and file_status = #{query.fileStatus}
 		</if>
 		<if test="query.isPrimary != null">
-			and is_primary = #{query.isPrimary} 
+			and is_primary = #{query.isPrimary}
 		</if>
 		<if test="query.uploadId != null and query.uploadId != ''">
-			and upload_id = #{query.uploadId} 
+			and upload_id = #{query.uploadId}
 		</if>
 		<if test="query.createTime != null">
-			and create_time = #{query.createTime} 
+			and create_time = #{query.createTime}
 		</if>
 		<if test="query.updateTime != null">
-			and update_time = #{query.updateTime} 
+			and update_time = #{query.updateTime}
 		</if>
 	</sql>
 
@@ -182,6 +188,9 @@
 			<if test="bean.videoId != null">
 				video_id,
 			</if>
+			<if test="bean.draftId != null">
+				draft_id,
+			</if>
 			<if test="bean.userId != null">
 				user_id,
 			</if>
@@ -243,6 +252,9 @@
 			</if>
 			<if test="bean.videoId != null">
 				#{bean.videoId},
+			</if>
+			<if test="bean.draftId != null">
+				#{bean.draftId},
 			</if>
 			<if test="bean.userId != null">
 				#{bean.userId},
@@ -311,6 +323,9 @@
 			<if test="bean.videoId != null">
 				video_id,
 			</if>
+			<if test="bean.draftId != null">
+				draft_id,
+			</if>
 			<if test="bean.userId != null">
 				user_id,
 			</if>
@@ -373,6 +388,9 @@
 			<if test="bean.videoId != null">
 				#{bean.videoId},
 			</if>
+			<if test="bean.draftId != null">
+				#{bean.draftId},
+			</if>
 			<if test="bean.userId != null">
 				#{bean.userId},
 			</if>
@@ -434,6 +452,9 @@
 			<if test="bean.videoId!=null">
 				video_id = VALUES(video_id),
 			</if>
+			<if test="bean.draftId!=null">
+				draft_id = VALUES(draft_id),
+			</if>
 			<if test="bean.fileName!=null">
 				file_name = VALUES(file_name),
 			</if>
@@ -487,20 +508,20 @@
 
 	<!--添加 (批量插入)-->
 	<insert id="insertBatch" parameterType="com.interlude.entity.po.video.VideoFile" >
-		INSERT INTO video_file(file_id,video_id,user_id,file_name,file_size,file_path,file_url,duration,quality,format,width,height,bitrate,video_codec,audio_codec,file_status,is_primary,upload_id,create_time,update_time)values
+		INSERT INTO video_file(file_id,video_id,draft_id,user_id,file_name,file_size,file_path,file_url,duration,quality,format,width,height,bitrate,video_codec,audio_codec,file_status,is_primary,upload_id,create_time,update_time)values
 		<foreach collection="list" item="item" separator=",">
-			(#{item.fileId},#{item.videoId},#{item.userId},#{item.fileName},#{item.fileSize},#{item.filePath},#{item.fileUrl},#{item.duration},#{item.quality},#{item.format},#{item.width},#{item.height},#{item.bitrate},#{item.videoCodec},#{item.audioCodec},#{item.fileStatus},#{item.isPrimary},#{item.uploadId},#{item.createTime},#{item.updateTime})
+			(#{item.fileId},#{item.videoId},#{item.draftId},#{item.userId},#{item.fileName},#{item.fileSize},#{item.filePath},#{item.fileUrl},#{item.duration},#{item.quality},#{item.format},#{item.width},#{item.height},#{item.bitrate},#{item.videoCodec},#{item.audioCodec},#{item.fileStatus},#{item.isPrimary},#{item.uploadId},#{item.createTime},#{item.updateTime})
 		</foreach>
 	</insert>
 
 	<!--批量插入或者更新-->
 	<insert id="insertOrUpdateBatch" parameterType="com.interlude.entity.po.video.VideoFile" >
-		INSERT INTO video_file(file_id,video_id,user_id,file_name,file_size,file_path,file_url,duration,quality,format,width,height,bitrate,video_codec,audio_codec,file_status,is_primary,upload_id,create_time,update_time)values
+		INSERT INTO video_file(file_id,video_id,draft_id,user_id,file_name,file_size,file_path,file_url,duration,quality,format,width,height,bitrate,video_codec,audio_codec,file_status,is_primary,upload_id,create_time,update_time)values
 		<foreach collection="list" item="item" separator=",">
-			(#{item.fileId},#{item.videoId},#{item.userId},#{item.fileName},#{item.fileSize},#{item.filePath},#{item.fileUrl},#{item.duration},#{item.quality},#{item.format},#{item.width},#{item.height},#{item.bitrate},#{item.videoCodec},#{item.audioCodec},#{item.fileStatus},#{item.isPrimary},#{item.uploadId},#{item.createTime},#{item.updateTime})
+			(#{item.fileId},#{item.videoId},#{item.draftId},#{item.userId},#{item.fileName},#{item.fileSize},#{item.filePath},#{item.fileUrl},#{item.duration},#{item.quality},#{item.format},#{item.width},#{item.height},#{item.bitrate},#{item.videoCodec},#{item.audioCodec},#{item.fileStatus},#{item.isPrimary},#{item.uploadId},#{item.createTime},#{item.updateTime})
 		</foreach>
 		on DUPLICATE key update
-		file_id = VALUES(file_id),video_id = VALUES(video_id),user_id = VALUES(user_id),file_name = VALUES(file_name),file_size = VALUES(file_size),file_path = VALUES(file_path),file_url = VALUES(file_url),duration = VALUES(duration),quality = VALUES(quality),format = VALUES(format),width = VALUES(width),height = VALUES(height),bitrate = VALUES(bitrate),video_codec = VALUES(video_codec),audio_codec = VALUES(audio_codec),file_status = VALUES(file_status),is_primary = VALUES(is_primary),upload_id = VALUES(upload_id),create_time = VALUES(create_time),update_time = VALUES(update_time)
+		file_id = VALUES(file_id),video_id = VALUES(video_id),draft_id = VALUES(draft_id),user_id = VALUES(user_id),file_name = VALUES(file_name),file_size = VALUES(file_size),file_path = VALUES(file_path),file_url = VALUES(file_url),duration = VALUES(duration),quality = VALUES(quality),format = VALUES(format),width = VALUES(width),height = VALUES(height),bitrate = VALUES(bitrate),video_codec = VALUES(video_codec),audio_codec = VALUES(audio_codec),file_status = VALUES(file_status),is_primary = VALUES(is_primary),upload_id = VALUES(upload_id),create_time = VALUES(create_time),update_time = VALUES(update_time)
 	</insert>
 
 	<!-- 根据FileId查询 -->
@@ -517,6 +538,9 @@
 			</if>
 			<if test="bean.videoId != null" >
 				video_id = #{bean.videoId},
+			</if>
+			<if test="bean.draftId != null" >
+				draft_id = #{bean.draftId},
 			</if>
 			<if test="bean.userId != null" >
 				user_id = #{bean.userId},
@@ -597,6 +621,9 @@
 			</if>
 			<if test="bean.videoId != null" >
 				video_id = #{bean.videoId},
+			</if>
+			<if test="bean.draftId != null" >
+				draft_id = #{bean.draftId},
 			</if>
 			<if test="bean.userId != null" >
 				user_id = #{bean.userId},

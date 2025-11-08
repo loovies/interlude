@@ -21,6 +21,13 @@ public class VideoFileQuery extends BaseParam {
 	 */
 	private Long videoId;
 
+
+	/**
+	 * 草稿ID
+
+	 */
+	private Integer draftId;
+
 	/**
 	 * 用户ID
 	 */
@@ -132,6 +139,14 @@ public class VideoFileQuery extends BaseParam {
 	private String updateTimeStart;
 
 	private String updateTimeEnd;
+
+	public Integer getDraftId() {
+		return draftId;
+	}
+
+	public void setDraftId(Integer draftId) {
+		this.draftId = draftId;
+	}
 
 	public void setFileId(Long fileId) {
 		this.fileId = fileId;

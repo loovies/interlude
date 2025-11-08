@@ -100,21 +100,21 @@ public class VideoFileServiceImpl implements VideoFileService{
 	/**
 	 * 根据UploadIdAndUserId查询
 	 */
-	public VideoFile getVideoFileByUploadIdAndUserId(String uploadId, Long userId) {
+	public VideoFile getVideoFileByUploadIdAndUserId(String uploadId, String userId) {
 		return this.videoFileMapper.selectByUploadIdAndUserId(uploadId, userId);
 	}
 
 	/**
 	 * 根据UploadIdAndUserId更新
 	 */
-	public Integer updateVideoFileByUploadIdAndUserId(VideoFile bean, String uploadId, Long userId) {
+	public Integer updateVideoFileByUploadIdAndUserId(VideoFile bean, String uploadId, String userId) {
 		return this.videoFileMapper.updateByUploadIdAndUserId(bean, uploadId, userId);
 	}
 
 	/**
 	 * 根据UploadIdAndUserId删除
 	 */
-	public Integer deleteVideoFileByUploadIdAndUserId(String uploadId, Long userId) {
+	public Integer deleteVideoFileByUploadIdAndUserId(String uploadId, String userId) {
 		return this.videoFileMapper.deleteByUploadIdAndUserId(uploadId, userId);
 	}
 }
