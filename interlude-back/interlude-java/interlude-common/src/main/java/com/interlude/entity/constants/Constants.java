@@ -29,9 +29,16 @@ public class Constants {
     public static final String FILE_FOLDER_TEMP="temp/";
     public static final String FILE_AVATAR = "avatar/";
 
+    // 文件名
+    public static final String TEMP_VIDEO_NAME = "/temp.mp4";
+    public static final String IMAGE_THUMBNAIL_SUFFIX = "_thumbnail.jpg";
+    public static final String MP4_SUFFIX = ".mp4";
+
+
     // 系统
     public static final String REDIS_SYS_SETTING_KEY = REDIS_PREFIX_NAME + "setting:";
     public static final String REDIS_KEY_UPLOADING_FILE = REDIS_PREFIX_NAME + "uploading:";
+    public static final String REDIS_KEY_QUEUE_TRANSFER = REDIS_PREFIX_NAME + "queue:transfer:";
 
     // 存储单位
     public static final Long MB_SIZE = 1024 * 1024L;

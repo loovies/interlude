@@ -6,6 +6,7 @@ import com.interlude.entity.dto.SysSettingDto;
 import com.interlude.entity.dto.TokenUserInfoDto;
 import com.interlude.entity.dto.UploadResultDto;
 import com.interlude.entity.po.CategoryInfo;
+import com.interlude.entity.po.video.VideoFile;
 import com.interlude.enums.DateTimePatterEnum;
 import com.interlude.redis.RedisUtils;
 import com.interlude.utils.DateUtils;
@@ -125,5 +126,13 @@ public class RedisComponent {
     // 删除上传文件信息
     public void delVideoFileInfo(String userId,String uploadId){
         redisUtils.delete(Constants.REDIS_KEY_UPLOADING_FILE + userId + uploadId);
+    }
+
+    public void addFile2TransferQueue(VideoFile file) {
+        redisUtils.lpush(Constants.REDIS_KEY_QUEUE_TRANSFER,file, 0L);
+    }
+
+    public VideoFile getFileTransferQueue() {
+        return (VideoFile) redisUtils.rpop(Constants.REDIS_KEY_QUEUE_TRANSFER);
     }
 }

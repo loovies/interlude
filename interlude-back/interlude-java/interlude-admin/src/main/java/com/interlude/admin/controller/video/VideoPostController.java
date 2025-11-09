@@ -11,7 +11,6 @@ import com.interlude.exception.BusinessException;
 import com.interlude.service.video.VideoAuditService;
 import com.interlude.service.video.VideoDraftService;
 import com.interlude.service.video.VideoInfoService;
-import com.interlude.utils.StringTools;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,16 +37,19 @@ public class VideoPostController extends ABaseController {
     private RedisComponent redisComponent;
 
     @RequestMapping("postVideo")
-    public ResponseVO postVideo(@NotNull String uploadId){
+    public ResponseVO postVideo(@NotNull String uploadId,Long videoId){
         TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
 
         UploadResultDto fileInfoByKey = redisComponent.getUploadVideoFileInfoByKey(Constants.REDIS_KEY_UPLOADING_FILE + tokenUserInfo.getUserId() + uploadId);
         if(fileInfoByKey == null){
             throw new BusinessException("文件不存在");
         }
+        if(!fileInfoByKey.getStatus().equals("success")){
+            throw new BusinessException("上传视频文件还未上传成功,请上传成功在提交");
+        }
 
         VideoInfo videoInfo = new VideoInfo();
-        videoInfo.setVideoId(Long.parseLong(StringTools.getRandomNumber(Constants.NUMBER_15)));
+        videoInfo.setVideoId(videoId == null ? 0 : videoId);
         videoInfo.setUserId(tokenUserInfo.getUserId());
         videoInfo.setVideoName(fileInfoByKey.getVideoName());
         videoInfo.setVideoCover(fileInfoByKey.getVideoCover());
@@ -61,7 +63,7 @@ public class VideoPostController extends ABaseController {
         videoInfo.setStatus(status);
         videoInfo.setPublishTime(new Date());
 
-        videoInfoService.saveVideoInfo(videoInfo);
+        videoInfoService.saveVideoInfo(videoInfo,uploadId);
 
         return getSuccessResponseVO(null);
     }

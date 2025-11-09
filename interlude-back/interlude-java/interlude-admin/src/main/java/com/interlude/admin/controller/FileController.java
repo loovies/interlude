@@ -10,6 +10,7 @@ import com.interlude.entity.po.video.VideoDraft;
 import com.interlude.entity.po.video.VideoFile;
 import com.interlude.entity.vo.ResponseVO;
 import com.interlude.enums.DateTimePatterEnum;
+import com.interlude.enums.FileStatusEnum;
 import com.interlude.enums.ResponseCodeEnum;
 import com.interlude.exception.BusinessException;
 import com.interlude.service.video.VideoDraftService;
@@ -140,25 +141,25 @@ public class FileController extends ABaseController{
         TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
         VideoDraft videoDraft = new VideoDraft();
         VideoFile videoFile = new VideoFile();
-        videoFile.setFileStatus(1);
+        videoFile.setFileStatus(FileStatusEnum.UPLOAD.getStatus());
         UploadResultDto uploadResultDto = redisComponent.getUploadVideoFileInfo(tokenUserInfo.getUserId(), uploadId);
 
         if(uploadResultDto == null){
             videoDraft.setUploadStatus(3);
-            videoFile.setFileStatus(5);
+            videoFile.setFileStatus(FileStatusEnum.FAILED.getStatus());
             throw new BusinessException("视频不存在请重新上传");
         }
         SysSettingDto settingDto = redisComponent.getSysSetting();
         if(uploadResultDto.getFileSize() > settingDto.getVideoSize() * Constants.MB_SIZE){
             videoDraft.setUploadStatus(3);
-            videoFile.setFileStatus(5);
+            videoFile.setFileStatus(FileStatusEnum.FAILED.getStatus());
             throw new BusinessException("文件超过大小限制");
         }
         // 第一个条件 防止分片乱序上传  当前分片的前一个分片必须已经上传成功 例如3号分片还没上传，不能直接上传4号分片
         // 第二个条件： 防止超出总分片数,当前分片索引不能超过最大有效索引
         if((chunksIndex -1) > uploadResultDto.getChunkIndex() || chunksIndex > uploadResultDto.getChunks()-1){
             videoDraft.setUploadStatus(3);
-            videoFile.setFileStatus(5);
+            videoFile.setFileStatus(FileStatusEnum.FAILED.getStatus());
             throw new BusinessException(ResponseCodeEnum.CODE_600);
         }
 
@@ -178,7 +179,7 @@ public class FileController extends ABaseController{
             uploadResultDto.setUploadPercent(100);
             uploadResultDto.setStatus("success");
             videoDraft.setUploadStatus(2);
-            videoFile.setFileStatus(2);
+            videoFile.setFileStatus(FileStatusEnum.UPLOADED.getStatus());
             videoFile.setFileSize(fileSize);
         }
         videoDraftService.updateVideoDraftByDraftKey(videoDraft,Constants.REDIS_KEY_UPLOADING_FILE+tokenUserInfo.getUserId()+uploadResultDto.getUploadId());
