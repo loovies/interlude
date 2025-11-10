@@ -33,6 +33,8 @@ public class Constants {
     public static final String TEMP_VIDEO_NAME = "/temp.mp4";
     public static final String IMAGE_THUMBNAIL_SUFFIX = "_thumbnail.jpg";
     public static final String MP4_SUFFIX = ".mp4";
+    public static final String TS_NAME = "index.ts";
+    public static final String M3U8_NAME = "index.m3u8";
 
 
     // 系统
