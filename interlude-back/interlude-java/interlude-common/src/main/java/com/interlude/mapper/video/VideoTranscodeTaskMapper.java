@@ -25,4 +25,5 @@ public interface VideoTranscodeTaskMapper<T, P> extends BaseMapper {
 	Integer deleteByTaskId(@Param("taskId") Long taskId);
 
 
+    Integer updateByVideoId2UserId2FileId(@Param("bean") T t,@Param("videoId") Long videoId, @Param("userId") String userId, @Param("fileId") Long fileId);
 }

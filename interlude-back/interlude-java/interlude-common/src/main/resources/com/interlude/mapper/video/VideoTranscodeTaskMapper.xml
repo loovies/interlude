@@ -369,7 +369,57 @@
 		where task_id=#{taskId}
 	</update>
 
-	<!-- 根据TaskId删除 -->
+    <update id="updateByVideoId2UserId2FileId" parameterType="com.interlude.entity.po.video.VideoTranscodeTask">
+		update video_transcode_task
+		<set>
+			<if test="bean.taskId != null" >
+				task_id = #{bean.taskId},
+			</if>
+			<if test="bean.videoId != null" >
+				video_id = #{bean.videoId},
+			</if>
+			<if test="bean.userId != null" >
+				user_id = #{bean.userId},
+			</if>
+			<if test="bean.sourceFileId != null" >
+				source_file_id = #{bean.sourceFileId},
+			</if>
+			<if test="bean.targetQuality != null" >
+				target_quality = #{bean.targetQuality},
+			</if>
+			<if test="bean.taskStatus != null" >
+				task_status = #{bean.taskStatus},
+			</if>
+			<if test="bean.progress != null" >
+				progress = #{bean.progress},
+			</if>
+			<if test="bean.errorMessage != null" >
+				error_message = #{bean.errorMessage},
+			</if>
+			<if test="bean.startTime != null" >
+				start_time = #{bean.startTime},
+			</if>
+			<if test="bean.endTime != null" >
+				end_time = #{bean.endTime},
+			</if>
+			<if test="bean.createTime != null" >
+				create_time = #{bean.createTime},
+			</if>
+		</set>
+		<where>
+			<if test="videoId != null">
+				and video_id = #{videoId}
+			</if>
+		    <if test="userId != null">
+				and user_id = #{userId}
+			</if>
+			<if test="fileId != null">
+				and source_file_id = #{fileId}
+			</if>
+		</where>
+	</update>
+
+    <!-- 根据TaskId删除 -->
 	<delete id="deleteByTaskId">
 		delete from video_transcode_task where task_id=#{taskId}
 	</delete>

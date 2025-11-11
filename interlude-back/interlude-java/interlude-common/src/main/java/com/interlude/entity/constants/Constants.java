@@ -35,7 +35,8 @@ public class Constants {
     public static final String MP4_SUFFIX = ".mp4";
     public static final String TS_NAME = "index.ts";
     public static final String M3U8_NAME = "index.m3u8";
-
+    public static final String VIDEO_CODE_HEVC="hevc";
+    public static final String VIDEO_CODE_TEMP_FILE_SUFFIX="_temp";
 
     // 系统
     public static final String REDIS_SYS_SETTING_KEY = REDIS_PREFIX_NAME + "setting:";

@@ -11,18 +11,17 @@ import com.interlude.entity.query.SimplePage;
 import com.interlude.entity.query.video.VideoAuditQuery;
 import com.interlude.entity.query.video.VideoFileQuery;
 import com.interlude.entity.query.video.VideoTranscodeTaskQuery;
-import com.interlude.enums.FileStatusEnum;
-import com.interlude.enums.PageSize;
+import com.interlude.enums.*;
 import com.interlude.entity.vo.PaginationResultVO;
 
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import com.interlude.entity.po.video.VideoInfo;
 import com.interlude.entity.query.video.VideoInfoQuery;
-import com.interlude.enums.ResponseCodeEnum;
-import com.interlude.enums.VideoTaskEnum;
 import com.interlude.exception.BusinessException;
 import com.interlude.mapper.video.VideoAuditMapper;
 import com.interlude.mapper.video.VideoFileMapper;
@@ -238,13 +237,80 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 		}catch (Exception e){
 			log.error("文件转码失败",e);
 			videoFile.setFileStatus(FileStatusEnum.FAILED.getStatus());
+			videoTranscodeTask.setTaskStatus(VideoTaskEnum.FAILURE.getStatus());
+			videoTranscodeTask.setErrorMessage(e.getMessage());
 		}finally {
 			// 更新数据库记录
 			videoFileMapper.updateByUploadIdAndUserId(videoFile,fileTransferQueue.getUploadId(),fileTransferQueue.getUserId());
 
-
+			// 更新文件转码表
+			videoTranscodeTask.setEndTime(new Date());
+			videoTranscodeTask.setProgress(100);
+			videoTranscodeTaskMapper.updateByVideoId2UserId2FileId(videoTranscodeTask, fileTransferQueue.getVideoId(), fileTransferQueue.getUserId(), fileTransferQueue.getFileId());
 		}
+	}
 
+	/**
+	 *  将视频转换为多清晰度的 HLS 格式
+	 *  使用枚举配置管理清晰度
+	 * @param completeVideo 视频目标地址
+	 */
+	private void convertVideoToMultiQualityHLS(String completeVideo){
+		File videoFile = new File(completeVideo);
+		File outputFolder = videoFile.getParentFile();
+
+		// 步骤1: 检测视频编码，如果是 HEVC 则先转换
+		String codec = fFmpegUtils.getVideoCodec(completeVideo);
+		String processingVideoPath = completeVideo;
+		if (Constants.VIDEO_CODE_HEVC.equals(codec)) {
+			String tempFileName = completeVideo + Constants.VIDEO_CODE_TEMP_FILE_SUFFIX;
+
+			// 重命名原文件
+			boolean renamed = new File(completeVideo).renameTo(new File(tempFileName));
+			if (!renamed) {
+				throw new RuntimeException("重命名原文件失败: " + completeVideo);
+			}
+
+			// 转换为 H.264
+			fFmpegUtils.convertHevc2Mp4(tempFileName, completeVideo);
+			// 删除临时文件
+			File tempFile = new File(tempFileName);
+			if (tempFile.exists()) {
+				boolean deleted = tempFile.delete();
+				if (!deleted) {
+					System.err.println("警告: 无法删除临时文件: " + tempFileName);
+				}
+			}
+			// 步骤2: 生成多清晰度 HLS 流
+			// 可以根据需要选择特定的清晰度，这里使用所有支持的清晰度
+			fFmpegUtils.convertVideoToMultiQualityHLS(outputFolder, processingVideoPath);
+
+			// 步骤3: 生成主播放列表
+			fFmpegUtils.generateMasterPlaylist(outputFolder);
+		}
+	}
+
+	/**
+	 * 自定义清晰度转换 - 只生成指定的清晰度
+	 */
+	private void convertVideoToSpecificQualities(String completeVideo, List<VideoQualityEnum> targetQualities) {
+		File videoFile = new File(completeVideo);
+		File outputFolder = videoFile.getParentFile();
+
+		System.out.println("开始处理视频: " + completeVideo);
+		System.out.println("目标清晰度: " + targetQualities.stream()
+				.map(VideoQualityEnum::getDescription)
+				.collect(Collectors.joining(", ")));
+
+		// 编码检测和转换逻辑（同上）...
+
+		// 只生成指定的清晰度
+		fFmpegUtils.convertVideoToMultiQualityHLS(outputFolder, completeVideo, targetQualities);
+
+		// 生成主播放列表（只包含指定的清晰度）
+		fFmpegUtils.generateMasterPlaylist(outputFolder, targetQualities);
+
+		System.out.println("指定清晰度转换完成");
 	}
 
 	// 合并文件
