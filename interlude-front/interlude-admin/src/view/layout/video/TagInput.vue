@@ -53,13 +53,13 @@ const changeInput = () => {
     return
   }
   if (props.modelValue.length >= 10) {
-    proxy.Message.warning('最多设置十个标签')
+    proxy.$Message.warning('最多设置十个标签')
     inputValue.value = ''
     return
   }
   // 检查是否重复
   if (props.modelValue.includes(inputValue.value)) {
-    proxy.Message.warning('设置的标签重复了')
+    proxy.$Message.warning('设置的标签重复了')
     inputValue.value = ''
     return
   }

@@ -220,10 +220,29 @@ const loadDraftInfo = async (): Promise<void> => {
 }
 
 const submitForm = () => {
-  console.log(props.fileList[activeIndex.value])
+  formDataRef.value.validate(async (vaild) => {
+    if (!vaild) {
+      return
+    }
+    if (!isSaveVideoInfo.value) {
+      saveDraftInfo(true)
+    }
+    const uploadId = props.fileList[activeIndex.value].uploadId
+
+    let res = await proxy.$Request({
+      url: proxy.$Api.postVideo,
+      params: {
+        uploadId,
+      },
+    })
+    if (!res) {
+      return
+    }
+    proxy.$Message.success('投稿成功')
+  })
 }
 
-const saveDraftInfo = async (): Promise<void> => {
+const saveDraftInfo = async (showMsg: boolean = false): Promise<void> => {
   let params = {}
   Object.assign(params, formData.value)
   console.log(params)
@@ -249,7 +268,9 @@ const saveDraftInfo = async (): Promise<void> => {
   if (!res) {
     return
   }
-  proxy.$Message.success('保存成功')
+  if (!showMsg) {
+    proxy.$Message.success('保存成功')
+  }
   isSaveVideoInfo.value = true
 }
 

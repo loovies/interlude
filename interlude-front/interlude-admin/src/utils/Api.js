@@ -34,6 +34,9 @@ const Api = {
   //草稿
   getDraftInfoByUserId: '/draft/getDraftInfoByUserId',
   updateDraftInfo: '/draft/updateDraftInfo',
+
+  // 投稿
+  postVideo: '/vp/postVideo',
 }
 
 //上传图片
