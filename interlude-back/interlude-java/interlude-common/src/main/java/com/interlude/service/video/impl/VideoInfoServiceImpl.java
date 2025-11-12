@@ -4,13 +4,9 @@ import com.interlude.component.RedisComponent;
 import com.interlude.entity.config.AppConfig;
 import com.interlude.entity.constants.Constants;
 import com.interlude.entity.dto.UploadResultDto;
-import com.interlude.entity.po.video.VideoAudit;
-import com.interlude.entity.po.video.VideoFile;
-import com.interlude.entity.po.video.VideoTranscodeTask;
+import com.interlude.entity.po.video.*;
 import com.interlude.entity.query.SimplePage;
-import com.interlude.entity.query.video.VideoAuditQuery;
-import com.interlude.entity.query.video.VideoFileQuery;
-import com.interlude.entity.query.video.VideoTranscodeTaskQuery;
+import com.interlude.entity.query.video.*;
 import com.interlude.enums.*;
 import com.interlude.entity.vo.PaginationResultVO;
 
@@ -20,13 +16,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.interlude.entity.po.video.VideoInfo;
-import com.interlude.entity.query.video.VideoInfoQuery;
 import com.interlude.exception.BusinessException;
-import com.interlude.mapper.video.VideoAuditMapper;
-import com.interlude.mapper.video.VideoFileMapper;
-import com.interlude.mapper.video.VideoInfoMapper;
-import com.interlude.mapper.video.VideoTranscodeTaskMapper;
+import com.interlude.mapper.video.*;
 import com.interlude.service.video.VideoInfoService;
 import com.interlude.utils.FFmpegUtils;
 import com.interlude.utils.StringTools;
@@ -52,11 +43,11 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 	@Resource
 	private VideoAuditMapper<VideoAudit, VideoAuditQuery> videoAuditMapper;
 
-	@Resource
-	private VideoTranscodeTaskMapper<VideoTranscodeTask, VideoTranscodeTaskQuery> videoTranscodeTaskMapper;
-
     @Resource
     private VideoFileMapper<VideoFile, VideoFileQuery> videoFileMapper;
+
+	@Resource
+	private VideoDraftMapper<VideoDraft, VideoDraftQuery> videoDraftMapper;
 
 	@Resource
 	private RedisComponent redisComponent;
@@ -158,7 +149,6 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 		}
 
 		Date currentDate = new Date();
-		VideoTranscodeTask videoTranscodeTask = new VideoTranscodeTask();
 		VideoFile videoFile = new VideoFile();
 
 		// 添加视频
@@ -166,46 +156,37 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 			videoInfo.setVideoId(Long.parseLong(StringTools.getRandomNumber(Constants.NUMBER_15)));
 			videoInfoMapper.insert(videoInfo);
 
-			// 更新video_file的 video_id
-			videoFile = videoFileMapper.selectByUploadIdAndUserId(uploadId, videoInfo.getUserId());
-			if (videoFile == null){
+			// 判断文件信息是否存在, 将草稿表对应的redis里的文件信息存进 转码方法
+			String key = Constants.REDIS_KEY_UPLOADING_FILE + videoInfo.getUserId() + uploadId;
+			VideoDraft videoDraft = videoDraftMapper.selectByDraftKey(key);
+			if(videoDraft == null){
 				throw new BusinessException(ResponseCodeEnum.CODE_600);
 			}
-			videoFile.setVideoId(videoInfo.getVideoId());
-			videoFile.setFileStatus(FileStatusEnum.TRANSCODING.getStatus());
-			videoFileMapper.updateByFileId(videoFile,videoFile.getFileId());
-
-			// 添加文件转码表
-			videoTranscodeTask.setVideoId(videoInfo.getVideoId());
-			videoTranscodeTask.setUserId(videoInfo.getUserId());
-			videoTranscodeTask.setTargetQuality("LD");
-			videoTranscodeTask.setSourceFileId(videoFile.getFileId());
-			videoTranscodeTask.setTaskStatus(VideoTaskEnum.PROCESSING.getStatus());
-			videoTranscodeTask.setProgress(Constants.NUMBER_ZERO);
-			videoTranscodeTask.setStartTime(currentDate);
-			videoTranscodeTask.setCreateTime(currentDate);
-			videoTranscodeTaskMapper.insert(videoTranscodeTask);
+			if(!videoDraft.getUserId().equals(videoInfo.getUserId()) && videoDraft.getDraftStatus() == 2){
+				throw new BusinessException(ResponseCodeEnum.CODE_600);
+			}
+			UploadResultDto uploadVideoFileInfoByKey = redisComponent.getUploadVideoFileInfoByKey(key);
+			if(uploadVideoFileInfoByKey == null){
+				throw new BusinessException(ResponseCodeEnum.CODE_600);
+			}
+			transferVideoFile(uploadVideoFileInfoByKey,videoDraft.getUserId());
 		}else{
 
 		}
-
-		redisComponent.addFile2TransferQueue(videoFile);
 	}
 
 	@Override
-	public void transferVideoFile(VideoFile fileTransferQueue) {
+	public void transferVideoFile(UploadResultDto resultDto,String userId) {
 		VideoFile videoFile = new VideoFile();
-		VideoTranscodeTask videoTranscodeTask = new VideoTranscodeTask();
 		try {
 			// 获取 从Redis队列获取任务得到 要上传的文件数据
-			UploadResultDto fileInfo = redisComponent.getUploadVideoFileInfo(fileTransferQueue.getUserId(), fileTransferQueue.getUploadId());
 
 			// 获取临时目录
-			String tempFilePath = appConfig.getProjectFolder() + Constants.FILE_FOLDER + Constants.FILE_FOLDER_TEMP + fileInfo.getFilePath();
+			String tempFilePath = appConfig.getProjectFolder() + Constants.FILE_FOLDER + Constants.FILE_FOLDER_TEMP + resultDto.getFilePath();
 			File tempFile = new File(tempFilePath);		// 临时目录
 
 			// 目标目录
-			String targetFilePath = appConfig.getProjectFolder() + Constants.FILE_FOLDER + Constants.FILE_VIDEO + fileInfo.getFilePath();
+			String targetFilePath = appConfig.getProjectFolder() + Constants.FILE_FOLDER + Constants.FILE_VIDEO + resultDto.getFilePath();
 			File targetFile = new File(targetFilePath);
 			if(targetFile.exists()){
 				targetFile.mkdirs();
@@ -218,9 +199,9 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 			FileUtils.forceDelete(tempFile);
 
 			// 删除redis中的上传数据
-			redisComponent.delVideoFileInfo(fileTransferQueue.getUserId(),fileTransferQueue.getUploadId());
+			redisComponent.delVideoFileInfo(userId,resultDto.getUploadId());
 
-			String fileName = File.separator + fileInfo.getFileName()+"@"+fileInfo.getUploadId() + Constants.MP4_SUFFIX;
+			String fileName = File.separator + resultDto.getFileName()+"@"+resultDto.getUploadId() + Constants.MP4_SUFFIX;
 			//合并文件
 			String completeVideo = targetFilePath + fileName;
 			this.union(targetFilePath,completeVideo,fileName,true);
@@ -229,24 +210,17 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 			Integer duration = fFmpegUtils.getVideoInfoDuration(completeVideo);
 			videoFile.setDuration(duration);
 			videoFile.setFileSize(new File(completeVideo).length());
-			videoFile.setFilePath(Constants.FILE_VIDEO + fileInfo.getFilePath());
+			videoFile.setFilePath(Constants.FILE_VIDEO + resultDto.getFilePath());
 			videoFile.setFileName(fileName);
 			videoFile.setFileStatus(FileStatusEnum.READY.getStatus());
 
-			videoTranscodeTask.setTaskStatus(VideoTaskEnum.SUCCESS.getStatus());
 		}catch (Exception e){
 			log.error("文件转码失败",e);
 			videoFile.setFileStatus(FileStatusEnum.FAILED.getStatus());
-			videoTranscodeTask.setTaskStatus(VideoTaskEnum.FAILURE.getStatus());
-			videoTranscodeTask.setErrorMessage(e.getMessage());
 		}finally {
 			// 更新数据库记录
-			videoFileMapper.updateByUploadIdAndUserId(videoFile,fileTransferQueue.getUploadId(),fileTransferQueue.getUserId());
 
 			// 更新文件转码表
-			videoTranscodeTask.setEndTime(new Date());
-			videoTranscodeTask.setProgress(100);
-			videoTranscodeTaskMapper.updateByVideoId2UserId2FileId(videoTranscodeTask, fileTransferQueue.getVideoId(), fileTransferQueue.getUserId(), fileTransferQueue.getFileId());
 		}
 	}
 

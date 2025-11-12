@@ -1,5 +1,6 @@
 package com.interlude.service.video;
 
+import com.interlude.entity.dto.UploadResultDto;
 import com.interlude.entity.po.video.VideoFile;
 import com.interlude.entity.vo.PaginationResultVO;
 import java.util.List;
@@ -60,5 +61,5 @@ public interface VideoInfoService{
 
     void saveVideoInfo(VideoInfo videoInfo,String uploadId);
 
-	void transferVideoFile(VideoFile fileTransferQueue);
+	void transferVideoFile(UploadResultDto resultDto, String userId);
 }
