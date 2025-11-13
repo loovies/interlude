@@ -152,6 +152,7 @@ public class FileController extends ABaseController{
         uploadResultDto.setUploadId(uploadId);
         uploadResultDto.setUid(uid);
         uploadResultDto.setStatus(status);
+        uploadResultDto.setUserId(tokenUserInfo.getUserId());
         uploadResultDto.setUploadPercent(uploadPercent);
         uploadResultDto.setUploadSize(uploadSize);
 

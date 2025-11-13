@@ -96,6 +96,10 @@ public enum VideoQualityEnum {
         return Arrays.asList(values());
     }
 
+    public static List<VideoQualityEnum> getMainstreamQualities() {
+        return Arrays.asList(QUALITY_480P, QUALITY_720P, QUALITY_1080P);
+    }
+
     /**
      * 获取基础清晰度列表（360p, 480p, 720p）
      */

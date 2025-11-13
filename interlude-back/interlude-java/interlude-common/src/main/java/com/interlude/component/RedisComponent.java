@@ -128,11 +128,11 @@ public class RedisComponent {
         redisUtils.delete(Constants.REDIS_KEY_UPLOADING_FILE + userId + uploadId);
     }
 
-    public void addFile2TransferQueue(VideoFile file) {
-        redisUtils.lpush(Constants.REDIS_KEY_QUEUE_TRANSFER,file, 0L);
+    public void addFile2TransferQueue(UploadResultDto resultDto) {
+        redisUtils.lpush(Constants.REDIS_KEY_QUEUE_TRANSFER,resultDto, 0L);
     }
 
-    public VideoFile getFileTransferQueue() {
-        return (VideoFile) redisUtils.rpop(Constants.REDIS_KEY_QUEUE_TRANSFER);
+    public UploadResultDto getFileTransferQueue() {
+        return (UploadResultDto) redisUtils.rpop(Constants.REDIS_KEY_QUEUE_TRANSFER);
     }
 }

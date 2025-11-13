@@ -61,5 +61,5 @@ public interface VideoInfoService{
 
     void saveVideoInfo(VideoInfo videoInfo,String uploadId);
 
-	void transferVideoFile(UploadResultDto resultDto, String userId);
+	void transferVideoFile(UploadResultDto resultDto);
 }

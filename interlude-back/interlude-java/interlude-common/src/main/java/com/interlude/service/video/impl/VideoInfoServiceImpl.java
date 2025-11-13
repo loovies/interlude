@@ -169,14 +169,14 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 			if(uploadVideoFileInfoByKey == null){
 				throw new BusinessException(ResponseCodeEnum.CODE_600);
 			}
-			transferVideoFile(uploadVideoFileInfoByKey,videoDraft.getUserId());
+			redisComponent.addFile2TransferQueue(uploadVideoFileInfoByKey);
 		}else{
 
 		}
 	}
 
 	@Override
-	public void transferVideoFile(UploadResultDto resultDto,String userId) {
+	public void transferVideoFile(UploadResultDto resultDto) {
 		VideoFile videoFile = new VideoFile();
 		try {
 			// 获取 从Redis队列获取任务得到 要上传的文件数据
@@ -199,7 +199,7 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 			FileUtils.forceDelete(tempFile);
 
 			// 删除redis中的上传数据
-			redisComponent.delVideoFileInfo(userId,resultDto.getUploadId());
+			redisComponent.delVideoFileInfo(resultDto.getUserId(),resultDto.getUploadId());
 
 			String fileName = File.separator + resultDto.getFileName()+"@"+resultDto.getUploadId() + Constants.MP4_SUFFIX;
 			//合并文件
@@ -207,13 +207,13 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 			this.union(targetFilePath,completeVideo,fileName,true);
 
 			// 获取播放时长
-			Integer duration = fFmpegUtils.getVideoInfoDuration(completeVideo);
-			videoFile.setDuration(duration);
-			videoFile.setFileSize(new File(completeVideo).length());
-			videoFile.setFilePath(Constants.FILE_VIDEO + resultDto.getFilePath());
-			videoFile.setFileName(fileName);
-			videoFile.setFileStatus(FileStatusEnum.READY.getStatus());
-
+//			Integer duration = fFmpegUtils.getVideoInfoDuration(completeVideo);
+//			videoFile.setDuration(duration);
+//			videoFile.setFileSize(new File(completeVideo).length());
+//			videoFile.setFilePath(Constants.FILE_VIDEO + resultDto.getFilePath());
+//			videoFile.setFileName(fileName);
+//			videoFile.setFileStatus(FileStatusEnum.READY.getStatus());
+			convertVideoToMultiQualityHLS(completeVideo);
 		}catch (Exception e){
 			log.error("文件转码失败",e);
 			videoFile.setFileStatus(FileStatusEnum.FAILED.getStatus());
@@ -255,13 +255,13 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 					System.err.println("警告: 无法删除临时文件: " + tempFileName);
 				}
 			}
-			// 步骤2: 生成多清晰度 HLS 流
-			// 可以根据需要选择特定的清晰度，这里使用所有支持的清晰度
-			fFmpegUtils.convertVideoToMultiQualityHLS(outputFolder, processingVideoPath);
-
-			// 步骤3: 生成主播放列表
-			fFmpegUtils.generateMasterPlaylist(outputFolder);
 		}
+		// 步骤2: 生成多清晰度 HLS 流
+		// 可以根据需要选择特定的清晰度，这里使用480p, 720p, 1080p的清晰度
+		fFmpegUtils.convertVideoToMultiQualityHLS(outputFolder, processingVideoPath,VideoQualityEnum.getMainstreamQualities());
+
+		// 步骤3: 生成主播放列表
+		fFmpegUtils.generateMasterPlaylist(outputFolder);
 	}
 
 	/**
