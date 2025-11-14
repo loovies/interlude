@@ -25,6 +25,7 @@ public class UploadResultDto implements Serializable {
     private Long uploadSize = 0L;
     private String status;
     private Integer visibility;
+    private Long videoId;
 
     // 文件唯一标识
     private String fileIdentifier;
@@ -50,6 +51,13 @@ public class UploadResultDto implements Serializable {
     private String tempData;    // 临时存储的编辑数据
     private String last_edit_content;  // 最后一次编辑的未保存内容
 
+    public Long getVideoId() {
+        return videoId;
+    }
+
+    public void setVideoId(Long videoId) {
+        this.videoId = videoId;
+    }
 
     public String getUserId() {
         return userId;

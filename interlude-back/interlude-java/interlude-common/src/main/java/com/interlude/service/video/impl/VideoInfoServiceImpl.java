@@ -148,12 +148,11 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 			// TODO 判断视频文件状态 是否为转码中待审核
 		}
 
-		Date currentDate = new Date();
-		VideoFile videoFile = new VideoFile();
 
 		// 添加视频
 		if(videoInfo.getVideoId() == 0){
-			videoInfo.setVideoId(Long.parseLong(StringTools.getRandomNumber(Constants.NUMBER_15)));
+			Long videoId = Long.parseLong(StringTools.getRandomNumber(Constants.NUMBER_15));
+			videoInfo.setVideoId(videoId);
 			videoInfoMapper.insert(videoInfo);
 
 			// 判断文件信息是否存在, 将草稿表对应的redis里的文件信息存进 转码方法
@@ -169,6 +168,7 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 			if(uploadVideoFileInfoByKey == null){
 				throw new BusinessException(ResponseCodeEnum.CODE_600);
 			}
+			uploadVideoFileInfoByKey.setVideoId(videoId);
 			redisComponent.addFile2TransferQueue(uploadVideoFileInfoByKey);
 		}else{
 
@@ -206,14 +206,8 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 			String completeVideo = targetFilePath + fileName;
 			this.union(targetFilePath,completeVideo,fileName,true);
 
-			// 获取播放时长
-//			Integer duration = fFmpegUtils.getVideoInfoDuration(completeVideo);
-//			videoFile.setDuration(duration);
-//			videoFile.setFileSize(new File(completeVideo).length());
-//			videoFile.setFilePath(Constants.FILE_VIDEO + resultDto.getFilePath());
-//			videoFile.setFileName(fileName);
-//			videoFile.setFileStatus(FileStatusEnum.READY.getStatus());
-			convertVideoToMultiQualityHLS(completeVideo);
+
+			convertVideoToMultiQualityHLS(completeVideo,resultDto);
 		}catch (Exception e){
 			log.error("文件转码失败",e);
 			videoFile.setFileStatus(FileStatusEnum.FAILED.getStatus());
@@ -229,7 +223,7 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 	 *  使用枚举配置管理清晰度
 	 * @param completeVideo 视频目标地址
 	 */
-	private void convertVideoToMultiQualityHLS(String completeVideo){
+	private void convertVideoToMultiQualityHLS(String completeVideo,UploadResultDto resultDto){
 		File videoFile = new File(completeVideo);
 		File outputFolder = videoFile.getParentFile();
 
@@ -256,9 +250,10 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 				}
 			}
 		}
+
 		// 步骤2: 生成多清晰度 HLS 流
 		// 可以根据需要选择特定的清晰度，这里使用480p, 720p, 1080p的清晰度
-		fFmpegUtils.convertVideoToMultiQualityHLS(outputFolder, processingVideoPath,VideoQualityEnum.getMainstreamQualities());
+		fFmpegUtils.convertVideoToMultiQualityHLS(outputFolder, processingVideoPath,VideoQualityEnum.getMainstreamQualities(),resultDto);
 
 		// 步骤3: 生成主播放列表
 		fFmpegUtils.generateMasterPlaylist(outputFolder);
@@ -267,7 +262,7 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 	/**
 	 * 自定义清晰度转换 - 只生成指定的清晰度
 	 */
-	private void convertVideoToSpecificQualities(String completeVideo, List<VideoQualityEnum> targetQualities) {
+	private void convertVideoToSpecificQualities(String completeVideo, List<VideoQualityEnum> targetQualities,UploadResultDto resultDto) {
 		File videoFile = new File(completeVideo);
 		File outputFolder = videoFile.getParentFile();
 
@@ -279,7 +274,7 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 		// 编码检测和转换逻辑（同上）...
 
 		// 只生成指定的清晰度
-		fFmpegUtils.convertVideoToMultiQualityHLS(outputFolder, completeVideo, targetQualities);
+		fFmpegUtils.convertVideoToMultiQualityHLS(outputFolder, completeVideo, targetQualities,resultDto);
 
 		// 生成主播放列表（只包含指定的清晰度）
 		fFmpegUtils.generateMasterPlaylist(outputFolder, targetQualities);

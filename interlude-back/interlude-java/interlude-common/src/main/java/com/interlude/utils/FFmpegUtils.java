@@ -1,9 +1,15 @@
 package com.interlude.utils;
 
 import com.interlude.entity.constants.Constants;
+import com.interlude.entity.dto.UploadResultDto;
+import com.interlude.entity.po.video.VideoFile;
+import com.interlude.enums.FileStatusEnum;
+import com.interlude.enums.QualityStatusEnum;
 import com.interlude.enums.VideoQualityEnum;
+import com.interlude.service.video.VideoFileService;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -14,6 +20,9 @@ import java.util.stream.Collectors;
 
 @Component
 public class FFmpegUtils {
+
+    @Resource
+    private VideoFileService videoFileService;
 
     /**
      * 创建缩略图
@@ -88,12 +97,18 @@ public class FFmpegUtils {
      * @param outputFolder 输出目录（视频文件所在目录）
      * @param videoFilePath 视频文件路径
      */
-    public void convertVideoToMultiQualityHLS(File outputFolder, String videoFilePath, List<VideoQualityEnum> qualities){
+    public void convertVideoToMultiQualityHLS(File outputFolder, String videoFilePath, List<VideoQualityEnum> qualities, UploadResultDto resultDto){
         // 如果未指定清晰度列表，使用所有支持的清晰度
         if (qualities == null || qualities.isEmpty()) {
             qualities = VideoQualityEnum.getSupportedQualities();
         }
 
+        VideoFile videoFile = new VideoFile();
+        videoFile.setUserId(resultDto.getUserId());
+        videoFile.setVideoId(resultDto.getVideoId());
+        videoFile.setUploadId(resultDto.getUploadId());
+        videoFile.setFileName(resultDto.getFileName());
+        videoFile.setFileSize(resultDto.getFileSize());
         System.out.println("开始生成多清晰度 HLS 视频，原始文件: " + videoFilePath);
         System.out.println("将生成 " + qualities.size() + " 个清晰度: " +
                 qualities.stream().map(VideoQualityEnum::getName).collect(Collectors.joining(", ")));
@@ -102,6 +117,12 @@ public class FFmpegUtils {
         for (VideoQualityEnum quality : qualities) {
             try {
                 System.out.println("正在生成 " + quality.getDescription() + " (" + quality.getName() + ") ...");
+
+                videoFile.setQuality(QualityStatusEnum.getByDesc(quality.getName()).getStatus());
+                videoFile.setWidth(quality.getWidth());
+                videoFile.setHeight(quality.getHeight());
+                videoFile.setBitrate(quality.getBitrate());
+                videoFile.setFilePath(videoFilePath);
 
                 // 为当前清晰度创建专属文件夹
                 File qualityFolder = new File(outputFolder, quality.getFolderName());
@@ -113,11 +134,15 @@ public class FFmpegUtils {
                 convertVideoToSpecificQualityHLS(qualityFolder, videoFilePath, quality);
 
                 System.out.println(quality.getDescription() + " 生成完成");
-
+                videoFile.setFileStatus(FileStatusEnum.READY.getStatus());
             } catch (Exception e) {
                 System.err.println("生成 " + quality.getDescription() + " 失败: " + e.getMessage());
+                videoFile.setFileStatus(FileStatusEnum.FAILED.getStatus());
                 e.printStackTrace();
                 // 继续处理其他清晰度
+            }finally {
+                // 添加
+                videoFileService.add(videoFile);
             }
         }
 
@@ -127,9 +152,9 @@ public class FFmpegUtils {
     /**
      * 使用默认清晰度配置转换视频
      */
-    public void convertVideoToMultiQualityHLS(File outputFolder, String videoFilePath) {
+    public void convertVideoToMultiQualityHLS(File outputFolder, String videoFilePath,UploadResultDto resultDto) {
         // 使用所有支持的清晰度
-        convertVideoToMultiQualityHLS(outputFolder, videoFilePath, VideoQualityEnum.getSupportedQualities());
+        convertVideoToMultiQualityHLS(outputFolder, videoFilePath, VideoQualityEnum.getSupportedQualities(),resultDto);
     }
 
     /**
