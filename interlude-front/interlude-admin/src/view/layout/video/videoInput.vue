@@ -5,7 +5,7 @@
         v-for="(item, index) in fileList"
         :key="index"
         class="menu-item"
-        :class="{ active: activeIndex === index }"
+        :class="{ active: activeIndex === index, disable: item.status === 'uploading' }"
         @click="setActive(index)"
       >
         <i class="iconfont icon-video1"></i>
@@ -227,8 +227,8 @@ const submitForm = () => {
     if (!isSaveVideoInfo.value) {
       saveDraftInfo(true)
     }
+    const currentIndex = activeIndex.value
     const uploadId = props.fileList[activeIndex.value].uploadId
-
     let res = await proxy.$Request({
       url: proxy.$Api.postVideo,
       params: {
@@ -239,6 +239,31 @@ const submitForm = () => {
       return
     }
     proxy.$Message.success('投稿成功')
+
+    // 立即删除当前项
+    const newFileList = [...props.fileList]
+    newFileList.splice(currentIndex, 1)
+    emit('update:fileList', newFileList)
+
+    // 处理 activeIndex
+    if (newFileList.length === 0) {
+      activeIndex.value = 0
+      // 清空表单
+      formDataRef.value.resetFields()
+      formData.value = {}
+    } else if (currentIndex >= newFileList.length) {
+      activeIndex.value = newFileList.length - 1
+      await nextTick()
+      formData.value.videoCoverFile = ''
+      formData.value.tags = ''
+      showVideoInput(activeIndex.value)
+    } else {
+      // 如果删除的不是当前显示项，则不需要改变activeIndex，但需要更新表单显示
+      await nextTick()
+      formData.value.videoCoverFile = ''
+      formData.value.tags = ''
+      showVideoInput(activeIndex.value)
+    }
   })
 }
 

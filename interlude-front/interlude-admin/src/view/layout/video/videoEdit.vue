@@ -349,7 +349,7 @@ const endEdit = async (index): Promise<void> => {
   const currentFile = fileList.value[index]
   console.log(currentFile)
   const res = await proxy.$Request({
-    url: proxy.$Api.updateDraftInfo,
+    url: proxy.$Api.updateVideoName,
     params: {
       fileName: currentFile.fileName,
       uploadId: currentFile.uploadId,
