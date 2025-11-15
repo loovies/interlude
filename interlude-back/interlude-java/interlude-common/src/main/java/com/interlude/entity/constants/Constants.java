@@ -17,6 +17,7 @@ public class Constants {
     public static final Integer NUMBER_10 = 10;
     public static final Integer NUMBER_15 = 15;
     public static final Integer NUMBER_ZERO = 0;
+    public static final Integer NUMBER_TWO = 2;
 
     // Admin
     public static final String REDIS_ADMIN_TOKEN = "adminToken";

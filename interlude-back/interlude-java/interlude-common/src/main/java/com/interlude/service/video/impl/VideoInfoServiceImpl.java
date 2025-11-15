@@ -177,9 +177,7 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 
 	@Override
 	public void transferVideoFile(UploadResultDto resultDto) {
-		VideoFile videoFile = new VideoFile();
 		try {
-			// 获取 从Redis队列获取任务得到 要上传的文件数据
 
 			// 获取临时目录
 			String tempFilePath = appConfig.getProjectFolder() + Constants.FILE_FOLDER + Constants.FILE_FOLDER_TEMP + resultDto.getFilePath();
@@ -206,15 +204,17 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 			String completeVideo = targetFilePath + fileName;
 			this.union(targetFilePath,completeVideo,fileName,true);
 
-
 			convertVideoToMultiQualityHLS(completeVideo,resultDto);
 		}catch (Exception e){
 			log.error("文件转码失败",e);
-			videoFile.setFileStatus(FileStatusEnum.FAILED.getStatus());
 		}finally {
-			// 更新数据库记录
-
-			// 更新文件转码表
+			String key = Constants.REDIS_KEY_UPLOADING_FILE + resultDto.getUserId() + resultDto.getUploadId();
+			// 更新草稿表记录为已提交
+			VideoDraft draft = videoDraftMapper.selectByDraftKey(key);
+			if(draft != null){
+				draft.setDraftStatus(Constants.NUMBER_TWO);
+				videoDraftMapper.updateByDraftKey(draft,key);
+			}
 		}
 	}
 

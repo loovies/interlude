@@ -9,6 +9,7 @@ import com.interlude.entity.dto.UploadResultDto;
 import com.interlude.entity.po.video.VideoDraft;
 import com.interlude.entity.vo.ResponseVO;
 import com.interlude.enums.DateTimePatterEnum;
+import com.interlude.enums.ResponseCodeEnum;
 import com.interlude.exception.BusinessException;
 import com.interlude.service.video.VideoDraftService;
 import com.interlude.utils.DateUtils;
@@ -104,6 +105,30 @@ public class VideoDraftController extends ABaseController {
             throw new BusinessException("当前文件不存在");
         }
         videoDraftService.updateVideoDraftByDraftKey(videoDraft,draftKey);
+        return getSuccessResponseVO(null);
+    }
+
+    //更新 videoName
+    @RequestMapping("updateVideoName")
+    public ResponseVO updateDraftInfo(String fileName,String uploadId){
+        TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
+
+        String key = Constants.REDIS_KEY_UPLOADING_FILE + tokenUserInfo.getUserId() + uploadId;
+
+        UploadResultDto info = redisComponent.getUploadVideoFileInfoByKey(key);
+        if (info == null){
+            throw new BusinessException(ResponseCodeEnum.CODE_600);
+        }
+        info.setFileName(fileName);
+        redisComponent.uploadVideoFileInfo(tokenUserInfo.getUserId(),info);
+
+        // 更新 草稿表
+        VideoDraft videoDraft = videoDraftService.getVideoDraftByDraftKey(key);
+        if(videoDraft==null){
+            throw new BusinessException(ResponseCodeEnum.CODE_600);
+        }
+        videoDraft.setVideoName(fileName);
+        videoDraftService.updateVideoDraftByDraftKey(videoDraft,key);
         return getSuccessResponseVO(null);
     }
 

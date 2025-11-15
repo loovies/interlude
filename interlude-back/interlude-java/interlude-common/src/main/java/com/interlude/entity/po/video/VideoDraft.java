@@ -36,21 +36,6 @@ public class VideoDraft implements Serializable {
 	private String videoName;
 
 	/**
-	 * 一级分类
-	 */
-	private Integer pCategoryId;
-
-	/**
-	 * 二级分类
-	 */
-	private Integer categoryId;
-
-	/**
-	 * 1:原创、2:转发
-	 */
-	private Integer videoType;
-
-	/**
 	 * 1:草稿、2:已提交
 	 */
 	private Integer draftStatus;
@@ -106,30 +91,6 @@ public class VideoDraft implements Serializable {
 		return this.videoName;
 	}
 
-	public void setPCategoryId(Integer pCategoryId) {
-		this.pCategoryId = pCategoryId;
-	}
-
-	public Integer getPCategoryId() {
-		return this.pCategoryId;
-	}
-
-	public void setCategoryId(Integer categoryId) {
-		this.categoryId = categoryId;
-	}
-
-	public Integer getCategoryId() {
-		return this.categoryId;
-	}
-
-	public void setVideoType(Integer videoType) {
-		this.videoType = videoType;
-	}
-
-	public Integer getVideoType() {
-		return this.videoType;
-	}
-
 	public void setDraftStatus(Integer draftStatus) {
 		this.draftStatus = draftStatus;
 	}
@@ -164,6 +125,6 @@ public class VideoDraft implements Serializable {
 
 	@Override
 	public String toString() {
-		return "草稿ID:" + (draftId == null ? "空" : draftId) + ",用户Id:" + (userId == null ? "空" : userId) + ",Redis草稿key:" + (draftKey == null ? "空" : draftKey) + ",视频名称:" + (videoName == null ? "空" : videoName) + ",一级分类:" + (pCategoryId == null ? "空" : pCategoryId) + ",二级分类:" + (categoryId == null ? "空" : categoryId) + ",1:原创、2:转发:" + (videoType == null ? "空" : videoType) + ",1:草稿、2:已提交:" + (draftStatus == null ? "空" : draftStatus) + ",0:未开始、1:上传中、2:成功、3:失败:" + (uploadStatus == null ? "空" : uploadStatus) + ",:" + (createTime == null ? "空" : DateUtils.format(createTime, DateTimePatterEnum.YYYY_MM_DD_HH_MM_SS.getPattern())) + ",:" + (updateTime == null ? "空" : DateUtils.format(updateTime, DateTimePatterEnum.YYYY_MM_DD_HH_MM_SS.getPattern()));
+		return "草稿ID:" + (draftId == null ? "空" : draftId) + ",用户Id:" + (userId == null ? "空" : userId) + ",Redis草稿key:" + (draftKey == null ? "空" : draftKey) + ",视频名称:" + (videoName == null ? "空" : videoName) + ",1:草稿、2:已提交:" + (draftStatus == null ? "空" : draftStatus) + ",0:未开始、1:上传中、2:成功、3:失败:" + (uploadStatus == null ? "空" : uploadStatus) + ",:" + (createTime == null ? "空" : DateUtils.format(createTime, DateTimePatterEnum.YYYY_MM_DD_HH_MM_SS.getPattern())) + ",:" + (updateTime == null ? "空" : DateUtils.format(updateTime, DateTimePatterEnum.YYYY_MM_DD_HH_MM_SS.getPattern()));
 	}
 }

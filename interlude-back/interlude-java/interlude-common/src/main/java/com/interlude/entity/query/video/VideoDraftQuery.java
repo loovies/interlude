@@ -35,20 +35,6 @@ public class VideoDraftQuery extends BaseParam{
 
 	private String videoNameFuzzy;
 
-	/**
-	 * 一级分类
-	 */
-	private Integer pCategoryId;
-
-	/**
-	 * 二级分类
-	 */
-	private Integer categoryId;
-
-	/**
-	 * 1:原创、2:转发
-	 */
-	private Integer videoType;
 
 	/**
 	 * 1:草稿、2:已提交
@@ -108,30 +94,6 @@ public class VideoDraftQuery extends BaseParam{
 
 	public String getVideoName() {
 		return this.videoName;
-	}
-
-	public void setPCategoryId(Integer pCategoryId) {
-		this.pCategoryId = pCategoryId;
-	}
-
-	public Integer getPCategoryId() {
-		return this.pCategoryId;
-	}
-
-	public void setCategoryId(Integer categoryId) {
-		this.categoryId = categoryId;
-	}
-
-	public Integer getCategoryId() {
-		return this.categoryId;
-	}
-
-	public void setVideoType(Integer videoType) {
-		this.videoType = videoType;
-	}
-
-	public Integer getVideoType() {
-		return this.videoType;
 	}
 
 	public void setDraftStatus(Integer draftStatus) {

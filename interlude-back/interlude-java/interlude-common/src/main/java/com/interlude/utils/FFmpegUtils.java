@@ -112,17 +112,24 @@ public class FFmpegUtils {
         System.out.println("开始生成多清晰度 HLS 视频，原始文件: " + videoFilePath);
         System.out.println("将生成 " + qualities.size() + " 个清晰度: " +
                 qualities.stream().map(VideoQualityEnum::getName).collect(Collectors.joining(", ")));
+        videoFile.setDuration(getVideoInfoDuration(videoFilePath));
 
         // 为每个清晰度生成对应的 HLS 流
         for (VideoQualityEnum quality : qualities) {
             try {
                 System.out.println("正在生成 " + quality.getDescription() + " (" + quality.getName() + ") ...");
-
+                videoFile.setFileId(Long.parseLong(StringTools.getRandomNumber(Constants.NUMBER_15)));
                 videoFile.setQuality(QualityStatusEnum.getByDesc(quality.getName()).getStatus());
                 videoFile.setWidth(quality.getWidth());
                 videoFile.setHeight(quality.getHeight());
                 videoFile.setBitrate(quality.getBitrate());
-                videoFile.setFilePath(videoFilePath);
+                videoFile.setFilePath(resultDto.getFilePath()+File.separator+quality.getName());
+
+                if(quality.getName().equals("720p")){
+                    videoFile.setIsPrimary(1);
+                }else{
+                    videoFile.setIsPrimary(0);
+                }
 
                 // 为当前清晰度创建专属文件夹
                 File qualityFolder = new File(outputFolder, quality.getFolderName());

@@ -12,12 +12,6 @@
 		<result column="draft_key" property="draftKey"/>
 		<!--视频名称-->
 		<result column="video_name" property="videoName"/>
-		<!--一级分类-->
-		<result column="p_category_id" property="pCategoryId"/>
-		<!--二级分类-->
-		<result column="category_id" property="categoryId"/>
-		<!--1:原创、2:转发-->
-		<result column="video_type" property="videoType"/>
 		<!--1:草稿、2:已提交-->
 		<result column="draft_status" property="draftStatus"/>
 		<!--0:未开始、1:上传中、2:成功、3:失败-->
@@ -29,7 +23,7 @@
 	</resultMap>
 	<!--通用测序结果列-->
 	<sql id="base_column_list">
-		draft_id,user_id,draft_key,video_name,p_category_id,category_id,video_type,draft_status,upload_status,create_time,update_time
+		draft_id,user_id,draft_key,video_name,draft_status,upload_status,create_time,update_time
 	</sql>
 
 
@@ -46,15 +40,6 @@
 		</if>
 		<if test="query.videoName != null and query.videoName != ''">
 			and video_name = #{query.videoName}
-		</if>
-		<if test="query.pCategoryId != null">
-			and p_category_id = #{query.pCategoryId}
-		</if>
-		<if test="query.categoryId != null">
-			and category_id = #{query.categoryId}
-		</if>
-		<if test="query.videoType != null">
-			and video_type = #{query.videoType}
 		</if>
 		<if test="query.draftStatus != null">
 			and draft_status = #{query.draftStatus}
@@ -131,15 +116,6 @@
 			<if test="bean.videoName != null">
 				video_name,
 			</if>
-			<if test="bean.pCategoryId != null">
-				p_category_id,
-			</if>
-			<if test="bean.categoryId != null">
-				category_id,
-			</if>
-			<if test="bean.videoType != null">
-				video_type,
-			</if>
 			<if test="bean.draftStatus != null">
 				draft_status,
 			</if>
@@ -165,15 +141,6 @@
 			</if>
 			<if test="bean.videoName != null">
 				#{bean.videoName},
-			</if>
-			<if test="bean.pCategoryId != null">
-				#{bean.pCategoryId},
-			</if>
-			<if test="bean.categoryId != null">
-				#{bean.categoryId},
-			</if>
-			<if test="bean.videoType != null">
-				#{bean.videoType},
 			</if>
 			<if test="bean.draftStatus != null">
 				#{bean.draftStatus},
@@ -206,15 +173,6 @@
 			<if test="bean.videoName != null">
 				video_name,
 			</if>
-			<if test="bean.pCategoryId != null">
-				p_category_id,
-			</if>
-			<if test="bean.categoryId != null">
-				category_id,
-			</if>
-			<if test="bean.videoType != null">
-				video_type,
-			</if>
 			<if test="bean.draftStatus != null">
 				draft_status,
 			</if>
@@ -241,15 +199,6 @@
 			<if test="bean.videoName != null">
 				#{bean.videoName},
 			</if>
-			<if test="bean.pCategoryId != null">
-				#{bean.pCategoryId},
-			</if>
-			<if test="bean.categoryId != null">
-				#{bean.categoryId},
-			</if>
-			<if test="bean.videoType != null">
-				#{bean.videoType},
-			</if>
 			<if test="bean.draftStatus != null">
 				#{bean.draftStatus},
 			</if>
@@ -272,15 +221,6 @@
 			<if test="bean.videoName!=null">
 				video_name = VALUES(video_name),
 			</if>
-			<if test="bean.pCategoryId!=null">
-				p_category_id = VALUES(p_category_id),
-			</if>
-			<if test="bean.categoryId!=null">
-				category_id = VALUES(category_id),
-			</if>
-			<if test="bean.videoType!=null">
-				video_type = VALUES(video_type),
-			</if>
 			<if test="bean.draftStatus!=null">
 				draft_status = VALUES(draft_status),
 			</if>
@@ -298,20 +238,20 @@
 
 	<!--添加 (批量插入)-->
 	<insert id="insertBatch" parameterType="com.interlude.entity.po.video.VideoDraft" >
-		INSERT INTO video_draft(user_id,draft_key,video_name,p_category_id,category_id,video_type,draft_status,upload_status,create_time,update_time)values
+		INSERT INTO video_draft(user_id,draft_key,video_name,draft_status,upload_status,create_time,update_time)values
 		<foreach collection="list" item="item" separator=",">
-			(#{item.userId},#{item.draftKey},#{item.videoName},#{item.pCategoryId},#{item.categoryId},#{item.videoType},#{item.draftStatus},#{item.uploadStatus},#{item.createTime},#{item.updateTime})
+			(#{item.userId},#{item.draftKey},#{item.videoName},#{item.draftStatus},#{item.uploadStatus},#{item.createTime},#{item.updateTime})
 		</foreach>
 	</insert>
 
 	<!--批量插入或者更新-->
 	<insert id="insertOrUpdateBatch" parameterType="com.interlude.entity.po.video.VideoDraft" >
-		INSERT INTO video_draft(user_id,draft_key,video_name,p_category_id,category_id,video_type,draft_status,upload_status,create_time,update_time)values
+		INSERT INTO video_draft(user_id,draft_key,video_name,draft_status,upload_status,create_time,update_time)values
 		<foreach collection="list" item="item" separator=",">
-			(#{item.userId},#{item.draftKey},#{item.videoName},#{item.pCategoryId},#{item.categoryId},#{item.videoType},#{item.draftStatus},#{item.uploadStatus},#{item.createTime},#{item.updateTime})
+			(#{item.userId},#{item.draftKey},#{item.videoName},#{item.draftStatus},#{item.uploadStatus},#{item.createTime},#{item.updateTime})
 		</foreach>
 		on DUPLICATE key update
-		draft_id = VALUES(draft_id),user_id = VALUES(user_id),draft_key = VALUES(draft_key),video_name = VALUES(video_name),p_category_id = VALUES(p_category_id),category_id = VALUES(category_id),video_type = VALUES(video_type),draft_status = VALUES(draft_status),upload_status = VALUES(upload_status),create_time = VALUES(create_time),update_time = VALUES(update_time)
+		draft_id = VALUES(draft_id),user_id = VALUES(user_id),draft_key = VALUES(draft_key),video_name = VALUES(video_name),draft_status = VALUES(draft_status),upload_status = VALUES(upload_status),create_time = VALUES(create_time),update_time = VALUES(update_time)
 	</insert>
 
 	<!-- 根据DraftId查询 -->
@@ -334,15 +274,6 @@
 			</if>
 			<if test="bean.videoName != null" >
 				video_name = #{bean.videoName},
-			</if>
-			<if test="bean.pCategoryId != null" >
-				p_category_id = #{bean.pCategoryId},
-			</if>
-			<if test="bean.categoryId != null" >
-				category_id = #{bean.categoryId},
-			</if>
-			<if test="bean.videoType != null" >
-				video_type = #{bean.videoType},
 			</if>
 			<if test="bean.draftStatus != null" >
 				draft_status = #{bean.draftStatus},
@@ -395,15 +326,6 @@
 			</if>
 			<if test="bean.videoName != null" >
 				video_name = #{bean.videoName},
-			</if>
-			<if test="bean.pCategoryId != null" >
-				p_category_id = #{bean.pCategoryId},
-			</if>
-			<if test="bean.categoryId != null" >
-				category_id = #{bean.categoryId},
-			</if>
-			<if test="bean.videoType != null" >
-				video_type = #{bean.videoType},
 			</if>
 			<if test="bean.draftStatus != null" >
 				draft_status = #{bean.draftStatus},

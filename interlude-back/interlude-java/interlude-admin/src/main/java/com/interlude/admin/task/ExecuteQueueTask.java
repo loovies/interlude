@@ -34,10 +34,10 @@ public class ExecuteQueueTask {
                     // 从redis队列中获取转码任务
                     UploadResultDto transferQueue = redisComponent.getFileTransferQueue();
                     if (transferQueue == null){
-                        Thread.sleep(1500);
+                        Thread.sleep(1500); // 队列为空时休眠
                         continue;
                     }
-                    videoInfoService.transferVideoFile(transferQueue);
+                    videoInfoService.transferVideoFile(transferQueue); // 处理视频文件转换任务
                 }catch (Exception e){
                     log.error(e.getMessage());
                 }
