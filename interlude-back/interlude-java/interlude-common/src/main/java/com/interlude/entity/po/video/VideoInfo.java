@@ -72,31 +72,6 @@ public class VideoInfo implements Serializable {
 	private String tags;
 
 	/**
-	 * 时长(秒)
-	 */
-	private Integer duration;
-
-	/**
-	 * 视频宽度
-	 */
-	private Integer width;
-
-	/**
-	 * 视频高度
-	 */
-	private Integer height;
-
-	/**
-	 * 码率
-	 */
-	private Integer bitrate;
-
-	/**
-	 * 视频格式
-	 */
-	private String format;
-
-	/**
 	 * 互动设置JSON
 	 */
 	private String interactionSettings;
@@ -225,46 +200,6 @@ public class VideoInfo implements Serializable {
 		return this.tags;
 	}
 
-	public void setDuration(Integer duration) {
-		this.duration = duration;
-	}
-
-	public Integer getDuration() {
-		return this.duration;
-	}
-
-	public void setWidth(Integer width) {
-		this.width = width;
-	}
-
-	public Integer getWidth() {
-		return this.width;
-	}
-
-	public void setHeight(Integer height) {
-		this.height = height;
-	}
-
-	public Integer getHeight() {
-		return this.height;
-	}
-
-	public void setBitrate(Integer bitrate) {
-		this.bitrate = bitrate;
-	}
-
-	public Integer getBitrate() {
-		return this.bitrate;
-	}
-
-	public void setFormat(String format) {
-		this.format = format;
-	}
-
-	public String getFormat() {
-		return this.format;
-	}
-
 	public void setInteractionSettings(String interactionSettings) {
 		this.interactionSettings = interactionSettings;
 	}
@@ -323,6 +258,6 @@ public class VideoInfo implements Serializable {
 
 	@Override
 	public String toString() {
-		return "视频ID:" + (videoId == null ? "空" : videoId) + ",用户ID:" + (userId == null ? "空" : userId) + ",视频标题:" + (videoName == null ? "空" : videoName) + ",封面图URL:" + (videoCover == null ? "空" : videoCover) + ",视频描述:" + (description == null ? "空" : description) + ",一级分类:" + (pCategoryId == null ? "空" : pCategoryId) + ",二级分类:" + (categoryId == null ? "空" : categoryId) + ",视频类型 1:原视频, 2转载视频:" + (videoType == null ? "空" : videoType) + ",原作者(转载时使用):" + (originAuthor == null ? "空" : originAuthor) + ",原视频链接:" + (originUrl == null ? "空" : originUrl) + ",标签列表JSON:" + (tags == null ? "空" : tags) + ",时长(秒):" + (duration == null ? "空" : duration) + ",视频宽度:" + (width == null ? "空" : width) + ",视频高度:" + (height == null ? "空" : height) + ",码率:" + (bitrate == null ? "空" : bitrate) + ",视频格式:" + (format == null ? "空" : format) + ",互动设置JSON:" + (interactionSettings == null ? "空" : interactionSettings) + ",状态 1:已发布  2:已离线  3:已删除:" + (status == null ? "空" : status) + ",可见性 1:公共、2: 私人、3:仅限好友:" + (visibility == null ? "空" : visibility) + ",发布时间:" + (publishTime == null ? "空" : DateUtils.format(publishTime, DateTimePatterEnum.YYYY_MM_DD_HH_MM_SS.getPattern())) + ",:" + (createTime == null ? "空" : DateUtils.format(createTime, DateTimePatterEnum.YYYY_MM_DD_HH_MM_SS.getPattern())) + ",:" + (updateTime == null ? "空" : DateUtils.format(updateTime, DateTimePatterEnum.YYYY_MM_DD_HH_MM_SS.getPattern())) + ",:" + (version == null ? "空" : version);
+		return "视频ID:" + (videoId == null ? "空" : videoId) + ",用户ID:" + (userId == null ? "空" : userId) + ",视频标题:" + (videoName == null ? "空" : videoName) + ",封面图URL:" + (videoCover == null ? "空" : videoCover) + ",视频描述:" + (description == null ? "空" : description) + ",一级分类:" + (pCategoryId == null ? "空" : pCategoryId) + ",二级分类:" + (categoryId == null ? "空" : categoryId) + ",视频类型 1:原视频, 2转载视频:" + (videoType == null ? "空" : videoType) + ",原作者(转载时使用):" + (originAuthor == null ? "空" : originAuthor) + ",原视频链接:" + (originUrl == null ? "空" : originUrl) + ",标签列表JSON:" + (tags == null ? "空" : tags) +",互动设置JSON:" + (interactionSettings == null ? "空" : interactionSettings) + ",状态 1:已发布  2:已离线  3:已删除:" + (status == null ? "空" : status) + ",可见性 1:公共、2: 私人、3:仅限好友:" + (visibility == null ? "空" : visibility) + ",发布时间:" + (publishTime == null ? "空" : DateUtils.format(publishTime, DateTimePatterEnum.YYYY_MM_DD_HH_MM_SS.getPattern())) + ",:" + (createTime == null ? "空" : DateUtils.format(createTime, DateTimePatterEnum.YYYY_MM_DD_HH_MM_SS.getPattern())) + ",:" + (updateTime == null ? "空" : DateUtils.format(updateTime, DateTimePatterEnum.YYYY_MM_DD_HH_MM_SS.getPattern())) + ",:" + (version == null ? "空" : version);
 	}
 }

@@ -42,7 +42,7 @@ public class UploadResultDto implements Serializable {
 
     // JSON格式数据
     private String tags;
-    private String interactionSettings;
+    private String interactionSettings="";
 
     //上传进度
     private Integer uploadPercent = 0;

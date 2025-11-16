@@ -188,10 +188,15 @@ const tableOptions = {
 
 const columns = [
   {
-    label: '头像',
-    prop: 'avatar',
-    scopedSlots: 'avatar',
-    width: 80,
+    label: '文件名',
+    prop: 'fileName',
+    width: 100,
+  },
+  {
+    label: '视频封面',
+    prop: 'videoCover',
+    scopedSlots: 'videoCover',
+    width: 280,
   },
   {
     label: '用户名',
@@ -199,33 +204,26 @@ const columns = [
     width: 100,
   },
   {
-    label: '性别',
-    prop: 'sex',
-    width: 85,
-    scopedSlots: 'sex',
+    label: '分类',
+    prop: 'category',
+    scopedSlots: 'category',
     align: 'center',
   },
   {
-    label: '手机号',
-    prop: 'phone',
-    scopedSlots: 'phone',
-    align: 'center',
-  },
-  {
-    label: '邮箱',
-    prop: 'email',
-    scopedSlots: 'email',
+    label: '视频类型',
+    prop: 'videoType',
+    scopedSlots: 'videoType',
     align: 'center',
   },
   {
     label: '状态',
-    prop: 'enabled',
-    scopedSlots: 'enabled',
+    prop: 'status',
+    scopedSlots: 'status',
     align: 'center',
   },
   {
-    label: '最后登录时间',
-    prop: 'updateTime',
+    label: '发布时间',
+    prop: 'publishTime',
     align: 'center',
   },
   {

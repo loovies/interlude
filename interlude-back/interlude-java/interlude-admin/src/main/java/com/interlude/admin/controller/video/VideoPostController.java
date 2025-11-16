@@ -59,6 +59,7 @@ public class VideoPostController extends ABaseController {
         videoInfo.setVideoType(fileInfoByKey.getPostType());
         videoInfo.setTags(fileInfoByKey.getTags());
         videoInfo.setVisibility(fileInfoByKey.getVisibility());
+        videoInfo.setInteractionSettings(fileInfoByKey.getInteractionSettings());
         Integer status = fileInfoByKey.getStatus().equals("success") ? 1 : 0;
         videoInfo.setStatus(status);
         videoInfo.setPublishTime(new Date());

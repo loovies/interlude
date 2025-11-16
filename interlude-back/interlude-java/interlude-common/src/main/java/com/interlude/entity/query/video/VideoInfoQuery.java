@@ -79,33 +79,6 @@ public class VideoInfoQuery extends BaseParam {
 	private String tagsFuzzy;
 
 	/**
-	 * 时长(秒)
-	 */
-	private Integer duration;
-
-	/**
-	 * 视频宽度
-	 */
-	private Integer width;
-
-	/**
-	 * 视频高度
-	 */
-	private Integer height;
-
-	/**
-	 * 码率
-	 */
-	private Integer bitrate;
-
-	/**
-	 * 视频格式
-	 */
-	private String format;
-
-	private String formatFuzzy;
-
-	/**
 	 * 互动设置JSON
 	 */
 	private String interactionSettings;
@@ -242,46 +215,6 @@ public class VideoInfoQuery extends BaseParam {
 		return this.tags;
 	}
 
-	public void setDuration(Integer duration) {
-		this.duration = duration;
-	}
-
-	public Integer getDuration() {
-		return this.duration;
-	}
-
-	public void setWidth(Integer width) {
-		this.width = width;
-	}
-
-	public Integer getWidth() {
-		return this.width;
-	}
-
-	public void setHeight(Integer height) {
-		this.height = height;
-	}
-
-	public Integer getHeight() {
-		return this.height;
-	}
-
-	public void setBitrate(Integer bitrate) {
-		this.bitrate = bitrate;
-	}
-
-	public Integer getBitrate() {
-		return this.bitrate;
-	}
-
-	public void setFormat(String format) {
-		this.format = format;
-	}
-
-	public String getFormat() {
-		return this.format;
-	}
-
 	public void setInteractionSettings(String interactionSettings) {
 		this.interactionSettings = interactionSettings;
 	}
@@ -386,13 +319,6 @@ public class VideoInfoQuery extends BaseParam {
 		return this.tagsFuzzy;
 	}
 
-	public void setFormatFuzzy(String formatFuzzy) {
-		this.formatFuzzy = formatFuzzy;
-	}
-
-	public String getFormatFuzzy() {
-		return this.formatFuzzy;
-	}
 
 	public void setInteractionSettingsFuzzy(String interactionSettingsFuzzy) {
 		this.interactionSettingsFuzzy = interactionSettingsFuzzy;

@@ -26,16 +26,6 @@
 		<result column="origin_url" property="originUrl"/>
 		<!--标签列表JSON-->
 		<result column="tags" property="tags"/>
-		<!--时长(秒)-->
-		<result column="duration" property="duration"/>
-		<!--视频宽度-->
-		<result column="width" property="width"/>
-		<!--视频高度-->
-		<result column="height" property="height"/>
-		<!--码率-->
-		<result column="bitrate" property="bitrate"/>
-		<!--视频格式-->
-		<result column="format" property="format"/>
 		<!--互动设置JSON-->
 		<result column="interaction_settings" property="interactionSettings"/>
 		<!--状态 1:已发布  2:已离线  3:已删除-->
@@ -53,7 +43,7 @@
 	</resultMap>
 	<!--通用测序结果列-->
 	<sql id="base_column_list">
-		video_id,user_id,video_name,video_cover,description,p_category_id,category_id,video_type,origin_author,origin_url,tags,duration,width,height,bitrate,format,interaction_settings,status,visibility,publish_time,create_time,update_time,version
+		video_id,user_id,video_name,video_cover,description,p_category_id,category_id,video_type,origin_author,origin_url,tags,interaction_settings,status,visibility,publish_time,create_time,update_time,version
 	</sql>
 
 
@@ -91,21 +81,6 @@
 		</if>
 		<if test="query.tags != null and query.tags != ''">
 			and tags = #{query.tags} 
-		</if>
-		<if test="query.duration != null">
-			and duration = #{query.duration} 
-		</if>
-		<if test="query.width != null">
-			and width = #{query.width} 
-		</if>
-		<if test="query.height != null">
-			and height = #{query.height} 
-		</if>
-		<if test="query.bitrate != null">
-			and bitrate = #{query.bitrate} 
-		</if>
-		<if test="query.format != null and query.format != ''">
-			and format = #{query.format} 
 		</if>
 		<if test="query.interactionSettings != null and query.interactionSettings != ''">
 			and interaction_settings = #{query.interactionSettings} 
@@ -149,9 +124,6 @@
 		</if>
 		<if test="query.tagsFuzzy != null and query.tagsFuzzy != ''">
 			and tags like concat('%', #{query.tagsFuzzy}, '%')
-		</if>
-		<if test="query.formatFuzzy != null and query.formatFuzzy != ''">
-			and format like concat('%', #{query.formatFuzzy}, '%')
 		</if>
 		<if test="query.interactionSettingsFuzzy != null and query.interactionSettingsFuzzy != ''">
 			and interaction_settings like concat('%', #{query.interactionSettingsFuzzy}, '%')
@@ -233,21 +205,6 @@
 			<if test="bean.tags != null">
 				tags,
 			</if>
-			<if test="bean.duration != null">
-				duration,
-			</if>
-			<if test="bean.width != null">
-				width,
-			</if>
-			<if test="bean.height != null">
-				height,
-			</if>
-			<if test="bean.bitrate != null">
-				bitrate,
-			</if>
-			<if test="bean.format != null">
-				format,
-			</if>
 			<if test="bean.interactionSettings != null">
 				interaction_settings,
 			</if>
@@ -303,21 +260,6 @@
 			</if>
 			<if test="bean.tags != null">
 				#{bean.tags},
-			</if>
-			<if test="bean.duration != null">
-				#{bean.duration},
-			</if>
-			<if test="bean.width != null">
-				#{bean.width},
-			</if>
-			<if test="bean.height != null">
-				#{bean.height},
-			</if>
-			<if test="bean.bitrate != null">
-				#{bean.bitrate},
-			</if>
-			<if test="bean.format != null">
-				#{bean.format},
 			</if>
 			<if test="bean.interactionSettings != null">
 				#{bean.interactionSettings},
@@ -380,21 +322,6 @@
 			<if test="bean.tags != null">
 				tags,
 			</if>
-			<if test="bean.duration != null">
-				duration,
-			</if>
-			<if test="bean.width != null">
-				width,
-			</if>
-			<if test="bean.height != null">
-				height,
-			</if>
-			<if test="bean.bitrate != null">
-				bitrate,
-			</if>
-			<if test="bean.format != null">
-				format,
-			</if>
 			<if test="bean.interactionSettings != null">
 				interaction_settings,
 			</if>
@@ -451,21 +378,6 @@
 			<if test="bean.tags != null">
 				#{bean.tags},
 			</if>
-			<if test="bean.duration != null">
-				#{bean.duration},
-			</if>
-			<if test="bean.width != null">
-				#{bean.width},
-			</if>
-			<if test="bean.height != null">
-				#{bean.height},
-			</if>
-			<if test="bean.bitrate != null">
-				#{bean.bitrate},
-			</if>
-			<if test="bean.format != null">
-				#{bean.format},
-			</if>
 			<if test="bean.interactionSettings != null">
 				#{bean.interactionSettings},
 			</if>
@@ -521,21 +433,6 @@
 			<if test="bean.tags!=null">
 				tags = VALUES(tags),
 			</if>
-			<if test="bean.duration!=null">
-				duration = VALUES(duration),
-			</if>
-			<if test="bean.width!=null">
-				width = VALUES(width),
-			</if>
-			<if test="bean.height!=null">
-				height = VALUES(height),
-			</if>
-			<if test="bean.bitrate!=null">
-				bitrate = VALUES(bitrate),
-			</if>
-			<if test="bean.format!=null">
-				format = VALUES(format),
-			</if>
 			<if test="bean.interactionSettings!=null">
 				interaction_settings = VALUES(interaction_settings),
 			</if>
@@ -562,20 +459,20 @@
 
 	<!--添加 (批量插入)-->
 	<insert id="insertBatch" parameterType="com.interlude.entity.po.video.VideoInfo" >
-		INSERT INTO video_info(user_id,video_name,video_cover,description,p_category_id,category_id,video_type,origin_author,origin_url,tags,duration,width,height,bitrate,format,interaction_settings,status,visibility,publish_time,create_time,update_time,version)values
+		INSERT INTO video_info(user_id,video_name,video_cover,description,p_category_id,category_id,video_type,origin_author,origin_url,tags,interaction_settings,status,visibility,publish_time,create_time,update_time,version)values
 		<foreach collection="list" item="item" separator=",">
-			(#{item.userId},#{item.videoName},#{item.videoCover},#{item.description},#{item.pCategoryId},#{item.categoryId},#{item.videoType},#{item.originAuthor},#{item.originUrl},#{item.tags},#{item.duration},#{item.width},#{item.height},#{item.bitrate},#{item.format},#{item.interactionSettings},#{item.status},#{item.visibility},#{item.publishTime},#{item.createTime},#{item.updateTime},#{item.version})
+			(#{item.userId},#{item.videoName},#{item.videoCover},#{item.description},#{item.pCategoryId},#{item.categoryId},#{item.videoType},#{item.originAuthor},#{item.originUrl},#{item.tags},#{item.interactionSettings},#{item.status},#{item.visibility},#{item.publishTime},#{item.createTime},#{item.updateTime},#{item.version})
 		</foreach>
 	</insert>
 
 	<!--批量插入或者更新-->
 	<insert id="insertOrUpdateBatch" parameterType="com.interlude.entity.po.video.VideoInfo" >
-		INSERT INTO video_info(user_id,video_name,video_cover,description,p_category_id,category_id,video_type,origin_author,origin_url,tags,duration,width,height,bitrate,format,interaction_settings,status,visibility,publish_time,create_time,update_time,version)values
+		INSERT INTO video_info(user_id,video_name,video_cover,description,p_category_id,category_id,video_type,origin_author,origin_url,tags,interaction_settings,status,visibility,publish_time,create_time,update_time,version)values
 		<foreach collection="list" item="item" separator=",">
-			(#{item.userId},#{item.videoName},#{item.videoCover},#{item.description},#{item.pCategoryId},#{item.categoryId},#{item.videoType},#{item.originAuthor},#{item.originUrl},#{item.tags},#{item.duration},#{item.width},#{item.height},#{item.bitrate},#{item.format},#{item.interactionSettings},#{item.status},#{item.visibility},#{item.publishTime},#{item.createTime},#{item.updateTime},#{item.version})
+			(#{item.userId},#{item.videoName},#{item.videoCover},#{item.description},#{item.pCategoryId},#{item.categoryId},#{item.videoType},#{item.originAuthor},#{item.originUrl},#{item.tags},#{item.interactionSettings},#{item.status},#{item.visibility},#{item.publishTime},#{item.createTime},#{item.updateTime},#{item.version})
 		</foreach>
 		on DUPLICATE key update
-		video_id = VALUES(video_id),user_id = VALUES(user_id),video_name = VALUES(video_name),video_cover = VALUES(video_cover),description = VALUES(description),p_category_id = VALUES(p_category_id),category_id = VALUES(category_id),video_type = VALUES(video_type),origin_author = VALUES(origin_author),origin_url = VALUES(origin_url),tags = VALUES(tags),duration = VALUES(duration),width = VALUES(width),height = VALUES(height),bitrate = VALUES(bitrate),format = VALUES(format),interaction_settings = VALUES(interaction_settings),status = VALUES(status),visibility = VALUES(visibility),publish_time = VALUES(publish_time),create_time = VALUES(create_time),update_time = VALUES(update_time),version = VALUES(version)
+		video_id = VALUES(video_id),user_id = VALUES(user_id),video_name = VALUES(video_name),video_cover = VALUES(video_cover),description = VALUES(description),p_category_id = VALUES(p_category_id),category_id = VALUES(category_id),video_type = VALUES(video_type),origin_author = VALUES(origin_author),origin_url = VALUES(origin_url),tags = VALUES(tags),interaction_settings = VALUES(interaction_settings),status = VALUES(status),visibility = VALUES(visibility),publish_time = VALUES(publish_time),create_time = VALUES(create_time),update_time = VALUES(update_time),version = VALUES(version)
 	</insert>
 
 	<!-- 根据VideoId查询 -->
@@ -619,21 +516,6 @@
 			</if>
 			<if test="bean.tags != null" >
 				tags = #{bean.tags},
-			</if>
-			<if test="bean.duration != null" >
-				duration = #{bean.duration},
-			</if>
-			<if test="bean.width != null" >
-				width = #{bean.width},
-			</if>
-			<if test="bean.height != null" >
-				height = #{bean.height},
-			</if>
-			<if test="bean.bitrate != null" >
-				bitrate = #{bean.bitrate},
-			</if>
-			<if test="bean.format != null" >
-				format = #{bean.format},
 			</if>
 			<if test="bean.interactionSettings != null" >
 				interaction_settings = #{bean.interactionSettings},

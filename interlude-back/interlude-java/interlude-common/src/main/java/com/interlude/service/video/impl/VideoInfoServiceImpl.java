@@ -153,7 +153,6 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 		if(videoInfo.getVideoId() == 0){
 			Long videoId = Long.parseLong(StringTools.getRandomNumber(Constants.NUMBER_15));
 			videoInfo.setVideoId(videoId);
-			videoInfoMapper.insert(videoInfo);
 
 			// 判断文件信息是否存在, 将草稿表对应的redis里的文件信息存进 转码方法
 			String key = Constants.REDIS_KEY_UPLOADING_FILE + videoInfo.getUserId() + uploadId;
@@ -168,8 +167,21 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 			if(uploadVideoFileInfoByKey == null){
 				throw new BusinessException(ResponseCodeEnum.CODE_600);
 			}
+			videoInfoMapper.insert(videoInfo);
 			uploadVideoFileInfoByKey.setVideoId(videoId);
 			redisComponent.addFile2TransferQueue(uploadVideoFileInfoByKey);
+
+			// 新增审核表信息
+			VideoAudit videoAudit = videoAuditMapper.selectByVideoId(videoId);
+			if(videoAudit != null){
+				throw new BusinessException(ResponseCodeEnum.CODE_600);
+			}
+			VideoAudit audit = new VideoAudit();
+			audit.setVideoId(videoId);
+			audit.setUserId(videoInfo.getUserId());
+			audit.setAuditStatus(VideoAuditEnum.PENDING.getStatus());
+			audit.setSubmitTime(new Date());
+			videoAuditMapper.insert(audit);
 		}else{
 
 		}
