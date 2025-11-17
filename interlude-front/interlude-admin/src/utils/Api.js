@@ -34,7 +34,7 @@ const Api = {
   //草稿
   getDraftInfoByUserId: '/draft/getDraftInfoByUserId',
   updateDraftInfo: '/draft/updateDraftInfo',
-  updateVideoName: '/draft/updateVideoName',
+  updateVideoName: '/draft/updateVideoName1',
 
   // 投稿
   postVideo: '/vp/postVideo',

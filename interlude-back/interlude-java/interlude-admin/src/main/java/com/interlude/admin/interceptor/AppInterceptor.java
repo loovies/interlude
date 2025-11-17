@@ -26,41 +26,31 @@ public class AppInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        if(handler == null){
-            return false;
-        }
-        if(!(handler instanceof HandlerMethod)){
-            return true;
-        }
-
-        if(request.getRequestURI().contains(URL_ACCOUNT)){
-            return true;
-        }
-
-        String token = request.getHeader(Constants.REDIS_ADMIN_TOKEN);
-//        Cookie[] cookies = request.getCookies();
-//        if (cookies != null) {
-//            for (Cookie cookie : cookies) {
-//                // 查找名为"admintoken"的cookie
-//                if (Constants.REDIS_ADMIN_TOKEN.equals(cookie.getName())) {
-//                    token = cookie.getValue();
-//                }
-//            }
+//        if(handler == null){
+//            return false;
 //        }
-
-        // 获取图片
-        if(request.getRequestURI().contains(URL_FILE)){
-            token = getTokenFromRequest(request);
-        }
-
-        if(StringTools.isEmpty(token)){
-            throw new BusinessException(ResponseCodeEnum.CODE_901);
-        }
-
-        Object tokenInfo4Admin = redisComponent.getAdmin4Token(token);
-        if(tokenInfo4Admin == null){
-            throw new BusinessException(ResponseCodeEnum.CODE_901);
-        }
+//        if(!(handler instanceof HandlerMethod)){
+//            return true;
+//        }
+//
+//        if(request.getRequestURI().contains(URL_ACCOUNT)){
+//            return true;
+//        }
+//
+//        String token = request.getHeader(Constants.REDIS_ADMIN_TOKEN);
+//        // 获取图片
+//        if(request.getRequestURI().contains(URL_FILE)){
+//            token = getTokenFromRequest(request);
+//        }
+//
+//        if(StringTools.isEmpty(token)){
+//            throw new BusinessException(ResponseCodeEnum.CODE_901);
+//        }
+//
+//        Object tokenInfo4Admin = redisComponent.getAdmin4Token(token);
+//        if(tokenInfo4Admin == null){
+//            throw new BusinessException(ResponseCodeEnum.CODE_901);
+//        }
         return true;
     }
 
