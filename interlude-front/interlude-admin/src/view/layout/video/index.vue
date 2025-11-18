@@ -41,7 +41,7 @@
             <el-form-item>
               <el-button
                 type="primary"
-                @click="loadUserInfoList()"
+                @click="loadVideoInfoList()"
                 class="search-btn mainbtn"
                 style="width: 100px"
               >
@@ -135,12 +135,18 @@
           ref="dataTableRef"
           :columns="columns"
           :dataSource="tableData"
-          :fetch="loadUserInfoList"
+          :fetch="loadVideoInfoList"
           :initFetch="true"
           :options="tableOptions"
           :MaxHeight="MaxHeight"
           @rowSelected="rowSelected"
         >
+          <template #videoName="{ index, row }">
+            <span>{{ row.videoName }}</span>
+          </template>
+          <template #videoCover="{ index, row }">
+            <Cover :source="row.videoCover" defaultImg="404_cover.png" :preview="true"></Cover>
+          </template>
         </Table>
       </el-card>
     </div>
@@ -189,14 +195,16 @@ const tableOptions = {
 const columns = [
   {
     label: '文件名',
-    prop: 'fileName',
-    width: 100,
+    prop: 'videoName',
+    width: 150,
+    align: 'center',
   },
   {
     label: '视频封面',
     prop: 'videoCover',
     scopedSlots: 'videoCover',
     width: 280,
+    align: 'center',
   },
   {
     label: '用户名',
@@ -276,11 +284,20 @@ const tableData = ref([])
 const flag = ref('asc')
 
 // 加载用户信息列表
-const loadUserInfoList = async (): Promise<void> => {
+const loadVideoInfoList = async (): Promise<void> => {
   let params: Record<string, any> = {
     pageNo: tableData.value.pageNo,
     pageSize: tableData.value.pageSize,
   }
+  Object.assign(params, formData.value)
+  let result = await proxy.$Request({
+    url: proxy.$Api.getLoadVideoInfo,
+    params,
+  })
+  if (!result) {
+    return
+  }
+  tableData.value = result.data
 }
 
 const MaxHeight: Ref<number> = ref(565)
@@ -298,7 +315,7 @@ const changeShrink = (): void => {
 
 const cheanFrom = () => {
   formData.value = ref<Record<string, any>>({})
-  loadUserInfoList()
+  loadVideoInfoList()
 }
 
 // 单选按钮点击处理函数
@@ -322,7 +339,7 @@ const changeSort = (): void => {
   } else {
     flag.value = 'desc'
   }
-  loadUserInfoList()
+  loadVideoInfoList()
 }
 
 const rowSelectedList = ref([])

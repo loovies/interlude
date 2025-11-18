@@ -38,6 +38,9 @@ const Api = {
 
   // 投稿
   postVideo: '/vp/postVideo',
+
+  // video
+  getLoadVideoInfo: '/videoInfo/loadVideoInfo',
 }
 
 //上传图片

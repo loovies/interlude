@@ -275,9 +275,11 @@ const saveDraftInfo = async (showMsg: boolean = false): Promise<void> => {
   if (props.fileList[activeIndex.value]) {
     params.uploadId = props.fileList[activeIndex.value].uploadId
   }
-  params.pCategoryId = params.categoryArray[0]
   if (params.categoryArray.length > 1) {
+    params.pCategoryId = params.categoryArray[0]
     params.categoryId = params.categoryArray[1]
+  } else {
+    params.categoryId = params.categoryArray[0]
   }
   if (params.interactionArray) {
     params.interactionSettings = params.interactionArray.join(',')
@@ -285,6 +287,8 @@ const saveDraftInfo = async (showMsg: boolean = false): Promise<void> => {
   if (params.tags) {
     params.tags = params.tags.join(',')
   }
+  params.createThumbnail = true
+  debugger
   let res = await proxy.$Request({
     url: proxy.$Api.updateDraftInfo,
     params,

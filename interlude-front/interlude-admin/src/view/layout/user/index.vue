@@ -303,7 +303,7 @@ const loadUserInfoList = async (): Promise<void> => {
     pageNo: tableData.value.pageNo,
     pageSize: tableData.value.pageSize,
   }
-  formData.value.isCreatTimeDesc = flag.value
+  //formData.value.isCreatTimeDesc = flag.value
   Object.assign(params, formData.value)
   if (params.enabled == 2) params.enabled = null
   let result = await proxy.$Request({
