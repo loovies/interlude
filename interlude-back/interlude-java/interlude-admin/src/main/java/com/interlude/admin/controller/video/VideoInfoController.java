@@ -7,11 +7,13 @@ import com.interlude.entity.query.video.VideoInfoQuery;
 import com.interlude.entity.vo.PaginationResultVO;
 import com.interlude.entity.vo.ResponseVO;
 import com.interlude.entity.vo.video.VideoInfoVo;
+import com.interlude.enums.DateTimePatterEnum;
 import com.interlude.enums.ResponseCodeEnum;
 import com.interlude.exception.BusinessException;
 import com.interlude.service.UserInfoService;
 import com.interlude.service.video.VideoFileService;
 import com.interlude.service.video.VideoInfoService;
+import com.interlude.utils.DateUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -51,7 +53,7 @@ public class VideoInfoController extends ABaseController {
             vo.setCategoryId(item.getCategoryId());
             vo.setVideoType(item.getVideoType());
             vo.setStatus(item.getStatus());
-            vo.setPublishTime(item.getPublishTime());
+            vo.setPublishTime(DateUtils.format(item.getPublishTime(),DateTimePatterEnum.YYYY_MM_DD_HH_MM_SS.getPattern()));
             infoVos.add(vo);
         });
         PaginationResultVO<VideoInfo> result = new PaginationResultVO(infoVos);

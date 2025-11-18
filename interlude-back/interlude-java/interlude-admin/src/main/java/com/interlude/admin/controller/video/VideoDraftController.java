@@ -13,6 +13,7 @@ import com.interlude.enums.ResponseCodeEnum;
 import com.interlude.exception.BusinessException;
 import com.interlude.service.video.VideoDraftService;
 import com.interlude.utils.DateUtils;
+import com.interlude.utils.FFmpegUtils;
 import com.interlude.utils.StringTools;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
@@ -44,6 +45,9 @@ public class VideoDraftController extends ABaseController {
     @Resource
     private AppConfig appConfig;
 
+    @Resource
+    private FFmpegUtils fFmpegUtils;
+
     @RequestMapping("getDraftInfoByUserId")
     public ResponseVO getDraftInfoByUserId() {
         TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
@@ -68,7 +72,7 @@ public class VideoDraftController extends ABaseController {
 
     // 更新草稿
     @RequestMapping("updateDraftInfo")
-    public ResponseVO updateDraftInfo(UploadResultDto uploadResultDto,MultipartFile videoCoverFile) throws IOException {
+    public ResponseVO updateDraftInfo(UploadResultDto uploadResultDto,MultipartFile videoCoverFile,@NotNull Boolean createThumbnail) throws IOException {
         TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
         String draftKey = Constants.REDIS_KEY_UPLOADING_FILE+tokenUserInfo.getUserId()+uploadResultDto.getUploadId();
 
@@ -78,7 +82,7 @@ public class VideoDraftController extends ABaseController {
             throw new BusinessException("当前文件不存在");
         }
         if(videoCoverFile != null){
-            resultDto.setVideoCover(uploadCover(videoCoverFile)); // 保存封面
+            resultDto.setVideoCover(uploadCover(videoCoverFile,createThumbnail)); // 保存封面
         }
         resultDto.setpCategoryId(uploadResultDto.getpCategoryId());
         resultDto.setCategoryId(uploadResultDto.getCategoryId());
@@ -133,7 +137,7 @@ public class VideoDraftController extends ABaseController {
     }
 
     // 上传封面
-    public String uploadCover(MultipartFile file) throws IOException {
+    public String uploadCover(MultipartFile file,Boolean createThumbnail) throws IOException {
         String monthDD = DateUtils.format(new Date(), DateTimePatterEnum.YYYYMMDD.getPattern());
         String folder = appConfig.getProjectFolder() + Constants.FILE_FOLDER + Constants.FILE_COVER + monthDD;
         File folderFile = new File(folder);
@@ -145,7 +149,12 @@ public class VideoDraftController extends ABaseController {
         String realFileName = StringTools.getRandomString(30) + fileSuffix;
         String filePath = folder + File.separator + realFileName;
         file.transferTo(new File(filePath));
+        if(createThumbnail){
+            // 生成缩略图
+            fFmpegUtils.createTimageThumbnail(filePath);
+        }
         String videoCover = Constants.FILE_COVER + monthDD + "/" + realFileName;
+
         return videoCover;
     }
 }

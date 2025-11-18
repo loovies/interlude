@@ -11,7 +11,7 @@ public class VideoInfoVo {
     private Integer categoryId;
     private Integer videoType;
     private Integer status;
-    private Date publishTime;
+    private String publishTime;
 
     public String getVideoName() {
         return videoName;
@@ -69,11 +69,11 @@ public class VideoInfoVo {
         this.status = status;
     }
 
-    public Date getPublishTime() {
+    public String getPublishTime() {
         return publishTime;
     }
 
-    public void setPublishTime(Date publishTime) {
+    public void setPublishTime(String publishTime) {
         this.publishTime = publishTime;
     }
 }

@@ -16,6 +16,7 @@ import com.interlude.exception.BusinessException;
 import com.interlude.service.video.VideoDraftService;
 import com.interlude.service.video.VideoFileService;
 import com.interlude.utils.DateUtils;
+import com.interlude.utils.FFmpegUtils;
 import com.interlude.utils.StringTools;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -52,6 +53,7 @@ public class FileController extends ABaseController{
     @Resource
     private VideoFileService videoFileService;
 
+
     /**
      * 获取资源
      * @param response
@@ -72,7 +74,7 @@ public class FileController extends ABaseController{
      * 上传图片
      */
     @RequestMapping("/uploadImage")
-    public ResponseVO uploadImage(@NotNull MultipartFile file,@NotNull Boolean createThumbnail) throws IOException {
+    public ResponseVO uploadImage(@NotNull MultipartFile file) throws IOException {
         String month = DateUtils.format(new Date(), DateTimePatterEnum.YYYY_MM.getPattern());
         String folder = appConfig.getProjectFolder() + Constants.FILE_FOLDER + Constants.FILE_AVATAR + month;
         File folderFile = new File(folder);
@@ -84,9 +86,6 @@ public class FileController extends ABaseController{
         String realFileName = StringTools.getRandomString(30) + fileSuffix;
         String filePath = folder + File.separator + realFileName;
         file.transferTo(new File(filePath));
-        if(createThumbnail){
-            // TODO 生成缩略图
-        }
         return getSuccessResponseVO(Constants.FILE_AVATAR + month + "/" + realFileName);
     }
 

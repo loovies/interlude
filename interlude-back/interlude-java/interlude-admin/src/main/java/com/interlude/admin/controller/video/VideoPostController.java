@@ -54,7 +54,7 @@ public class VideoPostController extends ABaseController {
         videoInfo.setVideoName(fileInfoByKey.getVideoName());
         videoInfo.setVideoCover(fileInfoByKey.getVideoCover());
         videoInfo.setDescription(fileInfoByKey.getDescription());
-        videoInfo.setPCategoryId(fileInfoByKey.getpCategoryId());
+        videoInfo.setPCategoryId(fileInfoByKey.getpCategoryId() == null ? 0 : fileInfoByKey.getpCategoryId());
         videoInfo.setCategoryId(fileInfoByKey.getCategoryId());
         videoInfo.setVideoType(fileInfoByKey.getPostType());
         videoInfo.setTags(fileInfoByKey.getTags());
