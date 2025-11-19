@@ -17,6 +17,7 @@ const Api = {
 
   // category
   getLoadCategoryInfo: '/category/loadCategoryInfo',
+  getCategoryInfoById: '/category/loadCategoryInfoById',
   getSaveCategory: '/category/saveCategory',
   getDelCategory: '/category/delCategory',
   getChangeSort: '/category/changeSort',
@@ -76,4 +77,18 @@ const getRoleByUserId = async (userId) => {
   if (!res) return
   return res.data.roleId
 }
-export { Api, uploadImage, getRoleByUserId }
+
+// 提供 pCategoryId 和 categoryId
+const getCategoryInfoById = async (pCategoryId, categoryId) => {
+  let res = await Ruquest({
+    url: Api.getCategoryInfoById,
+    params: {
+      pCategoryId,
+      categoryId,
+    },
+  })
+  if (!res) return
+  return res.data
+}
+
+export { Api, uploadImage, getRoleByUserId, getCategoryInfoById }

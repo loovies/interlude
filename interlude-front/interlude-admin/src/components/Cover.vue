@@ -6,6 +6,7 @@
       'border-radius': borderRadius,
       width: width ? width + 'px' : '100%',
       height: width ? width * scale + 'px' : '100%',
+      marginLeft: marginLeft ? marginLeft + 'px' : 0 + 'px',
     }"
   >
     <el-image
@@ -82,6 +83,9 @@ const props = defineProps({
   preview: {
     type: Boolean,
     default: false,
+  },
+  marginLeft: {
+    type: Number,
   },
 })
 

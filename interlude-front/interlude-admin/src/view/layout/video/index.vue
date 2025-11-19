@@ -145,7 +145,13 @@
             <span>{{ row.videoName }}</span>
           </template>
           <template #videoCover="{ index, row }">
-            <Cover :source="row.videoCover" defaultImg="404_cover.png" :preview="true"></Cover>
+            <Cover
+              :source="row.videoCover"
+              defaultImg="404_cover.png"
+              :preview="true"
+              width="150"
+              marginLeft="35"
+            ></Cover>
           </template>
         </Table>
       </el-card>
@@ -161,6 +167,7 @@
 
 <script setup lang="ts">
 import videoEdit from './videoEdit.vue'
+import { getCategoryInfoById } from '@/utils/Api.js'
 
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ref, getCurrentInstance, nextTick, Ref, watch, onMounted, computed } from 'vue'
@@ -203,7 +210,7 @@ const columns = [
     label: '视频封面',
     prop: 'videoCover',
     scopedSlots: 'videoCover',
-    width: 280,
+    width: 250,
     align: 'center',
   },
   {
@@ -297,6 +304,9 @@ const loadVideoInfoList = async (): Promise<void> => {
   if (!result) {
     return
   }
+
+  const categoryInfo = getCategoryInfoById(result.data.pCategoryId, result.data.categoryId)
+  debugger
   tableData.value = result.data
 }
 

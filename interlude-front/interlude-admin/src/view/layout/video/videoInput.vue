@@ -288,7 +288,6 @@ const saveDraftInfo = async (showMsg: boolean = false): Promise<void> => {
     params.tags = params.tags.join(',')
   }
   params.createThumbnail = true
-  debugger
   let res = await proxy.$Request({
     url: proxy.$Api.updateDraftInfo,
     params,
