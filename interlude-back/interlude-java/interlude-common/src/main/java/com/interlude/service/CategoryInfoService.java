@@ -79,4 +79,6 @@ public interface CategoryInfoService{
 	void changeSort(Integer pCategoryId, String categoryIds);
 
 	List<CategoryInfo> getALlCategoryInfo();
+
+	List<CategoryInfo> selectCategoryById(Integer pCategoryId, Integer categoryId);
 }

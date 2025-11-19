@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import com.interlude.entity.po.CategoryInfo;
 import com.interlude.entity.query.CategoryInfoQuery;
+import com.interlude.enums.ResponseCodeEnum;
 import com.interlude.exception.BusinessException;
 import com.interlude.mapper.CategoryInfoMapper;
 import com.interlude.service.CategoryInfoService;
@@ -201,6 +202,30 @@ public class CategoryInfoServiceImpl implements CategoryInfoService{
 			save2Redis();
 		}
 		return redisComponent.getCategoryList();
+	}
+
+	@Override
+	public List<CategoryInfo> selectCategoryById(Integer pCategoryId, Integer categoryId) {
+		List<CategoryInfo> categoryInfoList = new ArrayList<>();
+		if(pCategoryId == 0){
+			CategoryInfo categoryInfo = categoryInfoMapper.selectByCategoryId(categoryId);
+			if(categoryInfo == null){
+				throw new BusinessException(ResponseCodeEnum.CODE_600);
+			}
+			categoryInfoList.add(categoryInfo);
+		}else{
+			CategoryInfo categoryInfo = categoryInfoMapper.selectByCategoryId(categoryId);
+			if(categoryInfo == null){
+				throw new BusinessException(ResponseCodeEnum.CODE_600);
+			}
+			categoryInfoList.add(categoryInfo);
+			categoryInfo = categoryInfoMapper.selectByCategoryId(pCategoryId);
+			if(categoryInfo == null){
+				throw new BusinessException(ResponseCodeEnum.CODE_600);
+			}
+			categoryInfoList.add(categoryInfo);
+		}
+		return categoryInfoList;
 	}
 
 	//刷新缓存

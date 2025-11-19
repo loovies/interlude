@@ -28,6 +28,15 @@ public class CategoryController extends ABaseController{
         return getSuccessResponseVO(listByParam);
     }
 
+    @RequestMapping("loadCategoryInfoById")
+    public ResponseVO getCategoryInfoById(@NotNull Integer pCategoryId, @NotNull Integer categoryId){
+        List<CategoryInfo> categoryInfoList = categoryInfoService.selectCategoryById(pCategoryId, categoryId);
+        if(categoryInfoList != null && categoryInfoList.size() > 0){
+            return getSuccessResponseVO(categoryInfoList);
+        }
+        return getSuccessResponseVO(null);
+    }
+
     @RequestMapping("saveCategory")
     public ResponseVO saveCategory(@NotNull String categoryCode,
                                    @NotNull String categoryName,
