@@ -76,8 +76,8 @@
                 placeholder="请输入上次播放时间"
               />
             </el-form-item>
-            <el-form-item label="状态" prop="enabled">
-              <el-select style="width: 140px" placeholder="请选择" v-model="formData.enabled">
+            <el-form-item label="状态" prop="status">
+              <el-select style="width: 140px" placeholder="请选择" v-model="formData.status">
                 <el-option :value="3" label="全部"></el-option>
                 <el-option :value="0" label="已发布"></el-option>
                 <el-option :value="1" label="已离线"></el-option>
@@ -153,6 +153,45 @@
               marginLeft="35"
             ></Cover>
           </template>
+          <template #category="{ index, row }">
+            {{
+              row.pCategoryId == 0 ? row.categoryName : row.pCategoryName + '/' + row.categoryName
+            }}
+          </template>
+          <template #videoType="{ index, row }">
+            {{ row.videoType == 0 ? '自制视频' : '转载视频' }}
+          </template>
+          <template #enabled="{ index, row }">
+            <div class="enabled">
+              <span
+                :class="[
+                  'comment',
+                  row.status == 0 ? 'audit' : row.status == 1 ? 'useing' : 'stoping',
+                ]"
+                >{{ row.status == 0 ? '待审核' : row.status == 1 ? '已发布' : '已离线' }}</span
+              >
+            </div>
+          </template>
+          <template #slotOperation="{ index, row }">
+            <div class="row-op-panel">
+              <a class="a-link" @click="showVideo()">预览</a>
+              <a
+                class="a-link"
+                v-if="row.userId != currentUserId && row.status != 0"
+                @click="stopEnable(row)"
+              >
+                {{ row.status == 0 ? '' : row.status == 1 ? '下线' : '上线' }}
+              </a>
+              <a class="a-link" v-if="row.roleId != 3" @click="showEdit(row, 1)">修改</a>
+              <a class="a-link" @click="showDetail(row)">详情</a>
+              <a
+                class="a-link"
+                @click="deleteUser(row)"
+                v-if="row.roleId != 3 && row.userId != currentUserId"
+                >删除</a
+              >
+            </div>
+          </template>
         </Table>
       </el-card>
     </div>
@@ -167,6 +206,8 @@
 
 <script setup lang="ts">
 import videoEdit from './videoEdit.vue'
+import VideoPlayer from '@/components/video/VideoPlayer.vue'
+
 import { getCategoryInfoById } from '@/utils/Api.js'
 
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -216,30 +257,35 @@ const columns = [
   {
     label: '用户名',
     prop: 'nickName',
-    width: 100,
+    align: 'center',
+    width: 150,
   },
   {
     label: '分类',
     prop: 'category',
     scopedSlots: 'category',
     align: 'center',
+    width: 150,
   },
   {
     label: '视频类型',
     prop: 'videoType',
     scopedSlots: 'videoType',
     align: 'center',
+    width: 150,
   },
   {
     label: '状态',
-    prop: 'status',
-    scopedSlots: 'status',
+    prop: 'enabled',
+    scopedSlots: 'enabled',
     align: 'center',
+    width: 150,
   },
   {
     label: '发布时间',
     prop: 'publishTime',
     align: 'center',
+    width: 200,
   },
   {
     label: '操作',
@@ -266,24 +312,6 @@ const editVideo = () => {
   isUploadvideo.value = true
 }
 
-const changeUploadvideo = () => {
-  isUploadvideo.value = !isUploadvideo.value
-  selectDarftInfo()
-}
-
-onMounted(() => {
-  selectDarftInfo()
-})
-
-// 查询草稿信息
-const selectDarftInfo = async (): Promise<void> => {
-  let res = await proxy.$Request({
-    url: proxy.$Api.getDraftInfoByUserId,
-  })
-  if (!res) return
-  fileList.value = res.data ? res.data : []
-}
-
 const startUpload = (file: Object) => {}
 
 // 用户信息表格数据
@@ -305,8 +333,6 @@ const loadVideoInfoList = async (): Promise<void> => {
     return
   }
 
-  const categoryInfo = getCategoryInfoById(result.data.pCategoryId, result.data.categoryId)
-  debugger
   tableData.value = result.data
 }
 
@@ -501,8 +527,12 @@ const handleUpStepClick = (): void => {
           background-color: #7073f4;
           color: #fff;
         }
+        .audit {
+          background-color: #f39364ff;
+          color: #fff;
+        }
         .stoping {
-          background-color: rgb(219, 93, 8);
+          background-color: rgba(122, 120, 119, 1);
           color: #fff;
         }
       }

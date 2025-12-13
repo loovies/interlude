@@ -5,13 +5,49 @@ import java.util.Date;
 public class VideoInfoVo {
 
     private String videoName;
+    private String userId;
+    private Long videoId;
     private String videoCover;
     private String nickName;
     private Integer pCategoryId;
+    private String pCategoryName;
+    private String CategoryName;
     private Integer categoryId;
     private Integer videoType;
     private Integer status;
     private String publishTime;
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public Long getVideoId() {
+        return videoId;
+    }
+
+    public void setVideoId(Long videoId) {
+        this.videoId = videoId;
+    }
+
+    public String getCategoryName() {
+        return CategoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        CategoryName = categoryName;
+    }
+
+    public String getpCategoryName() {
+        return pCategoryName;
+    }
+
+    public void setpCategoryName(String pCategoryName) {
+        this.pCategoryName = pCategoryName;
+    }
 
     public String getVideoName() {
         return videoName;

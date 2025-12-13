@@ -1,5 +1,6 @@
 import '@/assets/scss/base.scss'
 import '@/assets/icon/iconfont.css'
+import '@/assets/scss/videoplayer.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
