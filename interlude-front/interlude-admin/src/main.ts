@@ -5,6 +5,7 @@ import '@/assets/scss/videoplayer.css'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { createPersistedState } from 'pinia-plugin-persistedstate'
+import '@videojs/http-streaming'
 
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'

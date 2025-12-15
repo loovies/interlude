@@ -20,6 +20,15 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/admin'),
       },
+      '/admin/videos': {
+        target: 'http://localhost:9000/',
+        changeOrigin: true,
+      },
+      '/videos': {
+        target: 'http://localhost:9000/',
+        changeOrigin: true,
+        rewrite: (path) => '/admin' + path, // 将 /videos 重写为 /admin/videos
+      },
     },
   },
 })

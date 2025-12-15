@@ -123,7 +123,7 @@ public class FFmpegUtils {
                 videoFile.setWidth(quality.getWidth());
                 videoFile.setHeight(quality.getHeight());
                 videoFile.setBitrate(quality.getBitrate());
-                videoFile.setFilePath(resultDto.getFilePath()+File.separator+quality.getName());
+                videoFile.setFilePath(resultDto.getFilePath()+"/"+quality.getName());
 
                 if(quality.getName().equals("720p")){
                     videoFile.setIsPrimary(1);

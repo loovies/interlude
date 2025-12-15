@@ -174,7 +174,7 @@
           </template>
           <template #slotOperation="{ index, row }">
             <div class="row-op-panel">
-              <a class="a-link" @click="showVideo()">预览</a>
+              <a class="a-link" @click="fetchVideoData(row.videoId)">预览</a>
               <a
                 class="a-link"
                 v-if="row.userId != currentUserId && row.status != 0"
@@ -202,16 +202,39 @@
     @closeVideoEdit="changeUploadvideo"
     :videoInfo="fileList"
   ></videoEdit>
+  <!-- <VideoPlayer
+    v-model:visible="showPlayer"
+    :video-data="videoData"
+    :width="playerWidth"
+    :height="playerHeight"
+    @close="closePlayer"
+  /> -->
+  <VIdeoPlayerDoc
+    v-model:visible="showPlayer"
+    :video-data="videoData"
+    :width="playerWidth"
+    :height="playerHeight"
+    @close="closePlayer"
+  />
 </template>
 
 <script setup lang="ts">
 import videoEdit from './videoEdit.vue'
 import VideoPlayer from '@/components/video/VideoPlayer.vue'
-
+import VIdeoPlayerDoc from '@/components/video/VIdeoPlayerDoc.vue'
 import { getCategoryInfoById } from '@/utils/Api.js'
 
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ref, getCurrentInstance, nextTick, Ref, watch, onMounted, computed } from 'vue'
+import {
+  ref,
+  getCurrentInstance,
+  nextTick,
+  Ref,
+  onUnmounted,
+  watch,
+  onMounted,
+  computed,
+} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getRoleByUserId } from '@/utils/Api.js'
 import { storeToRefs } from 'pinia'
@@ -368,6 +391,10 @@ const exportClick = (): void => {
   proxy.$Message.success('导出成功')
 }
 
+const changeUploadvideo = () => {
+  isUploadvideo.value = false
+  selectDarftInfo()
+}
 // 排序切换
 const changeSort = (): void => {
   if (flag.value === 'desc') {
@@ -386,6 +413,15 @@ const rowSelected = async (selectedRows: Array<Object>): Promise<void> => {}
 // 删除选中行
 const deleteSelectedRows = (): void => {}
 
+// 查询草稿信息
+const selectDarftInfo = async (): Promise<void> => {
+  let res = await proxy.$Request({
+    url: proxy.$Api.getDraftInfoByUserId,
+  })
+  if (!res) return
+  fileList.value = res.data ? res.data : []
+}
+
 const userSearchDisplay = ref(true)
 const handleUpStepClick = (): void => {
   userSearchDisplay.value = !userSearchDisplay.value
@@ -397,6 +433,133 @@ const handleUpStepClick = (): void => {
     tableOptions.tableHeight = 800
   }
 }
+
+// 响应式数据
+const showPlayer = ref(false)
+const videoData = ref({
+  videoId: null,
+  title: '',
+  description: '',
+  duration: 0,
+  qualities: [],
+})
+
+// 播放器尺寸
+const playerWidth = computed(() => {
+  // 根据屏幕宽度自适应
+  const width = window.innerWidth
+  if (width < 768) {
+    return '95%'
+  } else if (width < 1200) {
+    return '90%'
+  } else {
+    return '80%'
+  }
+})
+
+const playerHeight = computed(() => {
+  // 根据屏幕高度自适应
+  const height = window.innerHeight
+  if (height < 600) {
+    return '95%'
+  } else {
+    return '90%'
+  }
+})
+
+// 获取视频数据
+const fetchVideoData = async (videoId) => {
+  try {
+    // 显示加载状态
+    const result = await proxy.$Request({
+      url: `/videoInfo/${videoId}/playList`,
+    })
+    if (!result || result.code !== 200) {
+      proxy.$Message.error('获取视频信息失败')
+      return
+    }
+
+    // 设置视频数据
+    videoData.value = {
+      videoId: result.data.videoId || videoId,
+      title: result.data.title || '未命名视频',
+      // description: result.data.description || '',
+      duration: result.data.duration || 0,
+      qualities: result.data.qualities || [],
+      // createTime: result.data.createTime,
+      // thumbnailUrl: result.data.thumbnailUrl,
+    }
+
+    // 显示播放器
+    showPlayer.value = true
+
+    // 记录播放历史（可选）
+    // recordPlayHistory(videoId)
+  } catch (error) {
+    console.error('获取视频数据失败:', error)
+  }
+}
+
+// 记录播放历史
+// const recordPlayHistory = (videoId) => {
+//   try {
+//     // 从本地存储获取播放历史
+//     let playHistory = JSON.parse(localStorage.getItem('videoPlayHistory') || '[]')
+
+//     // 移除重复记录
+//     playHistory = playHistory.filter((item) => item.videoId !== videoId)
+
+//     // 添加新记录到开头
+//     playHistory.unshift({
+//       videoId: videoId,
+//       title: videoData.value.title,
+//       thumbnail: videoData.value.thumbnailUrl,
+//       playTime: new Date().getTime(),
+//     })
+
+//     // 只保留最近10条记录
+//     playHistory = playHistory.slice(0, 10)
+
+//     // 保存到本地存储
+//     localStorage.setItem('videoPlayHistory', JSON.stringify(playHistory))
+//   } catch (error) {
+//     console.warn('记录播放历史失败:', error)
+//   }
+// }
+
+// 关闭播放器
+const closePlayer = () => {
+  showPlayer.value = false
+  // 可选：清除视频数据
+  videoData.value = {}
+}
+
+// 监听键盘事件
+const handleKeydown = (e) => {
+  if (!showPlayer.value) return
+
+  // ESC键关闭播放器
+  if (e.key === 'Escape') {
+    closePlayer()
+  }
+}
+
+// 组件挂载时添加键盘监听
+onMounted(() => {
+  selectDarftInfo()
+  document.addEventListener('keydown', handleKeydown)
+})
+
+// 组件卸载时移除监听
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+})
+
+// 暴露方法给其他组件
+defineExpose({
+  showVideo: fetchVideoData,
+  closeVideo: closePlayer,
+})
 </script>
 
 <style lang="scss" scoped>

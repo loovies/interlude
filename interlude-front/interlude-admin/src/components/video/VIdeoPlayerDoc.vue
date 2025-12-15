@@ -23,10 +23,10 @@
 
       <!-- 视频播放区域 -->
       <div class="video-content">
-        <div class="video-wrapper" ref="videoContainer"></div>
+        <div class="video-wrapper" @click="heandleWrapperPause()" ref="videoContainer"></div>
 
         <!-- 中央播放按钮（暂停时显示） -->
-        <div class="center-play-button" v-if="!isPlaying && !loading && !error" @click="togglePlay">
+        <div class="center-play-button" v-if="!isPlaying && !loading && !error" @click="playVideo">
           <svg class="play-icon" viewBox="0 0 24 24">
             <path d="M8 5v14l11-7z" />
           </svg>
@@ -254,6 +254,7 @@ const isFullscreen = ref(false)
 // 加载和错误状态
 const loading = ref(false)
 const error = ref('')
+const isInitialized = ref(false)
 
 // 计算属性
 const videoTitle = computed(() => props.videoData.title || '视频播放')
@@ -290,6 +291,7 @@ const initPlayer = () => {
   loading.value = true
   error.value = ''
   controlsVisible.value = true
+  isInitialized.value = false
 
   try {
     // 销毁现有的播放器
@@ -308,12 +310,23 @@ const initPlayer = () => {
     totalDuration.value = props.videoData.duration || 0
     console.log('视频时长:', totalDuration.value)
 
-    // 初始化video.js播放器（隐藏原生控件）
+    // 创建video元素
+    const videoElement = document.createElement('video')
+    videoElement.className = 'video-js vjs-default-skin vjs-big-play-centered'
+    videoElement.setAttribute('playsinline', '')
+    videoElement.setAttribute('webkit-playsinline', '')
+    videoElement.setAttribute('controlsList', 'nodownload')
+
+    // 清空容器并添加video元素
+    videoContainer.value.innerHTML = ''
+    videoContainer.value.appendChild(videoElement)
+
+    // 初始化video.js播放器
     player.value = videojs(
-      videoContainer.value,
+      videoElement,
       {
         controls: false,
-        autoplay: true,
+        autoplay: true, // 改为false，由用户手动触发
         preload: 'auto',
         fluid: true,
         aspectRatio: '16:9',
@@ -326,31 +339,35 @@ const initPlayer = () => {
         },
         html5: {
           vhs: {
-            overrideNative: !Hls.isSupported(), // 如果hls.js支持，则覆盖原生
+            overrideNative: !Hls.isSupported(),
             withCredentials: false,
           },
           nativeVideoTracks: false,
           nativeAudioTracks: false,
           nativeTextTracks: false,
         },
-        sources: [], // 初始为空，稍后通过hls.js加载
+        sources: [],
       },
       function () {
         console.log('Video.js播放器初始化完成')
+        isInitialized.value = true
+
+        // 设置初始清晰度
+        setInitialQuality()
+
+        // 设置播放速率
+        player.value.playbackRate(currentPlaybackRate.value)
+
+        // 设置事件监听
+        setupPlayerEvents()
+
+        // 开始隐藏控制条的计时器
+        startHideTimer()
+
+        // 触发ready事件
+        emit('ready')
       }
     )
-
-    // 设置初始清晰度
-    setInitialQuality()
-
-    // 设置播放速率
-    player.value.playbackRate(currentPlaybackRate.value)
-
-    // 设置事件监听
-    setupPlayerEvents()
-
-    // 开始隐藏控制条的计时器
-    startHideTimer()
 
     console.log('播放器初始化完成')
   } catch (err) {
@@ -387,12 +404,6 @@ const loadVideoSource = (quality) => {
   loading.value = true
   error.value = ''
 
-  // 保存当前播放时间
-  const currentPlayTime = player.value.currentTime() || 0
-  const wasPaused = player.value.paused()
-
-  console.log('当前播放时间:', currentPlayTime, '是否暂停:', wasPaused)
-
   // 清除之前的HLS实例
   if (hls.value) {
     console.log('销毁之前的HLS实例')
@@ -400,11 +411,10 @@ const loadVideoSource = (quality) => {
     hls.value = null
   }
 
-  // 设置视频源 - 添加调试信息
   const videoSrc = 'http://localhost:4000' + qualityData.m3u8Url
   console.log('完整视频URL:', videoSrc)
 
-  // 1. 首先测试URL是否可访问
+  // 测试URL是否可访问
   fetch(videoSrc)
     .then((response) => {
       console.log('M3U8文件响应状态:', response.status, response.statusText)
@@ -417,7 +427,6 @@ const loadVideoSource = (quality) => {
       console.log('M3U8文件内容前200字符:', text.substring(0, 200))
       console.log('M3U8文件总长度:', text.length)
 
-      // 检查是否是有效的M3U8文件
       if (!text.includes('#EXTM3U')) {
         console.error('不是有效的M3U8文件')
         error.value = '视频格式错误：不是有效的M3U8文件'
@@ -425,8 +434,8 @@ const loadVideoSource = (quality) => {
         return
       }
 
-      // 2. 尝试播放视频
-      playVideoWithHls(videoSrc, currentPlayTime, wasPaused)
+      // 使用HLS.js播放视频
+      playVideoWithHls(videoSrc)
     })
     .catch((err) => {
       console.error('无法获取M3U8文件:', err)
@@ -435,11 +444,10 @@ const loadVideoSource = (quality) => {
     })
 }
 
-// 提取播放逻辑到单独函数
-const playVideoWithHls = (videoSrc, currentPlayTime, wasPaused) => {
+// 使用HLS.js播放视频
+const playVideoWithHls = (videoSrc) => {
   console.log('playVideoWithHls 开始，videoSrc:', videoSrc)
 
-  // 首先尝试使用hls.js（更好的兼容性和控制）
   if (Hls.isSupported()) {
     console.log('浏览器支持hls.js，使用hls.js播放')
 
@@ -448,7 +456,7 @@ const playVideoWithHls = (videoSrc, currentPlayTime, wasPaused) => {
       lowLatencyMode: true,
       backBufferLength: 90,
       maxBufferLength: 30,
-      debug: true, // 开启调试
+      debug: true,
       xhrSetup: (xhr, url) => {
         xhr.withCredentials = false
         console.log('加载资源:', url)
@@ -457,31 +465,61 @@ const playVideoWithHls = (videoSrc, currentPlayTime, wasPaused) => {
 
     hls.value.loadSource(videoSrc)
 
-    // 确保使用正确的video元素
-    const videoElement = player.value.el()
+    // 获取video元素 - 使用原生video元素
+    let videoElement
+    if (player.value && player.value.el()) {
+      videoElement = player.value.el()
+      // 确保是video元素，如果被包装了则找到真正的video元素
+      if (videoElement.tagName !== 'VIDEO') {
+        videoElement = videoElement.querySelector('video')
+      }
+    }
+
+    if (!videoElement) {
+      console.error('未找到video元素')
+      error.value = '播放器初始化失败'
+      loading.value = false
+      return
+    }
+
     console.log('将hls.js附加到video元素:', videoElement)
     hls.value.attachMedia(videoElement)
 
     // HLS事件监听
-    hls.value.on(Hls.Events.MANIFEST_PARSED, () => {
-      console.log('HLS manifest解析完成，可以开始播放')
-      loading.value = false
+    hls.value.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+      console.log('HLS manifest解析完成，可以开始播放', data)
 
-      // 给一点时间让媒体就绪
+      // 重要：设置正确的视频时长
+      if (data.levels && data.levels.length > 0) {
+        const level = data.levels[0]
+        const duration = level.duration || level.totalduration || 0
+        if (duration > 0) {
+          totalDuration.value = duration
+          console.log('从HLS设置视频时长:', duration)
+        }
+      }
+
+      // 等待一小段时间确保视频就绪
       setTimeout(() => {
-        if (currentPlayTime > 0) {
-          console.log('恢复播放时间到:', currentPlayTime)
-          player.value.currentTime(currentPlayTime)
+        loading.value = false
+        console.log('加载状态设为false，显示播放按钮')
+
+        // 确保视频元素有正确的状态
+        if (videoElement.readyState >= 2) {
+          // HAVE_CURRENT_DATA 或更高
+          console.log('视频已就绪，可以播放')
+        } else {
+          console.log('视频准备状态:', videoElement.readyState)
+          // 监听视频就绪事件
+          videoElement.addEventListener(
+            'loadeddata',
+            () => {
+              console.log('视频数据加载完成')
+            },
+            { once: true }
+          )
         }
-        if (!wasPaused) {
-          console.log('尝试自动播放')
-          player.value.play().catch((e) => {
-            console.log('自动播放失败:', e)
-            // 显示播放按钮让用户手动点击
-            isPlaying.value = false
-          })
-        }
-      }, 300)
+      }, 500)
     })
 
     hls.value.on(Hls.Events.LEVEL_LOADED, (event, data) => {
@@ -516,42 +554,88 @@ const playVideoWithHls = (videoSrc, currentPlayTime, wasPaused) => {
         }
       }
     })
-  } else if (player.value.tech_ && player.value.tech_.featuresNativeHls) {
+  } else {
     // 浏览器原生支持HLS
     console.log('浏览器原生支持HLS，使用原生播放')
 
-    player.value.src({
-      src: videoSrc,
-      type: 'application/x-mpegURL',
-      withCredentials: false,
-    })
+    const videoElement = player.value.el()
+    if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+      // 设置视频源
+      player.value.src({
+        src: videoSrc,
+        type: 'application/x-mpegURL',
+        withCredentials: false,
+      })
 
-    // 添加错误处理
-    player.value.on('error', () => {
-      const playerError = player.value.error()
-      console.error('原生HLS播放错误:', playerError)
+      // 监听加载完成事件
+      player.value.ready(() => {
+        console.log('原生HLS播放器就绪')
+        loading.value = false
+
+        // 监听视频数据加载
+        videoElement.addEventListener(
+          'loadeddata',
+          () => {
+            console.log('视频数据加载完成')
+            if (videoElement.duration && videoElement.duration > 0) {
+              totalDuration.value = videoElement.duration
+              console.log('设置视频时长:', videoElement.duration)
+            }
+          },
+          { once: true }
+        )
+      })
+
+      // 监听错误
+      player.value.on('error', () => {
+        const playerError = player.value.error()
+        console.error('原生HLS播放错误:', playerError)
+        loading.value = false
+        error.value = `播放错误: ${getErrorMessage(playerError)}`
+      })
+    } else {
+      error.value = '您的浏览器不支持HLS视频播放'
       loading.value = false
-      error.value = `播放错误: ${getErrorMessage(playerError)}`
-    })
+      console.error('浏览器不支持HLS')
+    }
+  }
+}
 
-    player.value.ready(() => {
-      console.log('原生HLS播放器就绪')
-      loading.value = false
+// 手动播放视频
+const playVideo = () => {
+  if (!player.value) return
 
-      if (currentPlayTime > 0) {
-        player.value.currentTime(currentPlayTime)
-      }
-      if (!wasPaused) {
-        player.value.play().catch((e) => {
-          console.log('原生HLS自动播放失败:', e)
-          isPlaying.value = false
+  try {
+    // 直接调用 video.js 的 play 方法
+    const playPromise = player.value.play()
+
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          console.log('视频播放成功')
+          isPlaying.value = true
+          error.value = '' // 清除任何错误
         })
-      }
-    })
-  } else {
-    error.value = '您的浏览器不支持HLS视频播放'
-    loading.value = false
-    console.error('浏览器不支持HLS')
+        .catch((err) => {
+          console.log('自动播放被阻止:', err)
+          // 尝试静音播放
+          player.value.muted(true)
+          player.value
+            .play()
+            .then(() => {
+              console.log('静音播放成功')
+              isPlaying.value = true
+              error.value = '' // 清除任何错误
+            })
+            .catch((err2) => {
+              console.error('静音播放也失败:', err2)
+              error.value = '播放失败，请点击播放按钮重试'
+            })
+        })
+    }
+  } catch (err) {
+    console.error('播放异常:', err)
+    error.value = '播放失败，请重试'
   }
 }
 
@@ -559,17 +643,21 @@ const playVideoWithHls = (videoSrc, currentPlayTime, wasPaused) => {
 const setupPlayerEvents = () => {
   if (!player.value) return
 
+  // 使用 video.js 的事件监听
   player.value.on('play', () => {
+    console.log('视频开始播放')
     isPlaying.value = true
     emit('play')
   })
 
   player.value.on('pause', () => {
+    console.log('视频暂停')
     isPlaying.value = false
     emit('pause')
   })
 
   player.value.on('ended', () => {
+    console.log('视频播放结束')
     isPlaying.value = false
     emit('ended')
   })
@@ -578,14 +666,31 @@ const setupPlayerEvents = () => {
     const playerError = player.value.error()
     console.error('视频播放错误:', playerError)
     error.value = getErrorMessage(playerError)
+    loading.value = false
   })
 
   player.value.on('timeupdate', () => {
-    currentTime.value = player.value.currentTime()
-    totalDuration.value = player.value.duration() || props.videoData.duration || 0
+    const current = player.value.currentTime()
+    const duration = player.value.duration()
 
-    if (totalDuration.value > 0) {
-      progressPercent.value = (currentTime.value / totalDuration.value) * 100
+    if (current !== undefined) {
+      currentTime.value = current
+    }
+
+    if (duration && duration > 0) {
+      totalDuration.value = duration
+
+      if (totalDuration.value > 0) {
+        progressPercent.value = (currentTime.value / totalDuration.value) * 100
+      }
+    }
+  })
+
+  player.value.on('loadedmetadata', () => {
+    const duration = player.value.duration()
+    if (duration && duration > 0) {
+      totalDuration.value = duration
+      console.log('从视频获取到时长:', duration)
     }
   })
 
@@ -600,6 +705,20 @@ const setupPlayerEvents = () => {
 
   // 监听键盘事件
   document.addEventListener('keydown', handleKeydown)
+
+  // 添加一个超时检查，防止视频一直加载
+  setTimeout(() => {
+    if (loading.value) {
+      console.log('视频加载超时，尝试强制显示播放按钮')
+      loading.value = false
+      // 检查视频元素状态
+      const videoElement = player.value.el()
+      if (videoElement.readyState >= 1) {
+        // HAVE_ENOUGH_DATA 或更高
+        console.log('视频已有足够数据，应该可以播放')
+      }
+    }
+  }, 10000) // 10秒超时
 }
 
 // 显示控制条
@@ -664,7 +783,7 @@ const togglePlay = () => {
   if (!player.value) return
 
   if (player.value.paused()) {
-    player.value.play().catch((e) => console.log('播放失败:', e))
+    playVideo()
   } else {
     player.value.pause()
   }
@@ -809,6 +928,10 @@ const formatTime = (seconds) => {
   }
 }
 
+const heandleWrapperPause = (event) => {
+  togglePlay()
+}
+
 // 键盘快捷键
 const handleKeydown = (e) => {
   if (!props.visible) return
@@ -888,6 +1011,7 @@ watch(
       }
       clearTimeout(hideTimer.value)
       document.removeEventListener('keydown', handleKeydown)
+      isInitialized.value = false
     }
   }
 )
@@ -896,7 +1020,7 @@ watch(
 watch(
   () => props.videoData,
   (newData) => {
-    if (newData.qualities && newData.qualities.length > 0) {
+    if (isInitialized.value && newData.qualities && newData.qualities.length > 0) {
       setInitialQuality()
     }
   },
@@ -1072,8 +1196,8 @@ defineExpose({
 }
 
 .center-play-button .play-icon {
-  width: 30px;
-  height: 30px;
+  width: 40px;
+  height: 40px;
   fill: #fff;
   margin-left: 4px;
 }

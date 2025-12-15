@@ -6,7 +6,16 @@ import java.util.Map;
 public class PlayListInfoVo {
     private Long videoId;
     private String title;
+    private Integer duration;
     private List<Map<String,Object>> qualities;
+
+    public Integer getDuration() {
+        return duration;
+    }
+
+    public void setDuration(Integer duration) {
+        this.duration = duration;
+    }
 
     public Long getVideoId() {
         return videoId;

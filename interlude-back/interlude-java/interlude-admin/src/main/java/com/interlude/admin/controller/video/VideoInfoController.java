@@ -65,6 +65,7 @@ public class VideoInfoController extends ABaseController {
                 vo.setNickName(userInfo.getNickName());
             }
             vo.setVideoName(item.getVideoName());
+            vo.setVideoId(item.getVideoId());
             vo.setVideoCover(item.getVideoCover());
             vo.setpCategoryId(item.getPCategoryId());
             vo.setCategoryId(item.getCategoryId());
@@ -101,17 +102,17 @@ public class VideoInfoController extends ABaseController {
         playListInfoVo.setVideoId(infoByVideoId.getVideoId());
         playListInfoVo.setTitle(infoByVideoId.getVideoName());
         ArrayList<Map<String,Object>> qualities = new ArrayList<>();
-
         VideoFileQuery videoFileQuery = new VideoFileQuery();
         videoFileQuery.setVideoId(videoId);
         List<VideoFile> listByParam = videoFileService.findListByParam(videoFileQuery);
         listByParam.stream().forEach(item -> {
             Map<String,Object> map = new HashMap<>();
-            map.put("quality", VideoQualityEnum.getByCode(item.getQuality()).getName());
-            map.put("m3u8Url","/videos/"+item.getFilePath()+"/index.m3u8");
+            map.put("quality", VideoQualityEnum.getByCode(item.getQuality()-1).getName());
+            map.put("m3u8Url","/admin/videos/"+item.getFilePath()+"/index.m3u8");
             map.put("resolution",item.getWidth()+"×"+item.getHeight());
             map.put("bitrate",item.getBitrate()+"kbps");
             qualities.add(map);
+            playListInfoVo.setDuration(item.getDuration());
         });
         playListInfoVo.setQualities(qualities);
         return getSuccessResponseVO(playListInfoVo);

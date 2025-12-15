@@ -21,15 +21,26 @@ public class WebAppConfigurer implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(appInterceptor).addPathPatterns("/**");
+        registry.addInterceptor(appInterceptor).addPathPatterns("/**").excludePathPatterns(
+                "admin/videos/**"
+        );
     }
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // 将本地视频目录映射到 /videos/** URL路径
         String localVideoPath = appConfig.getProjectFolder()+ Constants.FILE_FOLDER+Constants.FILE_VIDEO;
 
+        String location = "file:" + localVideoPath.replace("\\", "/");
+        if (!location.endsWith("/")) {
+            location += "/";
+        }
+
+        System.out.println("静态资源映射配置:");
+        System.out.println("URL路径: /videos/**");
+        System.out.println("本地路径: " + location);
+
         registry.addResourceHandler("/videos/**")
-                .addResourceLocations("file:" + localVideoPath)
-                .setCachePeriod(0); // 开发环境不缓存
+                .addResourceLocations(location)
+                .setCachePeriod(0);
     }
 }

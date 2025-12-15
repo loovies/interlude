@@ -111,7 +111,6 @@ public class VideoDraftController extends ABaseController {
         videoDraftService.updateVideoDraftByDraftKey(videoDraft,draftKey);
         return getSuccessResponseVO(null);
     }
-
     //更新 videoName
     @RequestMapping("updateVideoName")
     public ResponseVO updateDraftInfo(String fileName,String uploadId){
@@ -149,10 +148,10 @@ public class VideoDraftController extends ABaseController {
         String realFileName = StringTools.getRandomString(30) + fileSuffix;
         String filePath = folder + File.separator + realFileName;
         file.transferTo(new File(filePath));
-        if(createThumbnail){
-            // 生成缩略图
-            fFmpegUtils.createTimageThumbnail(filePath);
-        }
+//        if(createThumbnail){
+//            // 生成缩略图
+//            fFmpegUtils.createTimageThumbnail(filePath);
+//        }
         String videoCover = Constants.FILE_COVER + monthDD + "/" + realFileName;
 
         return videoCover;
