@@ -305,6 +305,7 @@ const loadUserInfoList = async (): Promise<void> => {
   }
   formData.value.isCreatTimeDesc = flag.value
   Object.assign(params, formData.value)
+  debugger
   if (params.enabled == 2) params.enabled = null
   let result = await proxy.$Request({
     url: proxy.$Api.getLoadDataList,

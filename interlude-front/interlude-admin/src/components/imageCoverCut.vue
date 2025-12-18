@@ -5,7 +5,7 @@
     :buttons="dialogConfig.buttons"
     width="1000px"
     :showCancel="false"
-    @close="dialogConfig.show = false"
+    @closeDialog="handleCloseDialog"
   >
     <div class="cut-image-panel">
       <VueCropper
@@ -14,7 +14,7 @@
         :img="sourceImage"
         outputType="png"
         :autoCrop="true"
-        :autoCropWdith="cutWidth"
+        :autoCropWidth="cutWidth"
         :autoCropHeight="Math.round(cutWidth * scale)"
         :fixed="true"
         :fixedNumber="[1, scale]"
@@ -37,9 +37,7 @@
         </el-upload>
       </div>
     </div>
-    <div class="info">
-      建议上传至少 {{ props.cutWidth }} * {{ Math.round(props.cutWidth * props.scale) }}的图片
-    </div>
+    <div class="info">建议上传至少 {{ cutWidth }} * {{ Math.round(cutWidth * scale) }}的图片</div>
   </Dialog>
 </template>
 
@@ -47,31 +45,11 @@
 import 'vue-cropper/dist/index.css'
 import { VueCropper } from 'vue-cropper'
 
-import { ref, reactive, getCurrentInstance, nextTick, inject } from 'vue'
+import { ref, reactive, getCurrentInstance, nextTick, inject, watch } from 'vue'
 const { proxy } = getCurrentInstance()
 import { useRoute, useRouter } from 'vue-router'
 const route = useRoute()
 const router = useRouter()
-
-// img:'，//裁剪图片的地址 url地址，base64，blob
-// outputsize:1，//裁剪生成图片的质量
-// outputType:'jpeg'，//裁剪生成图片的格式 jpeg，png，webp
-// info:true，// 裁剪框的大小信息
-// canScale:false，// 图片是否允许滚轮缩放
-// autoCrop:true，//是否默认生成截图框
-// autoCropwidth:150，//默认生成截图框宽度
-// autoCropHeight:150，//默认生成截图框高度
-// fixedBox:false，//固定截图框大小 不允许改变
-// fixed:false，//是否开启截图框宽高固定比例，这个如果设置为true，截图框会是固定比例缩放的，如果设置为false，则截图框的狂宽高比例就不固定了
-// fixedNumber:[1，1]，//截图框的宽高比例[宽度 ，高度]
-// canMove:true，//上传图片是否可以移动
-// canMoveBox:true，//截图框能否拖劫
-// original:false，//上传图片按照原始比例渲染
-// centerBox:true，//截图框是否被限制在图片里面
-// infoTrue:true，//true 为展示真实输出图片宽高 false 展示看到的截图框宽高
-// ful1:true，// 是否输出原图比例的截图
-// enlarge:'1'，// 图片根据截图框输出比例倍数
-// mode:'contain'//图片默认渲染方式contain，cover，100px，100% auto
 
 const props = defineProps({
   cutWidth: {
@@ -83,34 +61,14 @@ const props = defineProps({
     type: Number,
     default: 0.5,
   },
+  // 添加 coverImage 属性，用于接收当前封面图片
+  coverImage: {
+    type: [String, File],
+    default: null,
+  },
 })
 
-const cropperRef = ref()
-const previewsImage = ref()
-const prview = (data) => {
-  cropperRef.value.getCropData((data) => {
-    previewsImage.value = data
-  })
-}
-
-const show = () => {
-  dialogConfig.show = true
-  sourceImage.value = ''
-  nextTick(() => {
-    previewsImage.value = ''
-  })
-}
-
-const sourceImage = ref()
-const selectFile = (file) => {
-  file = file.file
-  let img = new FileReader()
-  img.readAsDataURL(file)
-  img.onload = ({ target }) => {
-    sourceImage.value = target.result
-  }
-}
-
+// 对话框配置（放在最前面，避免访问顺序问题）
 const dialogConfig = reactive({
   show: false,
   title: '上传图片',
@@ -125,10 +83,99 @@ const dialogConfig = reactive({
   ],
 })
 
-const cutImageCallback = inject('cutImageCallback')
+const cropperRef = ref()
+const previewsImage = ref()
+const sourceImage = ref()
+
+// 监听对话框显示/隐藏状态
+watch(
+  () => dialogConfig.show,
+  (newVal) => {
+    if (newVal) {
+      // 对话框打开时，重置裁剪器
+      resetCropper()
+      // 如果有封面图片，设置为裁剪器的图片源
+      if (props.coverImage) {
+        initSourceImage()
+      }
+    }
+  }
+)
+
+const prview = (data) => {
+  cropperRef.value.getCropData((data) => {
+    previewsImage.value = data
+  })
+}
+
+const show = () => {
+  dialogConfig.show = true
+}
+
+// 初始化裁剪器图片源
+const initSourceImage = async () => {
+  if (!props.coverImage) return
+
+  if (typeof props.coverImage === 'string') {
+    // 如果是字符串路径，直接使用
+    sourceImage.value = proxy.$Api.sourcePath + props.coverImage
+  } else if (props.coverImage instanceof File) {
+    // 如果是File对象，转换为base64
+    const base64 = await coverFile2Base64(props.coverImage)
+    sourceImage.value = base64
+  }
+}
+
+// 将File转换为base64
+const coverFile2Base64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = ({ target }) => {
+      resolve(target.result)
+    }
+    reader.onerror = reject
+  })
+}
+
+const selectFile = (file) => {
+  file = file.file
+  let img = new FileReader()
+  img.readAsDataURL(file)
+  img.onload = ({ target }) => {
+    sourceImage.value = target.result
+  }
+}
+
+// 重置裁剪器状态
+const resetCropper = () => {
+  // 重置图片源为空，等待初始化
+  sourceImage.value = ''
+  // 重置预览图
+  previewsImage.value = ''
+
+  // 如果有裁剪器实例，清空裁剪区域
+  nextTick(() => {
+    if (cropperRef.value) {
+      cropperRef.value.clearCrop()
+    }
+  })
+}
+
+// 处理对话框关闭
+const handleCloseDialog = () => {
+  dialogConfig.show = false
+}
+
+const cutImageCallback = inject('cutImageCallback', null)
 const emit = defineEmits(['change'])
 
 const cutImage = () => {
+  if (!cropperRef.value) {
+    proxy.$Message.warning('裁剪器未初始化')
+    return
+  }
+
   const cropW = Math.round(cropperRef.value.cropW)
   const cropH = Math.round(cropperRef.value.cropH)
   if (cropW == 0 || cropH == 0) {
@@ -147,9 +194,11 @@ const cutImage = () => {
     })
     dialogConfig.show = false
     emit('change', file)
-    cutImageCallback({
-      coverImage: file,
-    })
+    if (cutImageCallback) {
+      cutImageCallback({
+        coverImage: file,
+      })
+    }
   })
 }
 
@@ -175,9 +224,11 @@ defineExpose({
       background: #f6f6f6;
       display: flex;
       align-items: center;
+      justify-content: center;
     }
     img {
-      width: 100%;
+      max-width: 100%;
+      max-height: 200px;
     }
   }
   .select-btn {
@@ -186,5 +237,6 @@ defineExpose({
 }
 .info {
   color: #6b6b6b;
+  margin-top: 10px;
 }
 </style>

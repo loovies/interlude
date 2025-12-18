@@ -3,6 +3,8 @@ package com.interlude.mapper.video;
 import com.interlude.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * @Description:视频文件表 Mapper
  * @auther:dazhi
@@ -27,7 +29,7 @@ public interface VideoFileMapper<T, P> extends BaseMapper {
 	/**
 	 * 根据UploadIdAndUserId查询
 	 */
-	T selectByUploadIdAndUserId(@Param("uploadId") String uploadId, @Param("userId") String userId);
+	List<T> selectByUploadIdAndUserId(@Param("uploadId") String uploadId, @Param("userId") String userId);
 
 	/**
 	 * 根据UploadIdAndUserId更新

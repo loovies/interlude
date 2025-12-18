@@ -34,6 +34,7 @@ import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 
 @RestController
 @RequestMapping("/file")
@@ -127,7 +128,8 @@ public class FileController extends ABaseController{
         VideoDraft videoDraft = new VideoDraft();
         UploadResultDto uploadResultDto = redisComponent.getUploadVideoFileInfo(tokenUserInfo.getUserId(), uploadId);
 
-        if(uploadResultDto == null){
+        List<VideoFile> videoFileByUploadIdAndUserId = videoFileService.getVideoFileByUploadIdAndUserId(uploadId, tokenUserInfo.getUserId());
+        if(videoFileByUploadIdAndUserId == null && videoFileByUploadIdAndUserId.size() > 0 && uploadResultDto == null){
             videoDraft.setUploadStatus(3);
             throw new BusinessException("视频不存在请重新上传");
         }

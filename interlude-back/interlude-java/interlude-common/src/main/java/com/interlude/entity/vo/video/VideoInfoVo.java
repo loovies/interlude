@@ -7,6 +7,7 @@ public class VideoInfoVo {
     private String videoName;
     private String userId;
     private Long videoId;
+    private String tags;
     private String videoCover;
     private String nickName;
     private Integer pCategoryId;
@@ -16,6 +17,50 @@ public class VideoInfoVo {
     private Integer videoType;
     private Integer status;
     private String publishTime;
+    private String description;
+    private Integer visibility;
+    private String interactionArray;
+    private String uploadId;
+
+    public String getUploadId() {
+        return uploadId;
+    }
+
+    public void setUploadId(String uploadId) {
+        this.uploadId = uploadId;
+    }
+
+    public Integer getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(Integer visibility) {
+        this.visibility = visibility;
+    }
+
+    public String getInteractionArray() {
+        return interactionArray;
+    }
+
+    public void setInteractionArray(String interactionArray) {
+        this.interactionArray = interactionArray;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(String tags) {
+        this.tags = tags;
+    }
 
     public String getUserId() {
         return userId;

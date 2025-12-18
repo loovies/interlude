@@ -62,4 +62,45 @@ export default {
 
     return `${year}-${month}-${day}`
   },
+  // 生成含数字字母的随机数
+  generateSecureRandomString: (length, options = {}) => {
+    const {
+      includeUppercase = true,
+      includeLowercase = true,
+      includeNumbers = true,
+      customCharset = '',
+    } = options
+
+    let charset = customCharset
+
+    if (!customCharset) {
+      charset = ''
+      if (includeLowercase) charset += 'abcdefghijklmnopqrstuvwxyz'
+      if (includeUppercase) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+      if (includeNumbers) charset += '0123456789'
+
+      if (charset === '') charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    }
+
+    // 使用更安全的随机数生成器（如果可用）
+    const crypto = window.crypto || window.msCrypto
+    const charsetLength = charset.length
+    let result = ''
+
+    if (crypto && crypto.getRandomValues) {
+      const randomValues = new Uint32Array(length)
+      crypto.getRandomValues(randomValues)
+
+      for (let i = 0; i < length; i++) {
+        result += charset[randomValues[i] % charsetLength]
+      }
+    } else {
+      // 回退到 Math.random()
+      for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * charsetLength)
+        result += charset[randomIndex]
+      }
+    }
+    return result
+  },
 }

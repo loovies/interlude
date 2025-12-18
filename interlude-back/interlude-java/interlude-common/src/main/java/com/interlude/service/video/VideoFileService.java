@@ -60,7 +60,7 @@ public interface VideoFileService{
 	/**
 	 * 根据UploadIdAndUserId查询
 	 */
-	VideoFile getVideoFileByUploadIdAndUserId(String uploadId, String userId);
+	List<VideoFile> getVideoFileByUploadIdAndUserId(String uploadId, String userId);
 
 	/**
 	 * 根据UploadIdAndUserId更新

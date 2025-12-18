@@ -15,7 +15,11 @@
       {{ coverImage ? '重新上传' : '上传' }}
     </div>
   </div>
-  <imageCoverCut ref="imageCoverCurRef" @change="handleCoverChange"></imageCoverCut>
+  <imageCoverCut
+    ref="imageCoverCurRef"
+    @change="handleCoverChange"
+    :coverImage="coverImage"
+  ></imageCoverCut>
 </template>
 
 <script setup>
@@ -75,8 +79,8 @@ const selectImage = () => {
   imageCoverCurRef.value.show()
 }
 
-const handleCoverChange = () => {
-  emit('change')
+const handleCoverChange = (file) => {
+  emit('change', file)
 }
 </script>
 

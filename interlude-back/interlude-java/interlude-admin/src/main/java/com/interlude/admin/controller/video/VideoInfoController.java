@@ -27,12 +27,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Array;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/videoInfo")
@@ -53,10 +50,54 @@ public class VideoInfoController extends ABaseController {
 
     @RequestMapping("/loadVideoInfo")
     public ResponseVO loadVideoInfo(VideoInfoQuery videoInfoQuery){
+
+        ArrayList<Date> createTimeArray = videoInfoQuery.getCreateTimeArray();
+        ArrayList<String> createFormatArray = new ArrayList<>();
+        // 查询多个创建时间
+        if(createTimeArray != null && !createTimeArray.isEmpty()){
+            for(Date item : createTimeArray){
+                String format = DateUtils.format(item, "yyyy-MM-dd");
+                createFormatArray.add(format);
+            }
+            videoInfoQuery.setCreateTimeFormatArray(createFormatArray);
+        }
+
+        ArrayList<Date> lastPlayTime = videoInfoQuery.getLastPlayTime();
+        ArrayList<String> lastPlayTimeFormatArray = new ArrayList<>();
+        // 查询多个创建时间
+        if(lastPlayTime != null && !lastPlayTime.isEmpty()){
+            for(Date item : lastPlayTime){
+                String format = DateUtils.format(item, "yyyy-MM-dd");
+                lastPlayTimeFormatArray.add(format);
+            }
+            videoInfoQuery.setLastPlayTimeFormatArray(lastPlayTimeFormatArray);
+        }
+
         List<VideoInfoVo> infoVos = new ArrayList<>();
+        if(!"".equals(videoInfoQuery.getVisibilityArray())&& videoInfoQuery.getVisibilityArray() != null ){
+            ArrayList<Integer> vis = Arrays.stream(videoInfoQuery.getVisibilityArray().split(","))
+                    .map(Integer::parseInt)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            videoInfoQuery.setVisibilityArrayList(vis);
+        }
+        if(videoInfoQuery.getIsDescOrAscCreateTime().equals("desc")){
+            videoInfoQuery.setOrderBy("create_time desc");
+        }else{
+            videoInfoQuery.setOrderBy("create_time asc");
+        }
+
         PaginationResultVO<VideoInfo> listByPage = videoInfoService.findListByPage(videoInfoQuery);
         listByPage.getList().stream().forEach(item ->{
+            if(item.getStatus() == 3){
+                return;
+            }
             VideoInfoVo vo = new VideoInfoVo();
+            VideoFileQuery query = new VideoFileQuery();
+            query.setVideoId(item.getVideoId());
+            List<VideoFile> listByParam = videoFileService.findListByParam(query);
+            if(listByParam != null && listByParam.size() > 0){
+                vo.setUploadId(listByParam.get(0).getUploadId());
+            }
             UserInfo userInfo = userInfoService.getUserInfoByUserId(item.getUserId());
             if(userInfo == null){
                 throw new BusinessException(ResponseCodeEnum.CODE_600);
@@ -64,6 +105,12 @@ public class VideoInfoController extends ABaseController {
             if(userInfo.getUserId().equals(item.getUserId())){
                 vo.setNickName(userInfo.getNickName());
             }
+
+            vo.setTags(item.getTags());
+            vo.setDescription(item.getDescription());
+            vo.setUserId(item.getUserId());
+            vo.setVisibility(item.getVisibility());
+            vo.setInteractionArray(item.getInteractionSettings());
             vo.setVideoName(item.getVideoName());
             vo.setVideoId(item.getVideoId());
             vo.setVideoCover(item.getVideoCover());
@@ -116,5 +163,18 @@ public class VideoInfoController extends ABaseController {
         });
         playListInfoVo.setQualities(qualities);
         return getSuccessResponseVO(playListInfoVo);
+    }
+    @RequestMapping("/delVideoInfo")
+    public ResponseVO delVideoInfo(Long videoId){
+        VideoInfo infoByVideoId = videoInfoService.getVideoInfoByVideoId(videoId);
+        if(infoByVideoId == null){
+            throw new BusinessException(ResponseCodeEnum.CODE_600);
+        }
+        VideoInfo videoInfo = new VideoInfo();
+        videoInfo.setStatus(3);
+        videoInfo.setUpdateTime(new Date());
+        videoInfoService.updateVideoInfoByVideoId(videoInfo,videoId);
+
+        return getSuccessResponseVO(null);
     }
 }

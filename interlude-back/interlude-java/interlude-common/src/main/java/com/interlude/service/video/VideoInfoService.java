@@ -1,11 +1,11 @@
 package com.interlude.service.video;
 
 import com.interlude.entity.dto.UploadResultDto;
-import com.interlude.entity.po.video.VideoFile;
+import com.interlude.entity.query.video.VideoInfoQuery;
 import com.interlude.entity.vo.PaginationResultVO;
 import java.util.List;
 import com.interlude.entity.po.video.VideoInfo;
-import com.interlude.entity.query.video.VideoInfoQuery;
+
 /**
  * @Description:视频主表Service
  * @auther:dazhi

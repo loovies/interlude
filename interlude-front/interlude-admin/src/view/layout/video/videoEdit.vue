@@ -1,10 +1,14 @@
 <template>
   <div class="videoEditContantor">
-    <el-button type="primary" @click="returnVideoEdit()">
+    <el-button type="primary" :class="[isVideoInput ? '' : 'retBtn']" @click="returnVideoEdit()">
       <i class="iconfont icon-fanhui"></i>
       返回视频管理</el-button
     >
-    <div class="file-list" v-draggable="[fileList, { animation: 150, handle: '.video-p' }]">
+    <div
+      v-if="isUploadVideo"
+      class="file-list"
+      v-draggable="[fileList, { animation: 150, handle: '.video-p' }]"
+    >
       <div class="file-item" v-for="(item, index) in fileList" :key="index">
         <el-card class="file-box-card">
           <div class="video-p">
@@ -74,7 +78,7 @@
         </el-card>
       </div>
     </div>
-    <div class="add-video-btn" v-if="fileList.length < MAX_FILELIST">
+    <div class="add-video-btn" v-if="fileList.length < MAX_FILELIST && isVideoInput">
       <el-upload
         multiple
         :show-file-list="false"
@@ -86,9 +90,16 @@
     </div>
   </div>
   <videoInput
-    v-if="fileList.length > 0"
+    v-if="fileList.length > 0 && isVideoInput"
     :fileList="fileList"
     @update:fileList="fileList = $event"
+    ref="videoInputRef"
+  ></videoInput>
+  <videoInput
+    v-if="!isVideoInput"
+    ref="videoInputRef"
+    @addFile="changeVideoFile"
+    :updateFileList="updateFileList"
   ></videoInput>
 </template>
 
@@ -150,6 +161,13 @@ const props = defineProps({
 // 文件列表
 let fileList: Ref<Array<any>> = ref(props.videoInfo?.length == 0 ? [] : props.videoInfo)
 // let fileList: Ref<Array<any>> = ref([])
+let updateFileList: Ref<Array<any>> = ref([])
+
+const videoInputRef = ref()
+
+// const isUpdateEdit = ref(true)
+const isVideoInput = ref(true)
+const isUploadVideo = ref(true)
 
 // 分片大小
 const CHUNK_SIZE = proxy.chunkSize
@@ -164,9 +182,10 @@ const returnVideoEdit = () => {
   emit('closeVideoEdit')
 }
 
-const uploadFile = (file: Object) => {
+const uploadFile = (file: Object, uploadId: string) => {
   file = file.file
   // 文件名
+  console.log(file.name)
   let fileName = proxy.$Utils.getFileName(file.name)
   // 文件的基本信息
   const fileItem: Object = {
@@ -181,6 +200,7 @@ const uploadFile = (file: Object) => {
     chunkIndex: 0, // 分片索引
     errorMsg: null,
     fileIdentifier: generateFileIdentifier(file),
+    uploadId,
   }
   if (fileList.value.length == MAX_FILELIST) {
     proxy.$Message.warning('超出最大上传文件数量' + MAX_FILELIST)
@@ -211,7 +231,7 @@ const uploadFile = (file: Object) => {
   }
 
   // 上传uid
-  uploadVideo4Draft(fileItem.uid)
+  uploadVideo4Draft(fileItem.uid, 0)
 }
 
 const getFileByuid = (uid: number): Object => {
@@ -233,6 +253,7 @@ const uploadVideo4Draft = async (uid: number, chunkIndex: number): Promise<void>
   const chunks = Math.ceil(fileSize / CHUNK_SIZE) // 当前视频的分片数量
 
   // 如果文件没上传id 就上传视频, 并保存草稿表
+  debugger
   if (!currentFile.uploadId) {
     let result = await proxy.$Request({
       url: proxy.$Api.preUploadVideo,
@@ -339,6 +360,16 @@ const addFile = (file: Object) => {
   uploadFile(file)
 }
 
+// 更换视频
+const changeVideoFile = (file: Object, uploadId: string) => {
+  fileList.value = []
+  isUploadVideo.value = true
+  nextTick(() => {
+    debugger
+    uploadFile(file, uploadId.uploadId)
+  })
+}
+
 // 定义视频唯一标识符
 const generateFileIdentifier = (file) => {
   return `${file.name}-${file.size}-${file.lastModified}`
@@ -384,6 +415,7 @@ const restartUpload = (uid: number) => {
   uploadVideo4Draft(uid, currentFile.chunkIndex)
 }
 
+// 删除文件
 const delFile = async (index): Promise<void> => {
   const currentFile = fileList.value[index]
   currentFile.del = true
@@ -400,13 +432,28 @@ const delFile = async (index): Promise<void> => {
   })
 }
 
+const showUpdateEdit = (data) => {
+  isVideoInput.value = false
+  isUploadVideo.value = false
+  nextTick(() => {
+    videoInputRef.value.showEdit(data)
+  })
+}
+
 defineExpose({
   uploadFile,
+  showUpdateEdit,
 })
 </script>
 
 <style lang="scss" scoped>
 .videoEditContantor {
+  .retBtn {
+    margin-bottom: 20px;
+    position: relative;
+    top: 20px;
+    left: 45px;
+  }
   .file-list {
     width: 100%;
     //background-color: #f6f7f8;

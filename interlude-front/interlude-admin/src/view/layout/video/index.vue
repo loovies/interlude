@@ -11,31 +11,33 @@
         >
           <div class="show-form">
             <!--input输入-->
-            <el-form-item class="input" label="视频名称" prop="nickNameFuzzy">
+            <el-form-item class="input" label="视频名称" prop="videoNameFuzzy">
               <el-input
                 clearable
                 placeholder="请输入视频名称"
-                v-model.trim="formData.nickNameFuzzy"
+                v-model.trim="formData.videoNameFuzzy"
               ></el-input>
             </el-form-item>
-            <el-form-item label="分类" prop="enabled">
-              <el-select style="width: 140px" placeholder="请选择" v-model="formData.enabled">
-                <el-option :value="2" label="全部"></el-option>
-                <el-option :value="0" label="未启用"></el-option>
-                <el-option :value="1" label="已启用"></el-option>
-              </el-select>
+            <el-form-item label="分类" prop="categoryArray">
+              <el-cascader
+                @change="handleChange"
+                :options="categoryStore.categoryList"
+                v-model="formData.categoryArray"
+                style="width: 150px"
+                :props="{ value: 'categoryId', label: 'categoryName' }"
+              ></el-cascader>
             </el-form-item>
             <el-form-item label="视频类型:" prop="videoType">
               <el-radio-group v-model="formData.videoType">
-                <el-radio :label="1">原视频</el-radio>
-                <el-radio :label="2">转载视频</el-radio>
+                <el-radio :label="1" @click.native.prevent="handleRadioClick(1)">原视频</el-radio>
+                <el-radio :label="2" @click.native.prevent="handleRadioClick(2)">转载视频</el-radio>
               </el-radio-group>
             </el-form-item>
-            <el-form-item label="可见性:" prop="visibility">
-              <el-checkbox-group v-model="formData.visibility" size="small">
-                <el-checkbox label="公共" :value="0" border />
-                <el-checkbox label="私人" :value="1" border />
-                <el-checkbox label="仅限好友" :value="2" border />
+            <el-form-item label="可见性:" prop="visibilityArray">
+              <el-checkbox-group v-model="formData.visibilityArray" size="small">
+                <el-checkbox label="公共" :value="1" border />
+                <el-checkbox label="私人" :value="2" border />
+                <el-checkbox label="仅限好友" :value="3" border />
               </el-checkbox-group>
             </el-form-item>
             <el-form-item>
@@ -78,10 +80,10 @@
             </el-form-item>
             <el-form-item label="状态" prop="status">
               <el-select style="width: 140px" placeholder="请选择" v-model="formData.status">
-                <el-option :value="3" label="全部"></el-option>
-                <el-option :value="0" label="已发布"></el-option>
-                <el-option :value="1" label="已离线"></el-option>
-                <el-option :value="2" label="已删除"></el-option>
+                <el-option :value="-1" label="全部"></el-option>
+                <el-option :value="0" label="待审核"></el-option>
+                <el-option :value="1" label="已发布"></el-option>
+                <el-option :value="2" label="已离线"></el-option>
               </el-select>
             </el-form-item>
           </div>
@@ -152,6 +154,7 @@
               width="150"
               marginLeft="35"
             ></Cover>
+            <a class="a-link" @click="fetchVideoData(row.videoId)">预览</a>
           </template>
           <template #category="{ index, row }">
             {{
@@ -174,7 +177,6 @@
           </template>
           <template #slotOperation="{ index, row }">
             <div class="row-op-panel">
-              <a class="a-link" @click="fetchVideoData(row.videoId)">预览</a>
               <a
                 class="a-link"
                 v-if="row.userId != currentUserId && row.status != 0"
@@ -182,14 +184,9 @@
               >
                 {{ row.status == 0 ? '' : row.status == 1 ? '下线' : '上线' }}
               </a>
-              <a class="a-link" v-if="row.roleId != 3" @click="showEdit(row, 1)">修改</a>
+              <a class="a-link" @click="showEdit(row)">修改</a>
               <a class="a-link" @click="showDetail(row)">详情</a>
-              <a
-                class="a-link"
-                @click="deleteUser(row)"
-                v-if="row.roleId != 3 && row.userId != currentUserId"
-                >删除</a
-              >
+              <a class="a-link" @click="deleteVideo(row)">删除</a>
             </div>
           </template>
         </Table>
@@ -202,13 +199,6 @@
     @closeVideoEdit="changeUploadvideo"
     :videoInfo="fileList"
   ></videoEdit>
-  <!-- <VideoPlayer
-    v-model:visible="showPlayer"
-    :video-data="videoData"
-    :width="playerWidth"
-    :height="playerHeight"
-    @close="closePlayer"
-  /> -->
   <VIdeoPlayerDoc
     v-model:visible="showPlayer"
     :video-data="videoData"
@@ -220,9 +210,12 @@
 
 <script setup lang="ts">
 import videoEdit from './videoEdit.vue'
-import VideoPlayer from '@/components/video/VideoPlayer.vue'
 import VIdeoPlayerDoc from '@/components/video/VIdeoPlayerDoc.vue'
+import videoInput from './videoInput.vue'
 import { getCategoryInfoById } from '@/utils/Api.js'
+
+import { useCategoryStore } from '../../../stores/CategoryStore'
+const categoryStore = useCategoryStore()
 
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -253,7 +246,9 @@ const { proxy } = getCurrentInstance()
 const route = useRoute()
 const router = useRouter()
 
-const formData = ref<Record<string, any>>({}) // 键值对象
+const formData = ref<Record<string, any>>({
+  categoryArray: [],
+}) // 键值对象
 const formDataRef = ref()
 
 const tableOptions = {
@@ -335,6 +330,37 @@ const editVideo = () => {
   isUploadvideo.value = true
 }
 
+const showEdit = (row) => {
+  isUploadvideo.value = true
+  nextTick(() => {
+    videoEditRef.value.showUpdateEdit(row)
+  })
+}
+
+const deleteVideo = (row: Object) => {
+  ElMessageBox.confirm(`是否删除此视频`, '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(async () => {
+    let params: Record<string, any> = {
+      videoId: row.videoId,
+    }
+    const res = await proxy.$Request({
+      url: proxy.$Api.getDelVideoInfo,
+      params,
+    })
+    if (!res) {
+      return
+    }
+    loadVideoInfoList()
+    ElMessage({
+      type: 'success',
+      message: `删除成功!`,
+    })
+  })
+}
+
 const startUpload = (file: Object) => {}
 
 // 用户信息表格数据
@@ -348,6 +374,19 @@ const loadVideoInfoList = async (): Promise<void> => {
     pageSize: tableData.value.pageSize,
   }
   Object.assign(params, formData.value)
+  if (params.visibilityArray) {
+    params.visibilityArray = params.visibilityArray.join(',')
+  }
+  params.status = params.status == -1 ? null : params.status
+  params.isDescOrAscCreateTime = flag.value
+  if (params.categoryArray) {
+    if (params.categoryArray.length > 1) {
+      params.pCategoryId = params.categoryArray[0]
+      params.categoryId = params.categoryArray[1]
+    } else {
+      params.categoryId = params.categoryArray[0]
+    }
+  }
   let result = await proxy.$Request({
     url: proxy.$Api.getLoadVideoInfo,
     params,
@@ -355,7 +394,6 @@ const loadVideoInfoList = async (): Promise<void> => {
   if (!result) {
     return
   }
-
   tableData.value = result.data
 }
 
@@ -373,14 +411,16 @@ const changeShrink = (): void => {
 }
 
 const cheanFrom = () => {
-  formData.value = ref<Record<string, any>>({})
+  formData.value = ref<Record<string, any>>({
+    categoryArray: [],
+  })
   loadVideoInfoList()
 }
 
 // 单选按钮点击处理函数
 const handleRadioClick = (value) => {
   // 如果点击的是当前已选中的值，则清空，否则设置为新值
-  formData.value.sex = value === formData.value.sex ? null : value
+  formData.value.videoType = value === formData.value.videoType ? null : value
 }
 
 const dataTableRef = ref()
@@ -492,40 +532,10 @@ const fetchVideoData = async (videoId) => {
 
     // 显示播放器
     showPlayer.value = true
-
-    // 记录播放历史（可选）
-    // recordPlayHistory(videoId)
   } catch (error) {
     console.error('获取视频数据失败:', error)
   }
 }
-
-// 记录播放历史
-// const recordPlayHistory = (videoId) => {
-//   try {
-//     // 从本地存储获取播放历史
-//     let playHistory = JSON.parse(localStorage.getItem('videoPlayHistory') || '[]')
-
-//     // 移除重复记录
-//     playHistory = playHistory.filter((item) => item.videoId !== videoId)
-
-//     // 添加新记录到开头
-//     playHistory.unshift({
-//       videoId: videoId,
-//       title: videoData.value.title,
-//       thumbnail: videoData.value.thumbnailUrl,
-//       playTime: new Date().getTime(),
-//     })
-
-//     // 只保留最近10条记录
-//     playHistory = playHistory.slice(0, 10)
-
-//     // 保存到本地存储
-//     localStorage.setItem('videoPlayHistory', JSON.stringify(playHistory))
-//   } catch (error) {
-//     console.warn('记录播放历史失败:', error)
-//   }
-// }
 
 // 关闭播放器
 const closePlayer = () => {
@@ -712,5 +722,12 @@ defineExpose({
       }
     }
   }
+}
+.a-link {
+  cursor: pointer;
+  color: #7169c5;
+}
+.a-link:hover {
+  color: #52b8e7;
 }
 </style>

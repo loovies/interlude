@@ -2,6 +2,7 @@ package com.interlude.entity.query.video;
 
 import com.interlude.entity.query.BaseParam;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 
@@ -11,369 +12,444 @@ import java.util.Date;
  * @date:2025/10/30
  */
 public class VideoInfoQuery extends BaseParam {
-	/**
-	 * 视频ID
-	 */
-	private Long videoId;
+    /**
+     * 视频ID
+     */
+    private Long videoId;
 
-	/**
-	 * 用户ID
-	 */
-	private Long userId;
+    /**
+     * 用户ID
+     */
+    private Long userId;
 
-	/**
-	 * 视频标题
-	 */
-	private String videoName;
+    /**
+     * 视频标题
+     */
+    private String videoName;
 
-	private String videoNameFuzzy;
+    private String videoNameFuzzy;
 
-	/**
-	 * 封面图URL
-	 */
-	private String videoCover;
+    /**
+     * 封面图URL
+     */
+    private String videoCover;
 
-	private String videoCoverFuzzy;
+    private String videoCoverFuzzy;
 
-	/**
-	 * 视频描述
-	 */
-	private String description;
+    /**
+     * 视频描述
+     */
+    private String description;
 
-	private String descriptionFuzzy;
+    private String descriptionFuzzy;
 
-	/**
-	 * 一级分类
-	 */
-	private Integer pCategoryId;
+    /**
+     * 一级分类
+     */
+    private Integer pCategoryId;
 
-	/**
-	 * 二级分类
-	 */
-	private Integer categoryId;
+    /**
+     * 二级分类
+     */
+    private Integer categoryId;
 
-	/**
-	 * 视频类型 1:原视频, 2转载视频
-	 */
-	private Integer videoType;
+    /**
+     * 视频类型 1:原视频, 2转载视频
+     */
+    private Integer videoType;
 
-	/**
-	 * 原作者(转载时使用)
-	 */
-	private String originAuthor;
+    /**
+     * 原作者(转载时使用)
+     */
+    private String originAuthor;
 
-	private String originAuthorFuzzy;
+    private String originAuthorFuzzy;
 
-	/**
-	 * 原视频链接
-	 */
-	private String originUrl;
+    /**
+     * 原视频链接
+     */
+    private String originUrl;
 
-	private String originUrlFuzzy;
+    private String originUrlFuzzy;
 
-	/**
-	 * 标签列表JSON
-	 */
-	private String tags;
+    /**
+     * 标签列表JSON
+     */
+    private String tags;
 
-	private String tagsFuzzy;
+    private String tagsFuzzy;
 
-	/**
-	 * 互动设置JSON
-	 */
-	private String interactionSettings;
+    /**
+     * 互动设置JSON
+     */
+    private String interactionSettings;
 
-	private String interactionSettingsFuzzy;
+    private String interactionSettingsFuzzy;
 
-	/**
-	 * 状态 1:已发布  2:已离线  3:已删除
-	 */
-	private Integer status;
+    /**
+     * 状态 1:已发布  2:已离线  3:已删除
+     */
+    private Integer status;
 
-	/**
-	 * 可见性 1:公共、2: 私人、3:仅限好友
-	 */
-	private Integer visibility;
+    /**
+     * 可见性 1:公共、2: 私人、3:仅限好友
+     */
+    private Integer visibility;
 
-	/**
-	 * 发布时间
-	 */
-	private Date publishTime;
+    /**
+     * 发布时间
+     */
+    private Date publishTime;
 
-	private String publishTimeStart;
+    private String publishTimeStart;
 
-	private String publishTimeEnd;
+    private String publishTimeEnd;
 
-	/**
-	 * 
-	 */
-	private Date createTime;
+    /**
+     *
+     */
+    private Date createTime;
 
-	private String createTimeStart;
+    private String createTimeStart;
 
-	private String createTimeEnd;
+    private String createTimeEnd;
 
-	/**
-	 * 
-	 */
-	private Date updateTime;
+    /**
+     *
+     */
+    private Date updateTime;
 
-	private String updateTimeStart;
+    private String updateTimeStart;
 
-	private String updateTimeEnd;
+    private String updateTimeEnd;
 
-	/**
-	 * 
-	 */
-	private Integer version;
+    /**
+     *
+     */
+    private Integer version;
 
-	public void setVideoId(Long videoId) {
-		this.videoId = videoId;
-	}
+    private String isDescOrAscCreateTime;
 
-	public Long getVideoId() {
-		return this.videoId;
-	}
+    private String visibilityArray;
+    private ArrayList<Integer> visibilityArrayList;
 
-	public void setUserId(Long userId) {
-		this.userId = userId;
-	}
+    private ArrayList<Date> createTimeArray;
+    private ArrayList<String> createTimeFormatArray;
 
-	public Long getUserId() {
-		return this.userId;
-	}
+    private ArrayList<Date> lastPlayTime;
+    private ArrayList<String> lastPlayTimeFormatArray;
 
-	public void setVideoName(String videoName) {
-		this.videoName = videoName;
-	}
+    public Integer getpCategoryId() {
+        return pCategoryId;
+    }
 
-	public String getVideoName() {
-		return this.videoName;
-	}
+    public void setpCategoryId(Integer pCategoryId) {
+        this.pCategoryId = pCategoryId;
+    }
 
-	public void setVideoCover(String videoCover) {
-		this.videoCover = videoCover;
-	}
+    public ArrayList<Date> getCreateTimeArray() {
+        return createTimeArray;
+    }
 
-	public String getVideoCover() {
-		return this.videoCover;
-	}
+    public void setCreateTimeArray(ArrayList<Date> createTimeArray) {
+        this.createTimeArray = createTimeArray;
+    }
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    public ArrayList<String> getCreateTimeFormatArray() {
+        return createTimeFormatArray;
+    }
 
-	public String getDescription() {
-		return this.description;
-	}
+    public void setCreateTimeFormatArray(ArrayList<String> createTimeFormatArray) {
+        this.createTimeFormatArray = createTimeFormatArray;
+    }
 
-	public void setPCategoryId(Integer pCategoryId) {
-		this.pCategoryId = pCategoryId;
-	}
+    public ArrayList<Date> getLastPlayTime() {
+        return lastPlayTime;
+    }
 
-	public Integer getPCategoryId() {
-		return this.pCategoryId;
-	}
+    public void setLastPlayTime(ArrayList<Date> lastPlayTime) {
+        this.lastPlayTime = lastPlayTime;
+    }
 
-	public void setCategoryId(Integer categoryId) {
-		this.categoryId = categoryId;
-	}
+    public ArrayList<String> getLastPlayTimeFormatArray() {
+        return lastPlayTimeFormatArray;
+    }
 
-	public Integer getCategoryId() {
-		return this.categoryId;
-	}
+    public void setLastPlayTimeFormatArray(ArrayList<String> lastPlayTimeFormatArray) {
+        this.lastPlayTimeFormatArray = lastPlayTimeFormatArray;
+    }
 
-	public void setVideoType(Integer videoType) {
-		this.videoType = videoType;
-	}
+    public ArrayList<Integer> getVisibilityArrayList() {
+        return visibilityArrayList;
+    }
 
-	public Integer getVideoType() {
-		return this.videoType;
-	}
+    public void setVisibilityArrayList(ArrayList<Integer> visibilityArrayList) {
+        this.visibilityArrayList = visibilityArrayList;
+    }
 
-	public void setOriginAuthor(String originAuthor) {
-		this.originAuthor = originAuthor;
-	}
+    public String getVisibilityArray() {
+        return visibilityArray;
+    }
 
-	public String getOriginAuthor() {
-		return this.originAuthor;
-	}
+    public void setVisibilityArray(String visibilityArray) {
+        this.visibilityArray = visibilityArray;
+    }
 
-	public void setOriginUrl(String originUrl) {
-		this.originUrl = originUrl;
-	}
+    public String getIsDescOrAscCreateTime() {
+        return isDescOrAscCreateTime;
+    }
 
-	public String getOriginUrl() {
-		return this.originUrl;
-	}
+    public void setIsDescOrAscCreateTime(String isDescOrAscCreateTime) {
+        this.isDescOrAscCreateTime = isDescOrAscCreateTime;
+    }
 
-	public void setTags(String tags) {
-		this.tags = tags;
-	}
+    public void setVideoId(Long videoId) {
+        this.videoId = videoId;
+    }
 
-	public String getTags() {
-		return this.tags;
-	}
+    public Long getVideoId() {
+        return this.videoId;
+    }
 
-	public void setInteractionSettings(String interactionSettings) {
-		this.interactionSettings = interactionSettings;
-	}
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 
-	public String getInteractionSettings() {
-		return this.interactionSettings;
-	}
+    public Long getUserId() {
+        return this.userId;
+    }
 
-	public void setStatus(Integer status) {
-		this.status = status;
-	}
+    public void setVideoName(String videoName) {
+        this.videoName = videoName;
+    }
 
-	public Integer getStatus() {
-		return this.status;
-	}
+    public String getVideoName() {
+        return this.videoName;
+    }
 
-	public void setVisibility(Integer visibility) {
-		this.visibility = visibility;
-	}
+    public void setVideoCover(String videoCover) {
+        this.videoCover = videoCover;
+    }
 
-	public Integer getVisibility() {
-		return this.visibility;
-	}
+    public String getVideoCover() {
+        return this.videoCover;
+    }
 
-	public void setPublishTime(Date publishTime) {
-		this.publishTime = publishTime;
-	}
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-	public Date getPublishTime() {
-		return this.publishTime;
-	}
+    public String getDescription() {
+        return this.description;
+    }
 
-	public void setCreateTime(Date createTime) {
-		this.createTime = createTime;
-	}
+    public void setPCategoryId(Integer pCategoryId) {
+        this.pCategoryId = pCategoryId;
+    }
 
-	public Date getCreateTime() {
-		return this.createTime;
-	}
+    public Integer getPCategoryId() {
+        return this.pCategoryId;
+    }
 
-	public void setUpdateTime(Date updateTime) {
-		this.updateTime = updateTime;
-	}
+    public void setCategoryId(Integer categoryId) {
+        this.categoryId = categoryId;
+    }
 
-	public Date getUpdateTime() {
-		return this.updateTime;
-	}
+    public Integer getCategoryId() {
+        return this.categoryId;
+    }
 
-	public void setVersion(Integer version) {
-		this.version = version;
-	}
+    public void setVideoType(Integer videoType) {
+        this.videoType = videoType;
+    }
 
-	public Integer getVersion() {
-		return this.version;
-	}
+    public Integer getVideoType() {
+        return this.videoType;
+    }
 
-	public void setVideoNameFuzzy(String videoNameFuzzy) {
-		this.videoNameFuzzy = videoNameFuzzy;
-	}
+    public void setOriginAuthor(String originAuthor) {
+        this.originAuthor = originAuthor;
+    }
 
-	public String getVideoNameFuzzy() {
-		return this.videoNameFuzzy;
-	}
+    public String getOriginAuthor() {
+        return this.originAuthor;
+    }
 
-	public void setVideoCoverFuzzy(String videoCoverFuzzy) {
-		this.videoCoverFuzzy = videoCoverFuzzy;
-	}
+    public void setOriginUrl(String originUrl) {
+        this.originUrl = originUrl;
+    }
 
-	public String getVideoCoverFuzzy() {
-		return this.videoCoverFuzzy;
-	}
+    public String getOriginUrl() {
+        return this.originUrl;
+    }
 
-	public void setDescriptionFuzzy(String descriptionFuzzy) {
-		this.descriptionFuzzy = descriptionFuzzy;
-	}
+    public void setTags(String tags) {
+        this.tags = tags;
+    }
 
-	public String getDescriptionFuzzy() {
-		return this.descriptionFuzzy;
-	}
+    public String getTags() {
+        return this.tags;
+    }
 
-	public void setOriginAuthorFuzzy(String originAuthorFuzzy) {
-		this.originAuthorFuzzy = originAuthorFuzzy;
-	}
+    public void setInteractionSettings(String interactionSettings) {
+        this.interactionSettings = interactionSettings;
+    }
 
-	public String getOriginAuthorFuzzy() {
-		return this.originAuthorFuzzy;
-	}
+    public String getInteractionSettings() {
+        return this.interactionSettings;
+    }
 
-	public void setOriginUrlFuzzy(String originUrlFuzzy) {
-		this.originUrlFuzzy = originUrlFuzzy;
-	}
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
 
-	public String getOriginUrlFuzzy() {
-		return this.originUrlFuzzy;
-	}
+    public Integer getStatus() {
+        return this.status;
+    }
 
-	public void setTagsFuzzy(String tagsFuzzy) {
-		this.tagsFuzzy = tagsFuzzy;
-	}
+    public void setVisibility(Integer visibility) {
+        this.visibility = visibility;
+    }
 
-	public String getTagsFuzzy() {
-		return this.tagsFuzzy;
-	}
+    public Integer getVisibility() {
+        return this.visibility;
+    }
 
+    public void setPublishTime(Date publishTime) {
+        this.publishTime = publishTime;
+    }
 
-	public void setInteractionSettingsFuzzy(String interactionSettingsFuzzy) {
-		this.interactionSettingsFuzzy = interactionSettingsFuzzy;
-	}
+    public Date getPublishTime() {
+        return this.publishTime;
+    }
 
-	public String getInteractionSettingsFuzzy() {
-		return this.interactionSettingsFuzzy;
-	}
+    public void setCreateTime(Date createTime) {
+        this.createTime = createTime;
+    }
 
-	public void setPublishTimeStart(String publishTimeStart) {
-		this.publishTimeStart = publishTimeStart;
-	}
+    public Date getCreateTime() {
+        return this.createTime;
+    }
 
-	public String getPublishTimeStart() {
-		return this.publishTimeStart;
-	}
+    public void setUpdateTime(Date updateTime) {
+        this.updateTime = updateTime;
+    }
 
-	public void setPublishTimeEnd(String publishTimeEnd) {
-		this.publishTimeEnd = publishTimeEnd;
-	}
+    public Date getUpdateTime() {
+        return this.updateTime;
+    }
 
-	public String getPublishTimeEnd() {
-		return this.publishTimeEnd;
-	}
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
 
-	public void setCreateTimeStart(String createTimeStart) {
-		this.createTimeStart = createTimeStart;
-	}
+    public Integer getVersion() {
+        return this.version;
+    }
 
-	public String getCreateTimeStart() {
-		return this.createTimeStart;
-	}
+    public void setVideoNameFuzzy(String videoNameFuzzy) {
+        this.videoNameFuzzy = videoNameFuzzy;
+    }
 
-	public void setCreateTimeEnd(String createTimeEnd) {
-		this.createTimeEnd = createTimeEnd;
-	}
+    public String getVideoNameFuzzy() {
+        return this.videoNameFuzzy;
+    }
 
-	public String getCreateTimeEnd() {
-		return this.createTimeEnd;
-	}
+    public void setVideoCoverFuzzy(String videoCoverFuzzy) {
+        this.videoCoverFuzzy = videoCoverFuzzy;
+    }
 
-	public void setUpdateTimeStart(String updateTimeStart) {
-		this.updateTimeStart = updateTimeStart;
-	}
+    public String getVideoCoverFuzzy() {
+        return this.videoCoverFuzzy;
+    }
 
-	public String getUpdateTimeStart() {
-		return this.updateTimeStart;
-	}
+    public void setDescriptionFuzzy(String descriptionFuzzy) {
+        this.descriptionFuzzy = descriptionFuzzy;
+    }
 
-	public void setUpdateTimeEnd(String updateTimeEnd) {
-		this.updateTimeEnd = updateTimeEnd;
-	}
+    public String getDescriptionFuzzy() {
+        return this.descriptionFuzzy;
+    }
 
-	public String getUpdateTimeEnd() {
-		return this.updateTimeEnd;
-	}
+    public void setOriginAuthorFuzzy(String originAuthorFuzzy) {
+        this.originAuthorFuzzy = originAuthorFuzzy;
+    }
+
+    public String getOriginAuthorFuzzy() {
+        return this.originAuthorFuzzy;
+    }
+
+    public void setOriginUrlFuzzy(String originUrlFuzzy) {
+        this.originUrlFuzzy = originUrlFuzzy;
+    }
+
+    public String getOriginUrlFuzzy() {
+        return this.originUrlFuzzy;
+    }
+
+    public void setTagsFuzzy(String tagsFuzzy) {
+        this.tagsFuzzy = tagsFuzzy;
+    }
+
+    public String getTagsFuzzy() {
+        return this.tagsFuzzy;
+    }
+
+
+    public void setInteractionSettingsFuzzy(String interactionSettingsFuzzy) {
+        this.interactionSettingsFuzzy = interactionSettingsFuzzy;
+    }
+
+    public String getInteractionSettingsFuzzy() {
+        return this.interactionSettingsFuzzy;
+    }
+
+    public void setPublishTimeStart(String publishTimeStart) {
+        this.publishTimeStart = publishTimeStart;
+    }
+
+    public String getPublishTimeStart() {
+        return this.publishTimeStart;
+    }
+
+    public void setPublishTimeEnd(String publishTimeEnd) {
+        this.publishTimeEnd = publishTimeEnd;
+    }
+
+    public String getPublishTimeEnd() {
+        return this.publishTimeEnd;
+    }
+
+    public void setCreateTimeStart(String createTimeStart) {
+        this.createTimeStart = createTimeStart;
+    }
+
+    public String getCreateTimeStart() {
+        return this.createTimeStart;
+    }
+
+    public void setCreateTimeEnd(String createTimeEnd) {
+        this.createTimeEnd = createTimeEnd;
+    }
+
+    public String getCreateTimeEnd() {
+        return this.createTimeEnd;
+    }
+
+    public void setUpdateTimeStart(String updateTimeStart) {
+        this.updateTimeStart = updateTimeStart;
+    }
+
+    public String getUpdateTimeStart() {
+        return this.updateTimeStart;
+    }
+
+    public void setUpdateTimeEnd(String updateTimeEnd) {
+        this.updateTimeEnd = updateTimeEnd;
+    }
+
+    public String getUpdateTimeEnd() {
+        return this.updateTimeEnd;
+    }
 
 }

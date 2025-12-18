@@ -88,17 +88,17 @@
 		<if test="query.status != null">
 			and status = #{query.status} 
 		</if>
-		<if test="query.visibility != null">
-			and visibility = #{query.visibility} 
+		<if test="query.visibilityArrayList != null and query.visibilityArrayList.size() > 0">
+			and visibility in (<foreach collection="query.visibilityArrayList" item="item" separator=",">#{item}</foreach>)
 		</if>
 		<if test="query.publishTime != null">
 			and publish_time = #{query.publishTime} 
 		</if>
-		<if test="query.createTime != null">
-			and create_time = #{query.createTime} 
+		<if test="query.createTimeFormatArray != null and query.createTimeFormatArray.size() > 0">
+			and DATE_FORMAT(create_time, '%Y-%m-%d') in (<foreach collection="query.createTimeFormatArray" item="item" separator=",">#{item}</foreach>)
 		</if>
-		<if test="query.updateTime != null">
-			and update_time = #{query.updateTime} 
+		<if test="query.lastPlayTimeFormatArray != null and query.lastPlayTimeFormatArray.size() > 0">
+			and DATE_FORMAT(update_time, '%Y-%m-%d') in (<foreach collection="query.lastPlayTimeFormatArray" item="item" separator=",">#{item}</foreach>)
 		</if>
 		<if test="query.version != null">
 			and version = #{query.version} 
@@ -538,7 +538,6 @@
 			<if test="bean.version != null" >
 				version = #{bean.version},
 			</if>
-
 		</set>
 		where video_id=#{videoId}
 	</update>

@@ -3,6 +3,7 @@
     <ul class="horizontal-menu">
       <li
         v-for="(item, index) in fileList"
+        v-if="isUpdateVideo"
         :key="index"
         class="menu-item"
         :class="{ active: activeIndex === index, disable: item.status === 'uploading' }"
@@ -11,9 +12,23 @@
         <i class="iconfont icon-video1"></i>
         <span class="fileName"> {{ item.fileName }}</span>
       </li>
+      <li v-else class="menu-item">
+        <!-- <el-upload
+          class="uploader-start"
+          multiple
+          drag
+          :show-file-list="false"
+          :http-request="addFile"
+          :before-upload="startUpload"
+          :accept="proxy.videoAccept"
+          :limit="3"
+        > -->
+        <i class="iconfont icon-video1"></i>
+        <span class="fileName"> {{ fileName }}</span>
+        <!-- </el-upload> -->
+      </li>
     </ul>
   </div>
-
   <div class="content-area">
     <div class="video-form">
       <el-form
@@ -44,14 +59,14 @@
         </el-form-item>
         <el-form-item label="类型:" prop="postType" class="input">
           <el-radio-group v-model="formData.postType" @change="handleChange">
-            <el-radio :value="0">自制</el-radio>
-            <el-radio :value="1">转载</el-radio>
+            <el-radio :value="1">自制</el-radio>
+            <el-radio :value="2">转载</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item
           label=""
           prop="originInfo"
-          v-if="formData.postType == 1"
+          v-if="formData.postType == 2"
           style="margin-top: 10px"
         >
           <el-input
@@ -102,9 +117,12 @@
           </el-checkbox-group>
         </el-form-item>
 
-        <el-form-item label="" class="inputbtn">
+        <el-form-item label="" class="inputbtn" v-if="isUpdateVideo">
           <el-button type="primary" @click="submitForm" size="large">立即投稿</el-button>
           <el-button type="primary" size="large" @click="saveDraftInfo()">保存</el-button>
+        </el-form-item>
+        <el-form-item label="" class="inputbtn" v-else>
+          <el-button type="primary" @click="UpdateSubmitForm" size="large">更新视频信息</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -127,6 +145,10 @@ const categoryStore = useCategoryStore()
 
 const props = defineProps({
   fileList: {
+    type: Array,
+    default: [],
+  },
+  updateFileList: {
     type: Array,
     default: [],
   },
@@ -209,7 +231,7 @@ const rules = {
   visibility: [{ required: true, message: '可见性不能为空' }],
 }
 
-const emit = defineEmits(['update:fileList'])
+const emit = defineEmits(['update:fileList', 'addFile'])
 const loadDraftInfo = async (): Promise<void> => {
   let res = await proxy.$Request({
     url: proxy.$Api.getDraftInfoByUserId,
@@ -225,7 +247,7 @@ const submitForm = () => {
       return
     }
     if (!isSaveVideoInfo.value) {
-      saveDraftInfo(true)
+      await saveDraftInfo(true)
     }
     const currentIndex = activeIndex.value
     const uploadId = props.fileList[activeIndex.value].uploadId
@@ -264,6 +286,28 @@ const submitForm = () => {
       formData.value.tags = ''
       showVideoInput(activeIndex.value)
     }
+  })
+}
+
+const UpdateSubmitForm = () => {
+  formDataRef.value.validate(async (vaild) => {
+    if (!vaild) {
+      return
+    }
+    const uploadId = uploadId.value
+    let res = await proxy.$Request({
+      url: proxy.$Api.postVideo,
+      params: {
+        uploadId,
+      },
+    })
+    if (!res) {
+      return
+    }
+    proxy.$Message.success('更新成功')
+    setTimeout(() => {
+      location.reload()
+    }, 500)
   })
 }
 
@@ -309,6 +353,39 @@ provide('cutImageCallback', ({ coverImage }) => {
 onMounted(() => {
   showVideoInput(activeIndex.value)
 })
+
+const isUpdateVideo = ref(true)
+const fileName = ref('')
+const uploadId = ref('')
+
+const showEdit = (data) => {
+  isUpdateVideo.value = false
+  fileName.value = data.nickName + '-' + data.videoName
+  formData.value.videoCoverFile = data.videoCover
+  formData.value.videoName = data.videoName
+  formData.value.postType = data.videoType
+  formData.value.tags = data.tags.split(',')
+  formData.value.categoryArray = []
+  if (data.pCategoryId != 0) {
+    formData.value.categoryArray = [data.pCategoryId, data.categoryId]
+  } else {
+    formData.value.categoryArray = [data.categoryId]
+  }
+  formData.value.description = data.description
+  formData.value.visibility = data.visibility
+  formData.value.interactionArray = data.interactionArray?.split(',')
+  uploadId.value = data.uploadId
+}
+
+const addFile = (file: Object) => {
+  console.log(uploadId)
+
+  emit('addFile', { file: file.file }, { uploadId: uploadId.value })
+}
+
+defineExpose({
+  showEdit,
+})
 </script>
 
 <style lang="scss" scoped>
@@ -326,6 +403,12 @@ h1 {
   font-size: 2.2rem;
   margin-bottom: 10px;
   color: #2c3e50;
+}
+
+.returnVideo {
+  position: relative;
+  top: 30px;
+  left: 40px;
 }
 
 .subtitle {
@@ -359,8 +442,16 @@ h1 {
   border-bottom: 3px solid transparent;
   position: relative;
   font-weight: 500;
+  .iconfont {
+    font-size: 25px;
+    margin-right: 10px;
+    position: relative;
+    top: 5px;
+  }
 }
-
+:deep(.el-upload-dragger) {
+  padding: 20px;
+}
 .menu-item:hover {
   background: #f8f9fa;
   color: #3498db;
@@ -370,12 +461,6 @@ h1 {
   color: #3498db;
   border-bottom-color: #3498db;
   background: #f8f9fa;
-}
-.iconfont {
-  font-size: 25px;
-  margin-right: 10px;
-  position: relative;
-  top: 5px;
 }
 
 .content-area {

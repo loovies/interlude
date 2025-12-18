@@ -100,7 +100,7 @@ public class VideoFileServiceImpl implements VideoFileService{
 	/**
 	 * 根据UploadIdAndUserId查询
 	 */
-	public VideoFile getVideoFileByUploadIdAndUserId(String uploadId, String userId) {
+	public List<VideoFile> getVideoFileByUploadIdAndUserId(String uploadId, String userId) {
 		return this.videoFileMapper.selectByUploadIdAndUserId(uploadId, userId);
 	}
 
