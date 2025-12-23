@@ -42,6 +42,8 @@ const Api = {
 
   // video
   getLoadVideoInfo: '/videoInfo/loadVideoInfo',
+  getDelVideoInfo: '/videoInfo/delVideoInfo',
+  getVideoAuditInfo: '/audit/loadVideoAuditInfo',
 }
 
 //上传图片
