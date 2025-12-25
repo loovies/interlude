@@ -72,4 +72,5 @@ public interface VideoAuditService{
 	 */
 	Integer deleteVideoAuditByVideoId(Long videoId);
 
+	Integer selectVideoIdByExist(Long videoId, String userId);
 }

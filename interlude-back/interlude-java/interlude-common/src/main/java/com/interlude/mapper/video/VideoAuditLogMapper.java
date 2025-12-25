@@ -25,4 +25,5 @@ public interface VideoAuditLogMapper<T, P> extends BaseMapper {
 	Integer deleteByLogId(@Param("logId") Long logId);
 
 
+    T getVideoIdByNewLogInfo(@Param("videoId") Long videoId);
 }

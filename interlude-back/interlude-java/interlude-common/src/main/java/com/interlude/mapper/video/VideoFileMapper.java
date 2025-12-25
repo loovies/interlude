@@ -41,5 +41,5 @@ public interface VideoFileMapper<T, P> extends BaseMapper {
 	 */
 	Integer deleteByUploadIdAndUserId(@Param("uploadId") String uploadId, @Param("userId") String userId);
 
-
+	Integer selectVideoIdByExist(@Param("uploadId") String uploadId, @Param("userId") String userId);
 }

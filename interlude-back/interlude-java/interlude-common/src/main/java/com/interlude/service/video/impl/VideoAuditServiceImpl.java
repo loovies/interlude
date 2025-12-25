@@ -1,12 +1,15 @@
 package com.interlude.service.video.impl;
 
+import com.interlude.entity.po.video.VideoInfo;
 import com.interlude.entity.query.SimplePage;
+import com.interlude.entity.query.video.VideoInfoQuery;
 import com.interlude.enums.PageSize;
 import com.interlude.entity.vo.PaginationResultVO;
 import java.util.List;
 import com.interlude.entity.po.video.VideoAudit;
 import com.interlude.entity.query.video.VideoAuditQuery;
 import com.interlude.mapper.video.VideoAuditMapper;
+import com.interlude.mapper.video.VideoInfoMapper;
 import com.interlude.service.video.VideoAuditService;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +24,9 @@ public class VideoAuditServiceImpl implements VideoAuditService{
 
 	@Resource
 	private VideoAuditMapper<VideoAudit,VideoAuditQuery> videoAuditMapper;
+
+	@Resource
+	private VideoInfoMapper<VideoInfo, VideoInfoQuery> videoInfoMapper;
 	/**
 	 * 根据条件查询列表
 	 */
@@ -116,5 +122,13 @@ public class VideoAuditServiceImpl implements VideoAuditService{
 	 */
 	public Integer deleteVideoAuditByVideoId(Long videoId) {
 		return this.videoAuditMapper.deleteByVideoId(videoId);
+	}
+
+	@Override
+	public Integer selectVideoIdByExist(Long videoId,String userId) {
+		if(videoId == null || videoId <= 0) {
+			return 0;
+		}
+		return videoInfoMapper.selectVideoIdByExist(videoId,userId);
 	}
 }

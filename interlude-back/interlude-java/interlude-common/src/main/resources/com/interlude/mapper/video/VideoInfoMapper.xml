@@ -168,6 +168,17 @@
 		SELECT count(1) FROM video_info <include refid="query_condition"/>
 	</select>
 
+	<select id="selectVideoIdByExist" resultType="java.lang.Integer">
+		SELECT
+			CASE
+				WHEN EXISTS (SELECT 1 FROM video_info WHERE video_id = #{videoId} AND user_id = #{userId})
+					AND EXISTS (SELECT 1 FROM video_audit WHERE video_id = #{videoId} AND user_id = #{userId})
+					AND EXISTS (SELECT 1 FROM video_file WHERE video_id = #{videoId} AND user_id = #{userId})
+					THEN 1
+				ELSE 0
+				END AS 存在状态;
+	</select>
+
 	<!--插入(匹配有值的字段)-->
 	<insert id="insert" parameterType="com.interlude.entity.po.video.VideoInfo">
 		INSERT INTO video_info

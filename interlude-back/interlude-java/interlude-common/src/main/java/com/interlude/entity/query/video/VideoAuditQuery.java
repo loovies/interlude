@@ -24,7 +24,7 @@ public class VideoAuditQuery extends BaseParam {
 	/**
 	 * 
 	 */
-	private Long userId;
+	private String userId;
 
 	/**
 	 * “1:待处理”“2:已批准”“3:已拒绝”“4:已取消”
@@ -52,7 +52,7 @@ public class VideoAuditQuery extends BaseParam {
 	/**
 	 * 审核员ID
 	 */
-	private Long auditorId;
+	private String auditorId;
 
 	/**
 	 * 审核意见
@@ -96,12 +96,12 @@ public class VideoAuditQuery extends BaseParam {
 		return this.videoId;
 	}
 
-	public void setUserId(Long userId) {
-		this.userId = userId;
+	public String getUserId() {
+		return userId;
 	}
 
-	public Long getUserId() {
-		return this.userId;
+	public void setUserId(String userId) {
+		this.userId = userId;
 	}
 
 	public void setAuditStatus(Integer auditStatus) {
@@ -128,12 +128,12 @@ public class VideoAuditQuery extends BaseParam {
 		return this.auditTime;
 	}
 
-	public void setAuditorId(Long auditorId) {
-		this.auditorId = auditorId;
+	public String getAuditorId() {
+		return auditorId;
 	}
 
-	public Long getAuditorId() {
-		return this.auditorId;
+	public void setAuditorId(String auditorId) {
+		this.auditorId = auditorId;
 	}
 
 	public void setAuditComment(String auditComment) {

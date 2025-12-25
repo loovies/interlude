@@ -232,7 +232,11 @@
 		select <include refid="base_column_list"/> from video_audit_log where log_id=#{logId}
 	</select>
 
-	<!-- 根据LogId更新 -->
+    <select id="getVideoIdByNewLogInfo" resultMap="base_result_map">
+		select * from video_audit_log where video_id = #{videoId} ORDER BY create_time desc limit 0,1
+	</select>
+
+    <!-- 根据LogId更新 -->
 	<update id="updateByLogId" parameterType="com.interlude.entity.po.video.VideoAuditLog">
 		update video_audit_log
 		<set>

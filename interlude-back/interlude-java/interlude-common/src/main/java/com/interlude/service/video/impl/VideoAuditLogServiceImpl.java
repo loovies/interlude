@@ -96,4 +96,9 @@ public class VideoAuditLogServiceImpl implements VideoAuditLogService{
 	public Integer deleteVideoAuditLogByLogId(Long logId) {
 		return this.videoAuditLogMapper.deleteByLogId(logId);
 	}
+
+	@Override
+	public VideoAuditLog getVideoIdByNewLogInfo(Long videoId) {
+		return this.videoAuditLogMapper.getVideoIdByNewLogInfo(videoId);
+	}
 }

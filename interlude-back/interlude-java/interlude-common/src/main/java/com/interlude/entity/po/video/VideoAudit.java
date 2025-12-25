@@ -53,7 +53,7 @@ public class VideoAudit implements Serializable {
 	/**
 	 * 审核员ID
 	 */
-	private Long auditorId;
+	private String auditorId;
 
 	/**
 	 * 审核意见
@@ -125,12 +125,12 @@ public class VideoAudit implements Serializable {
 		return this.auditTime;
 	}
 
-	public void setAuditorId(Long auditorId) {
-		this.auditorId = auditorId;
+	public String getAuditorId() {
+		return auditorId;
 	}
 
-	public Long getAuditorId() {
-		return this.auditorId;
+	public void setAuditorId(String auditorId) {
+		this.auditorId = auditorId;
 	}
 
 	public void setAuditComment(String auditComment) {

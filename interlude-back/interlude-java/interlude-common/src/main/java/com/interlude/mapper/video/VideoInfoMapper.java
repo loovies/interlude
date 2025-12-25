@@ -24,5 +24,8 @@ public interface VideoInfoMapper<T, P> extends BaseMapper {
 	 */
 	Integer deleteByVideoId(@Param("videoId") Long videoId);
 
-
+	/**
+	 * 根据VideoId删除
+	 */
+		Integer selectVideoIdByExist(@Param("videoId") Long videoId, @Param("userId") String userId);
 }

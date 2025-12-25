@@ -38,7 +38,7 @@ public class VideoAuditLog implements Serializable {
 	/**
 	 * 审计员编号
 	 */
-	private Long auditorId;
+	private String auditorId;
 
 	/**
 	 * 行动评论
@@ -84,12 +84,12 @@ public class VideoAuditLog implements Serializable {
 		return this.newStatus;
 	}
 
-	public void setAuditorId(Long auditorId) {
-		this.auditorId = auditorId;
+	public String getAuditorId() {
+		return auditorId;
 	}
 
-	public Long getAuditorId() {
-		return this.auditorId;
+	public void setAuditorId(String auditorId) {
+		this.auditorId = auditorId;
 	}
 
 	public void setActionComment(String actionComment) {

@@ -57,4 +57,6 @@ public interface VideoAuditLogService{
 	 */
 	Integer deleteVideoAuditLogByLogId(Long logId);
 
+	VideoAuditLog getVideoIdByNewLogInfo(Long videoId);
+
 }
