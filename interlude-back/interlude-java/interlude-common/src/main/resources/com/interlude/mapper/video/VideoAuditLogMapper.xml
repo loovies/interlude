@@ -85,9 +85,7 @@
 
 	<!--插入(匹配有值的字段)-->
 	<insert id="insert" parameterType="com.interlude.entity.po.video.VideoAuditLog">
-		<selectKey keyProperty = "bean.log_id" resultType = "Long" order="AFTER">
-			SELECT LAST_INSERT_ID()
-		</selectKey>		INSERT INTO video_audit_log
+		INSERT INTO video_audit_log
 		<trim  prefix="(" suffix=")" suffixOverrides=",">
 			<if test="bean.logId != null">
 				log_id,

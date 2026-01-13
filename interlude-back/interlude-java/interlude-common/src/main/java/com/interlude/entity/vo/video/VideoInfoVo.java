@@ -21,6 +21,15 @@ public class VideoInfoVo {
     private Integer visibility;
     private String interactionArray;
     private String uploadId;
+    private Integer retryCount;
+
+    public Integer getRetryCount() {
+        return retryCount;
+    }
+
+    public void setRetryCount(Integer retryCount) {
+        this.retryCount = retryCount;
+    }
 
     public String getUploadId() {
         return uploadId;

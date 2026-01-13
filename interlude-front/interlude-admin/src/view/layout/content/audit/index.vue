@@ -141,15 +141,20 @@
               <span
                 :class="[
                   'comment',
-                  row.status == 0 ? 'audit' : row.status == 1 ? 'useing' : 'stoping',
+                  row.status == 1 ? 'audit' : row.status == 2 ? 'useing' : 'stoping',
                 ]"
-                >{{ row.status == 0 ? '待审核' : row.status == 1 ? '已发布' : '已离线' }}</span
+                >{{
+                  row.status == 1 ? '待审核' : row.status == 2 ? '审核通过' : '审核不通过'
+                }}</span
               >
             </div>
           </template>
           <template #slotOperation="{ index, row }">
-            <div class="row-op-panel">
+            <div class="row-op-panel" v-if="row.status == 1">
               <a class="a-link" @click="showAudit(row)">审核</a>
+            </div>
+            <div class="row-op-panel" v-else>
+              <a class="a-link" @click="showAuditEdit(row, 1)">修改</a>
             </div>
           </template>
         </Table>
@@ -163,7 +168,11 @@
     :height="playerHeight"
     @close="closePlayer"
   />
-  <AuditEdit ref="auditEditRef" @show-videoPlayer="fetchVideoData"></AuditEdit>
+  <AuditEdit
+    ref="auditEditRef"
+    @show-videoPlayer="fetchVideoData"
+    @reload="loadVideoAuditInfoList"
+  ></AuditEdit>
 </template>
 
 <script setup lang="ts">
@@ -267,7 +276,6 @@ const loadVideoAuditInfoList = async (): Promise<void> => {
   if (params.visibilityArray) {
     params.visibilityArray = params.visibilityArray.join(',')
   }
-  params.status = params.status == -1 ? null : params.status
   params.isDescOrAscCreateTime = flag.value
   if (params.categoryArray) {
     if (params.categoryArray.length > 1) {
@@ -354,6 +362,10 @@ const handleUpStepClick = (): void => {
 
 const showAudit = (data: Object) => {
   auditEditRef.value.showEdit(data)
+}
+
+const showAuditEdit = (data: Object) => {
+  auditEditRef.value.showEdit(data, 1)
 }
 
 // 响应式数据
@@ -582,11 +594,11 @@ defineExpose({
           color: #fff;
         }
         .audit {
-          background-color: #f39364ff;
+          background-color: rgb(242, 117, 55);
           color: #fff;
         }
         .stoping {
-          background-color: rgba(122, 120, 119, 1);
+          background-color: rgb(252, 52, 17);
           color: #fff;
         }
       }
