@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vite App</title>
+      <!-- 预留主题 link 标签，由下方脚本设置 href -->
+    <link id="theme-link" rel="stylesheet">
+    <script>
+      (function() {
+        // 读取 localStorage，默认为 'light'
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        const themeLink = document.getElementById('theme-link');
+        // 设置主题文件路径（注意：文件放在 public/themes 下）
+        themeLink.href = `./src/assets/css/${savedTheme}-theme.css`;
+      })();
+    </script>
+    
+    <!-- 基础样式（始终不变） -->
+    <link rel="stylesheet" href="./src/assets/css/base.css">
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
