@@ -5,7 +5,9 @@
       <div class="search-container">
         <SearchBar />
       </div>
-      <router-view />
+      <div class="content-container">
+        <router-view />
+      </div>
     </main>
   </div>
 </template>
@@ -26,6 +28,12 @@ import SearchBar from '@/components/SearchBar.vue'
     }
     .search-container{
       padding-top: 10px;
+    }
+    .content-container{
+      width: 100%;
+      padding: 10px;
+      height: calc(100vh - 56px);
+      overflow-y: auto;
     }
   }
 

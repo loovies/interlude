@@ -9,15 +9,15 @@
     <!-- 导航菜单 -->
     <nav class="nav-menu">
       <ul>
-        <li class="nav-item">
+        <li class="nav-item" :class="{ active: route.path === '/choiceness' }" @click="router.push('/choiceness')">
           <span class="icon">🔥</span>
           <span class="label">精选</span>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" :class="{ active: route.path === '/recommend' }" @click="router.push('/recommend')">
           <span class="icon">✨</span>
           <span class="label">推荐</span>
         </li>
-        <li class="nav-item">
+        <li class="nav-item" :class="{ active: route.path === '/aiSearch' }" @click="router.push('/aiSearch')">
           <span class="icon">🤖</span>
           <span class="label">AI搜索</span>
         </li>
@@ -26,7 +26,7 @@
       <div class="divider"></div>
 
       <ul>
-        <li class="nav-item">
+        <li class="nav-item" :class="{ active: route.path === '/follow' }" @click="router.push('/follow')">
           <span class="icon">👥</span>
           <span class="label">关注</span>
         </li>
@@ -52,8 +52,11 @@
 import ThemeToggle from './ThemeToggle.vue'
 import { computed } from 'vue'
 import { useThemeStore } from '../stores/theme'
+import { useRoute, useRouter } from 'vue-router'
 
 const themeStore = useThemeStore()
+const route = useRoute()
+const router = useRouter()
 
 // 根据当前主题动态计算图片路径
 const logoSrc = computed(() => {

@@ -4,15 +4,15 @@
       <div class="title-district">
         <h5 class="title">
           <img
-            src="../../assets/image/logo/perject-logo.png"
+            src="../../assets/image/logo/logo.png"
             :class="['logo-style', isCollapse ? 'collapse-logo' : '']"
             alt=""
           />
           <span
             :style="
               isCollapse
-                ? 'opacity:0;transition: opacity 0.3s ease 0.1s;'
-                : 'transition: opacity 1s ease 0.3s;'
+                ? 'opacity:0;transition: opacity 0.3s ease 0.1s; margin-left: 5px;'
+                : 'transition: opacity 1s ease 0.3s; margin-left: 5px;'
             "
             >幕间管理系统</span
           >

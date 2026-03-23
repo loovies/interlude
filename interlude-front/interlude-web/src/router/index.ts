@@ -6,7 +6,35 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
+      redirect: '/recommend',
       component: () => import('@/view/home/index.vue'),
+      children: [
+        {
+          path: 'recommend',
+          name: 'recommend',
+          component: () => import('@/view/home/recommend/index.vue'),
+        },
+        {
+          path: 'choiceness',
+          name: 'choiceness',
+          component: () => import('@/view/home/choiceness/index.vue'),
+        },
+        {
+          path: 'aiSearch',
+          name: 'aiSearch',
+          component: () => import('@/view/home/aiSearch/index.vue'),
+        },
+        {
+          path: 'test',
+          name: 'test',
+          component: () => import('@/view/home/test/index.vue'),
+        },
+        {
+          path: 'simple-test',
+          name: 'simple-test',
+          component: () => import('@/view/home/simple-test/index.vue'),
+        }
+      ]
     }
 ],
 })
