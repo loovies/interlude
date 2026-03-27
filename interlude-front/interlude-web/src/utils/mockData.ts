@@ -9,6 +9,7 @@ export interface VideoData {
   likes?: number
   comments?: number
   shares?: number
+  collects?: number
   createTime?: string
   thumbnailUrl?: string
 }
@@ -51,6 +52,7 @@ export const mockVideoList: VideoData[] = [
     likes: 12500,
     comments: 856,
     shares: 324,
+    collects: 789,
     createTime: '2024-01-15',
     thumbnailUrl: 'https://picsum.photos/seed/video1/400/700',
     qualities: [
@@ -84,6 +86,7 @@ export const mockVideoList: VideoData[] = [
     likes: 8920,
     comments: 1245,
     shares: 567,
+    collects: 432,
     createTime: '2024-01-14',
     thumbnailUrl: 'https://picsum.photos/seed/video2/400/700',
     qualities: [
@@ -117,6 +120,7 @@ export const mockVideoList: VideoData[] = [
     likes: 15680,
     comments: 2345,
     shares: 890,
+    collects: 678,
     createTime: '2024-01-13',
     thumbnailUrl: 'https://picsum.photos/seed/video3/400/700',
     qualities: [
@@ -150,6 +154,7 @@ export const mockVideoList: VideoData[] = [
     likes: 9870,
     comments: 1567,
     shares: 432,
+    collects: 321,
     createTime: '2024-01-12',
     thumbnailUrl: 'https://picsum.photos/seed/video4/400/700',
     qualities: [
@@ -183,6 +188,7 @@ export const mockVideoList: VideoData[] = [
     likes: 23450,
     comments: 3456,
     shares: 1234,
+    collects: 890,
     createTime: '2024-01-11',
     thumbnailUrl: 'https://picsum.photos/seed/video5/400/700',
     qualities: [

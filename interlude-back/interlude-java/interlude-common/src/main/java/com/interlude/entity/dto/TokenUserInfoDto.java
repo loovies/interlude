@@ -11,7 +11,10 @@ public class TokenUserInfoDto implements Serializable {
     private String userId;
     private String nickName;
     private String avatar;
+    private String email;
+    private String phone;
     private Long expireAt;
+    private Long roleId;
 
     private Integer fansCount;
     private Integer focusCount;
@@ -50,12 +53,36 @@ public class TokenUserInfoDto implements Serializable {
         this.avatar = avatar;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
     public Long getExpireAt() {
         return expireAt;
     }
 
     public void setExpireAt(Long expireAt) {
         this.expireAt = expireAt;
+    }
+
+    public Long getRoleId() {
+        return roleId;
+    }
+
+    public void setRoleId(Long roleId) {
+        this.roleId = roleId;
     }
 
     public Integer getFansCount() {

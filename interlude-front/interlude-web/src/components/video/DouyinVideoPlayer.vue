@@ -14,6 +14,7 @@
       v-if="showDanmu"
       :danmu-list="danmuList"
       :current-time="currentTime"
+      :is-playing="isPlaying"
       @send-danmu="handleSendDanmu"
     />
 
@@ -32,6 +33,45 @@
       </div>
       <div class="video-description" v-if="videoData.description">
         {{ videoData.description }}
+      </div>
+    </div>
+
+    <!-- 侧边栏操作区域 -->
+    <div class="sidebar-actions" v-if="controlsVisible">
+      <!-- 用户头像 -->
+      <div class="user-avatar">
+        <img src="https://picsum.photos/seed/avatar/40/40" alt="用户头像" />
+      </div>
+      
+      <!-- 互动按钮 -->
+      <div class="action-buttons">
+        <button class="action-btn like-btn" @click.stop="handleLike">
+          <svg class="action-icon" viewBox="0 0 24 24">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+          <span class="action-count">{{ videoData.likes || 0 }}</span>
+        </button>
+        
+        <button class="action-btn comment-btn" @click.stop="handleComment">
+          <svg class="action-icon" viewBox="0 0 24 24">
+            <path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+          </svg>
+          <span class="action-count">{{ videoData.comments || 0 }}</span>
+        </button>
+        
+        <button class="action-btn share-btn" @click.stop="handleShare">
+          <svg class="action-icon" viewBox="0 0 24 24">
+            <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
+          </svg>
+          <span class="action-count">{{ videoData.shares || 0 }}</span>
+        </button>
+        
+        <button class="action-btn collect-btn" @click.stop="handleCollect">
+          <svg class="action-icon" viewBox="0 0 24 24">
+            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+          </svg>
+          <span class="action-count">{{ videoData.collects || 0 }}</span>
+        </button>
       </div>
     </div>
 
@@ -68,7 +108,7 @@
           </div>
         </div>
 
-<!-- 中间：弹幕相关功能 -->
+        <!-- 中间：弹幕相关功能 -->
         <div class="control-center">
           <!-- 弹幕开关 -->
           <div class="danmu-switch-container" @click.stop>
@@ -1168,6 +1208,30 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 }
 
+// 处理点赞
+const handleLike = () => {
+  console.log('点赞视频:', props.videoData.videoId)
+  // 这里可以调用API进行点赞
+}
+
+// 处理评论
+const handleComment = () => {
+  console.log('评论视频:', props.videoData.videoId)
+  // 这里可以打开评论面板
+}
+
+// 处理分享
+const handleShare = () => {
+  console.log('分享视频:', props.videoData.videoId)
+  // 这里可以打开分享面板
+}
+
+// 处理收藏
+const handleCollect = () => {
+  console.log('收藏视频:', props.videoData.videoId)
+  // 这里可以调用API进行收藏
+}
+
 // 组件挂载
 onMounted(() => {
   nextTick(() => {
@@ -2082,5 +2146,121 @@ defineExpose({
 
 .retry-btn:hover {
   background: linear-gradient(135deg, #ff1a45, #ff5a8c);
+}
+
+/* 侧边栏操作区域 */
+.sidebar-actions {
+  position: absolute;
+  right: 20px;
+  bottom: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  z-index: 100;
+}
+
+.user-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.user-avatar:hover {
+  transform: scale(1.1);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.action-btn {
+  background: transparent;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+}
+
+.action-icon {
+  width: 24px;
+  height: 24px;
+  fill: #fff;
+}
+
+.action-count {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.like-btn .action-icon {
+  fill: #ff2d55;
+}
+
+.comment-btn .action-icon {
+  fill: #4cd964;
+}
+
+.share-btn .action-icon {
+  fill: #007aff;
+}
+
+.collect-btn .action-icon {
+  fill: #ffcc00;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .sidebar-actions {
+    right: 10px;
+    bottom: 120px;
+    gap: 15px;
+  }
+  
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+  }
+  
+  .action-buttons {
+    gap: 12px;
+  }
+  
+  .action-btn {
+    padding: 6px;
+  }
+  
+  .action-icon {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .action-count {
+    font-size: 11px;
+  }
 }
 </style>

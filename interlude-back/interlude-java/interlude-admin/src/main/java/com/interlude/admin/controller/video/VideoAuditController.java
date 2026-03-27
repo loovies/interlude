@@ -16,6 +16,7 @@ import com.interlude.entity.vo.video.VideoInfoVo;
 import com.interlude.enums.DateTimePatterEnum;
 import com.interlude.enums.ResponseCodeEnum;
 import com.interlude.enums.VideoAuditEnum;
+import com.interlude.enums.VideoStatusEnum;
 import com.interlude.exception.BusinessException;
 import com.interlude.service.CategoryInfoService;
 import com.interlude.service.UserInfoService;
@@ -178,6 +179,11 @@ public class VideoAuditController extends ABaseController {
         if(videoAuditQuery.getAuditStatus() == VideoAuditEnum.APPROVED.getStatus()){
             // 更新 video_audit 和 video_info 里的视频状态, 增加video_audit_log
             videoAuditQuery.setAuditStatus(VideoAuditEnum.APPROVED.getStatus());
+
+            // 更新 videoInfo的status信息
+            VideoInfo videoInfo = new VideoInfo();
+            videoInfo.setStatus(VideoStatusEnum.PUBLISHED.getStatus());
+            videoInfoService.updateVideoInfoByVideoId(videoInfo,videoAuditQuery.getVideoId());
 
             // 新增log和更新audit
             VideoAudit audit = new VideoAudit();

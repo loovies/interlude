@@ -49,21 +49,37 @@ public class RedisComponent {
 
     // 保存token 到redis
     public String saveAdmin4Token(TokenUserInfoDto tokenUserInfoDto){
-        String token = UUID.randomUUID().toString();
-        tokenUserInfoDto.setToken(token);
-        tokenUserInfoDto.setExpireAt(System.currentTimeMillis() + Constants.REDIS_TIME_ONE_DAY * 7);
-        redisUtils.setex(Constants.REDIS_TOKEN_ADMIN_KEY+token,tokenUserInfoDto,Constants.REDIS_TIME_ONE_DAY * 7);
-        return token;
+        return saveToken(tokenUserInfoDto, Constants.REDIS_TOKEN_ADMIN_KEY);
     }
 
     // 获取token
     public TokenUserInfoDto getAdmin4Token(String token){
-        return (TokenUserInfoDto) redisUtils.get(Constants.REDIS_TOKEN_ADMIN_KEY + token);
+        return getToken(token, Constants.REDIS_TOKEN_ADMIN_KEY);
+    }
+
+    public String saveWebToken(TokenUserInfoDto tokenUserInfoDto){
+        return saveToken(tokenUserInfoDto, Constants.REDIS_TOKEN_WEB_KEY);
+    }
+
+    // 前台用户 token 查询。
+    public TokenUserInfoDto getWebToken(String token){
+        return getToken(token, Constants.REDIS_TOKEN_WEB_KEY);
+    }
+
+    public Long incrementSendEmailCodeCount(String email){
+        if (StringTools.isEmpty(email)) {
+            return 0L;
+        }
+        // 同一邮箱一分钟内只允许发送一次验证码。
+        return redisUtils.incrementex(Constants.REDIS_KEY_SEND_EMAIL_CODE + email, Constants.REDIS_TIME_ONE_MINUTE);
     }
 
     // 清除token
     public void cleanToken(String token){
-        redisUtils.delete(Constants.REDIS_TOKEN_ADMIN_KEY+token);
+        if (StringTools.isEmpty(token)) {
+            return;
+        }
+        redisUtils.delete(Constants.REDIS_TOKEN_ADMIN_KEY + token, Constants.REDIS_TOKEN_WEB_KEY + token);
     }
 
     // 保存分类信息
@@ -134,5 +150,21 @@ public class RedisComponent {
 
     public UploadResultDto getFileTransferQueue() {
         return (UploadResultDto) redisUtils.rpop(Constants.REDIS_KEY_QUEUE_TRANSFER);
+    }
+
+    private String saveToken(TokenUserInfoDto tokenUserInfoDto, String tokenKeyPrefix) {
+        String token = StringTools.isEmpty(tokenUserInfoDto.getToken()) ? UUID.randomUUID().toString() : tokenUserInfoDto.getToken();
+        long expireTime = Constants.REDIS_TIME_ONE_DAY.longValue() * 7;
+        tokenUserInfoDto.setToken(token);
+        tokenUserInfoDto.setExpireAt(System.currentTimeMillis() + expireTime);
+        redisUtils.setex(tokenKeyPrefix + token, tokenUserInfoDto, expireTime);
+        return token;
+    }
+
+    private TokenUserInfoDto getToken(String token, String tokenKeyPrefix) {
+        if (StringTools.isEmpty(token)) {
+            return null;
+        }
+        return (TokenUserInfoDto) redisUtils.get(tokenKeyPrefix + token);
     }
 }

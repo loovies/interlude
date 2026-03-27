@@ -17,6 +17,40 @@ import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import DouyinVideoPlayer from './DouyinVideoPlayer.vue'
 import { fetchVideoList } from '@/utils/mockData'
 
+// 防抖函数
+function debounce<T extends (...args: any[]) => any>(fn: T, delay: number): T {
+  let timer: ReturnType<typeof setTimeout> | null = null
+  return function(this: any, ...args: any[]) {
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(() => {
+      fn.apply(this, args)
+    }, delay)
+  } as T
+}
+
+// 节流函数
+function throttle<T extends (...args: any[]) => any>(fn: T, interval: number): T {
+  let lastTime = 0
+  let timer: ReturnType<typeof setTimeout> | null = null
+  return function(this: any, ...args: any[]) {
+    const now = Date.now()
+    if (now - lastTime >= interval) {
+      lastTime = now
+      fn.apply(this, args)
+    } else if (timer === null) {
+      timer = setTimeout(() => {
+        lastTime = Date.now()
+        timer = null
+        fn.apply(this, args)
+      }, interval - (now - lastTime))
+    }
+  } as T
+}
+
+const emit = defineEmits<{
+  activeVideoChange: [index: number, video: any]
+}>()
+
 const feedRef = ref<HTMLElement | null>(null)
 const videoPlayers = ref<InstanceType<typeof DouyinVideoPlayer>[]>([])
 
@@ -30,6 +64,9 @@ const activeIndexInternal = ref(0)
 const isFullScreen = ref(false)
 const lastActiveIndexBeforeFullscreen = ref(0) // 记录进入全屏前的索引
 
+// 缓存项目高度，避免重复计算
+const itemHeight = ref(window.innerHeight)
+
 // 标志位，用于区分是用户滚动还是程序化滚动
 let isProgrammaticScroll = false
 
@@ -40,15 +77,23 @@ const updateActiveIndexInternal = (index: number) => {
   }
 }
 
-// 根据滚动位置计算当前索引
+// 根据滚动位置计算当前索引（优化版）
 const updateActiveIndexFromScroll = () => {
   if (!feedRef.value) return
   const scrollTop = feedRef.value.scrollTop
-  const itemHeight = window.innerHeight
-  const newIndex = Math.round(scrollTop / itemHeight)
+  const height = itemHeight.value
+  const newIndex = Math.round(scrollTop / height)
   if (newIndex !== activeIndex.value && newIndex >= 0 && newIndex < videoList.value.length) {
     activeIndex.value = newIndex
     updateActiveIndexInternal(newIndex)
+  }
+}
+
+// 触发当前激活视频变化事件
+const emitActiveVideoChange = () => {
+  const index = activeIndexInternal.value
+  if (index >= 0 && videoList.value[index]) {
+    emit('activeVideoChange', index, videoList.value[index])
   }
 }
 
@@ -60,6 +105,10 @@ const loadVideoList = async () => {
   try {
     const result = await fetchVideoList(1, 10)
     videoList.value = result.data
+    // 通知第一个视频激活
+    nextTick(() => {
+      emitActiveVideoChange()
+    })
   } catch (error) {
     console.error('加载视频列表失败:', error)
   } finally {
@@ -67,18 +116,34 @@ const loadVideoList = async () => {
   }
 }
 
+// 使用 requestAnimationFrame 优化滚动处理
+let scrollRafId: number | null = null
+
 // 滚动事件处理
 const onScroll = () => {
   if (isFullScreen.value || isProgrammaticScroll) return // 全屏或程序化滚动时忽略
-  updateActiveIndexFromScroll()
+  
+  if (scrollRafId !== null) {
+    cancelAnimationFrame(scrollRafId)
+  }
+  
+  scrollRafId = requestAnimationFrame(() => {
+    updateActiveIndexFromScroll()
+    scrollRafId = null
+  })
 }
 
-// 监听内部索引变化，暂停上一个视频
+// 监听内部索引变化，暂停上一个视频并通知父组件
 watch(activeIndexInternal, (newVal, oldVal) => {
   if (oldVal !== undefined && videoPlayers.value[oldVal]) {
     videoPlayers.value[oldVal].pause()
   }
   // 自动播放新视频已在 DouyinVideoPlayer 中通过 autoplay prop 处理
+  
+  // 通知父组件当前激活的视频变化
+  if (newVal !== undefined) {
+    emitActiveVideoChange()
+  }
 })
 
 // 处理视频播放
@@ -103,13 +168,13 @@ const handleKeyDown = (e: KeyboardEvent) => {
     e.preventDefault()
   }
 
-  const itemHeight = window.innerHeight
+  const height = itemHeight.value
   if (e.key === 'ArrowUp') {
     const newIndex = activeIndex.value - 1
     if (newIndex >= 0) {
       isProgrammaticScroll = true
       feedRef.value?.scrollTo({
-        top: newIndex * itemHeight,
+        top: newIndex * height,
         behavior: 'smooth'
       })
       // 由于 smooth 滚动是异步的，需要在一段时间后重置标志
@@ -122,7 +187,7 @@ const handleKeyDown = (e: KeyboardEvent) => {
     if (newIndex < videoList.value.length) {
       isProgrammaticScroll = true
       feedRef.value?.scrollTo({
-        top: newIndex * itemHeight,
+        top: newIndex * height,
         behavior: 'smooth'
       })
       setTimeout(() => {
@@ -149,7 +214,7 @@ const handleFullscreenChange = (val: boolean) => {
   } else {
     // 退出全屏：恢复滚动，并强制滚动到之前激活的视频位置
     feed.style.overflow = 'auto'
-    const targetTop = lastActiveIndexBeforeFullscreen.value * window.innerHeight
+    const targetTop = lastActiveIndexBeforeFullscreen.value * itemHeight.value
     // 程序化滚动到目标位置
     isProgrammaticScroll = true
     feed.scrollTo({
@@ -218,12 +283,15 @@ onUnmounted(() => {
 .video-feed {
   height: calc(100vh - 80px);
   overflow-y: scroll;
-  scroll-snap-type: y mandatory; /* 启用垂直滚动捕捉 */
-  -webkit-overflow-scrolling: touch; /* 提升 iOS 滚动流畅度 */
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   scrollbar-width: none;
   -ms-overflow-style: none;
   border-radius: 20px;
+  will-change: scroll-position;
+  backface-visibility: hidden;
 }
 
 .video-feed::-webkit-scrollbar {
@@ -232,8 +300,15 @@ onUnmounted(() => {
 
 .video-feed > * {
   width: 100%;
-  height: calc(100vh - 80px); /* 每个视频占满视口高度 */
-  scroll-snap-align: start; /* 用于滚动捕捉 */
+  height: calc(100vh - 80px);
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.video-feed > .douyin-video-player {
+  contain: strict;
 }
 
 /* 加载状态 */

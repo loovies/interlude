@@ -29,18 +29,20 @@
       </div>
 
       <!-- 滚动弹幕轨道（多个） -->
-      <div
-        v-for="(track, index) in scrollTracks"
-        :key="index"
-        class="danmu-track scroll-track"
-        :class="`track-${index}`"
-      >
+<div
+          v-for="(track, index) in scrollTracks"
+          :key="index"
+          class="danmu-track scroll-track"
+          :class="`track-${index}`"
+          :style="{ '--play-state': isPlaying ? 'running' : 'paused' }"
+        >
         <div
           v-for="danmu in track.danmus"
           :key="danmu.id"
           class="danmu-item"
           :style="getScrollDanmuStyle(danmu, index)"
           @click="handleDanmuClick(danmu)"
+          @animationend="handleDanmuAnimationEnd(danmu, index)"
         >
           <span class="danmu-content">{{ danmu.content }}</span>
         </div>
@@ -88,10 +90,14 @@ interface Danmu {
 interface Props {
   danmuList: Danmu[]
   currentTime: number
+  isPlaying?: boolean
 }
 
 const props = defineProps<Props>()
 const emit = defineEmits(['send-danmu'])
+
+// 是否播放中，默认true
+const isPlaying = computed(() => props.isPlaying !== false)
 
 const danmuLayer = ref<HTMLElement | null>(null)
 const danmuInput = ref<HTMLInputElement | null>(null)
@@ -101,12 +107,13 @@ const inputText = ref('')
 // 弹幕轨道配置
 const trackCount = 5 // 滚动弹幕轨道数量
 const scrollTracks = ref(Array.from({ length: trackCount }, () => ({ danmus: [] as Danmu[] })))
+const activeDanmuIds = ref<Set<number | string>>(new Set()) // 活跃弹幕ID集合
 
-// 计算当前时间范围内的弹幕
+// 计算当前时间范围内的弹幕，同时包含活跃弹幕
 const currentDanmus = computed(() => {
   const timeWindow = 3 // 显示前后3秒的弹幕
   return props.danmuList.filter(
-    (danmu) => Math.abs(danmu.time - props.currentTime) <= timeWindow
+    (danmu) => activeDanmuIds.value.has(danmu.id) || Math.abs(danmu.time - props.currentTime) <= timeWindow
   )
 })
 
@@ -129,17 +136,43 @@ const scrollDanmus = computed(() => {
 
 // 分配弹幕到不同轨道
 const assignDanmusToTracks = () => {
-  // 清空所有轨道
-  scrollTracks.value.forEach((track) => {
-    track.danmus = []
+  // 收集所有需要显示的滚动弹幕ID
+  const newDanmuIds = new Set(scrollDanmus.value.map(d => d.id))
+  
+  // 遍历每个轨道，移除不再需要显示的弹幕（不在newDanmuIds中且不在活跃集合中）
+  scrollTracks.value.forEach((track, trackIndex) => {
+    // 保留仍然需要显示的弹幕（在新的弹幕列表中或仍在活跃集合中）
+    track.danmus = track.danmus.filter(danmu => 
+      newDanmuIds.has(danmu.id) || activeDanmuIds.value.has(danmu.id)
+    )
   })
-
-  // 将弹幕分配到不同轨道
-  scrollDanmus.value.forEach((danmu, index) => {
-    const trackIndex = index % trackCount
-    const track = scrollTracks.value[trackIndex]
+  
+  // 分配新的弹幕到轨道（负载均衡）
+  const trackLoads: number[] = scrollTracks.value.map(track => track.danmus.length)
+  scrollDanmus.value.forEach((danmu) => {
+    // 如果弹幕已经在任何轨道中，跳过
+    const alreadyExists = scrollTracks.value.some(track => 
+      track.danmus.some(d => d.id === danmu.id)
+    )
+    if (alreadyExists) return
+    
+    // 选择当前负载最小的轨道
+    let minLoad = Infinity
+    let selectedTrackIndex = 0
+    for (let i = 0; i < trackCount; i++) {
+      const load = trackLoads[i]!
+      if (load < minLoad) {
+        minLoad = load
+        selectedTrackIndex = i
+      }
+    }
+    
+    const track = scrollTracks.value[selectedTrackIndex]
     if (track) {
       track.danmus.push(danmu)
+      trackLoads[selectedTrackIndex]!++
+      // 添加到活跃集合
+      activeDanmuIds.value.add(danmu.id)
     }
   })
 }
@@ -224,6 +257,20 @@ const hideInput = () => {
 const handleDanmuClick = (danmu: Danmu) => {
   console.log('弹幕点击:', danmu)
   // 可以在这里实现弹幕点赞、回复等功能
+}
+
+// 处理弹幕动画结束
+const handleDanmuAnimationEnd = (danmu: Danmu, trackIndex: number) => {
+  // 从活跃集合中移除
+  activeDanmuIds.value.delete(danmu.id)
+  // 从对应轨道中移除弹幕
+  const track = scrollTracks.value[trackIndex]
+  if (track) {
+    const index = track.danmus.findIndex(d => d.id === danmu.id)
+    if (index !== -1) {
+      track.danmus.splice(index, 1)
+    }
+  }
 }
 
 // 监听弹幕列表变化
@@ -314,13 +361,14 @@ onUnmounted(() => {
   animation-timing-function: linear;
   animation-iteration-count: 1;
   animation-fill-mode: forwards;
+  animation-play-state: var(--play-state, running);
   left: 100%;
 }
 
 .danmu-content {
   padding: 2px 8px;
   border-radius: 12px;
-  background: rgba(0, 0, 0, 0.3);
+  /*background: rgba(0, 0, 0, 0.3);*/
   backdrop-filter: blur(4px);
   line-height: 1.4;
 }
@@ -401,10 +449,10 @@ onUnmounted(() => {
 
 @keyframes scrollRightToLeft {
   from {
-    transform: translateX(0);
+    left: 100%;
   }
   to {
-    transform: translateX(-100vw);
+    left: -100%;
   }
 }
 

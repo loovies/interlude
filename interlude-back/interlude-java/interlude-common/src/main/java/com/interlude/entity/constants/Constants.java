@@ -17,11 +17,19 @@ public class Constants {
     public static final Integer NUMBER_10 = 10;
     public static final Integer NUMBER_15 = 15;
     public static final Integer NUMBER_ZERO = 0;
+    public static final Integer NUMBER_ONE = 1;
     public static final Integer NUMBER_TWO = 2;
+    public static final Integer NUMBER_SIX = 6;
 
     // Admin
     public static final String REDIS_ADMIN_TOKEN = "adminToken";
     public static final String REDIS_TOKEN_ADMIN_KEY = REDIS_PREFIX_NAME +  "token:admin:";
+
+    // Web
+    public static final String REDIS_WEB_TOKEN = "webToken";
+    public static final String REDIS_TOKEN_WEB_KEY = REDIS_PREFIX_NAME +  "token:web:";
+    public static final String REDIS_KEY_SEND_EMAIL_CODE = REDIS_PREFIX_NAME + "send:email:code:";
+    public static final Integer EMAIL_CODE_EXPIRE_MILLISECONDS = 15 * 60 * 1000;
 
     // 地址
     public static final String FILE_FOLDER="file/";

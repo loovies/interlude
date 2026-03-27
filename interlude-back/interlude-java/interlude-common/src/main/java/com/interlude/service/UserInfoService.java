@@ -110,6 +110,8 @@ public interface UserInfoService{
 
 	UserInfo login(String account, String password, HttpServletResponse response) ;
 
+	TokenUserInfoDto login4Web(String account, String password);
+
 	Integer addOrUpdateUserInfo(UserInfoQuery query, TokenUserInfoDto tokenUserInfo);
 
 	String resetPassword(String userId);
