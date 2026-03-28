@@ -435,6 +435,7 @@ const delFile = async (index): Promise<void> => {
 const showUpdateEdit = (data) => {
   isVideoInput.value = false
   isUploadVideo.value = false
+
   nextTick(() => {
     videoInputRef.value.showEdit(data)
   })

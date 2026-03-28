@@ -1,4 +1,14 @@
-// 模拟视频数据
+import axios from 'axios'
+
+export interface VideoQuality {
+  quality: string
+  url: string
+  resolution?: string
+  bitrate?: number
+  recommended?: boolean
+  disabled?: boolean
+}
+
 export interface VideoData {
   videoId: string | number
   title: string
@@ -12,456 +22,574 @@ export interface VideoData {
   collects?: number
   createTime?: string
   thumbnailUrl?: string
+  views?: number
+  categoryId?: number
+  pCategoryId?: number
+  categoryName?: string
+  pCategoryName?: string
 }
 
-export interface VideoQuality {
-  quality: string
-  url: string
-  resolution?: string
-  bitrate?: number
-  recommended?: boolean
-  disabled?: boolean
+export interface ChoicenessCategory {
+  id: string
+  name: string
+  pCategoryId?: number
+  categoryId?: number
+}
+
+export interface ChoicenessVideoItem {
+  id: number
+  title: string
+  category: string
+  categoryName: string
+  cover: string
+  likes: number
+  duration: string
+  author: string
+  views: number
+  uploadTime: string
+  description?: string
 }
 
 export interface DanmuData {
-  id: number | string
+  id: string
   content: string
   time: number
   color?: string
-  type?: 'normal' | 'top' | 'bottom' | 'scroll'
+  type?: 'scroll' | 'top' | 'bottom'
   speed?: number
   userId?: string
   userName?: string
 }
 
-// 快速加载的视频源（更小的文件，更快的CDN）
-const fastVideoSources: string[] = [
-  'https://vjs.zencdn.net/v/oceans.mp4', // 小文件，快速加载
-  'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4', // 较短视频
-  'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4', // 较短视频
+interface WebApiResponse<T> {
+  status?: string
+  code?: number
+  info?: string
+  data?: T
+}
+
+interface WebPage<T> {
+  totalCount?: number
+  pageSize?: number
+  pageNo?: number
+  pageTotal?: number
+  list?: T[]
+}
+
+interface WebVideoAuthor {
+  userId?: string | number
+  nickName?: string
+  avatar?: string
+}
+
+interface WebVideoQuality {
+  quality?: string
+  url?: string
+  m3u8Url?: string
+  resolution?: string
+  bitrate?: number | string
+  recommended?: boolean
+  disabled?: boolean
+}
+
+interface WebVideoItem {
+  videoId: number | string
+  title?: string
+  description?: string
+  duration?: number
+  qualities?: WebVideoQuality[]
+  author?: WebVideoAuthor
+  likeCount?: number
+  commentCount?: number
+  shareCount?: number
+  collectCount?: number
+  playCount?: number
+  publishTime?: string
+  coverUrl?: string
+  pCategoryId?: number
+  pCategoryName?: string
+  categoryId?: number
+  categoryName?: string
+}
+
+interface WebVideoCategory {
+  categoryId?: number
+  categoryCode?: string
+  categoryName?: string
+  pCategoryId?: number
+  sort?: number
+  children?: WebVideoCategory[]
+}
+
+interface WebPlayListInfo {
+  videoId?: number | string
+  title?: string
+  duration?: number
+  qualities?: Array<Record<string, unknown>>
+}
+
+const DEFAULT_VIDEO_SOURCES: string[] = [
+  'https://vjs.zencdn.net/v/oceans.mp4',
+  'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+  'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
 ]
 
-// 模拟视频列表数据
 export const mockVideoList: VideoData[] = [
   {
     videoId: 1,
-    title: '超美风景航拍，大自然的鬼斧神工',
-    description: '带你领略世界各地的壮丽风景，感受大自然的魅力',
-    duration: 596, // Big Buck Bunny 时长
-    author: '旅行摄影师',
-    likes: 12500,
-    comments: 856,
-    shares: 324,
-    collects: 789,
-    createTime: '2024-01-15',
-    thumbnailUrl: 'https://picsum.photos/seed/video1/400/700',
+    title: '清晨城市航拍',
+    description: '城市日出延时画面，适合测试播放器滚动切换。',
+    duration: 45,
+    author: 'Interlude官方',
+    likes: 1250,
+    comments: 86,
+    shares: 32,
+    collects: 79,
+    createTime: '2026-03-01 09:20:00',
+    thumbnailUrl: 'https://picsum.photos/seed/interlude1/400/700',
+    views: 18200,
+    categoryId: 101,
+    pCategoryId: 1,
+    categoryName: '推荐',
+    pCategoryName: '全部',
     qualities: [
       {
-        quality: '1080p',
-        url: fastVideoSources[0]!!, // 使用快速加载的视频源
-        resolution: '1920×1080',
-        bitrate: 8000,
-        recommended: true,
-      },
-      {
         quality: '720p',
-        url: fastVideoSources[0]!, // 使用快速加载的视频源
-        resolution: '1280×720',
-        bitrate: 4000,
-      },
-      {
-        quality: '480p',
-        url: fastVideoSources[0]!, // 使用快速加载的视频源
-        resolution: '854×480',
-        bitrate: 2000,
+        url: DEFAULT_VIDEO_SOURCES[0]!,
+        resolution: '1280x720',
+        bitrate: 3500,
+        recommended: true,
       },
     ],
   },
   {
     videoId: 2,
-    title: '萌宠日常，治愈你的不开心',
-    description: '可爱猫咪的日常，看完心情都变好了',
-    duration: 152,
-    author: '宠物日记',
-    likes: 8920,
-    comments: 1245,
-    shares: 567,
-    collects: 432,
-    createTime: '2024-01-14',
-    thumbnailUrl: 'https://picsum.photos/seed/video2/400/700',
+    title: '街头篮球瞬间',
+    description: '高光动作合集，测试快节奏视频切换。',
+    duration: 32,
+    author: '热血剪辑社',
+    likes: 3421,
+    comments: 210,
+    shares: 117,
+    collects: 203,
+    createTime: '2026-03-02 13:35:00',
+    thumbnailUrl: 'https://picsum.photos/seed/interlude2/400/700',
+    views: 49300,
+    categoryId: 102,
+    pCategoryId: 1,
+    categoryName: '热门',
+    pCategoryName: '全部',
     qualities: [
       {
-        quality: '1080p',
-        url: fastVideoSources[1]!, // 使用快速加载的视频源
-        resolution: '1920×1080',
-        bitrate: 8000,
-        recommended: true,
-      },
-      {
         quality: '720p',
-        url: fastVideoSources[1]!, // 使用快速加载的视频源
-        resolution: '1280×720',
-        bitrate: 4000,
-      },
-      {
-        quality: '480p',
-        url: fastVideoSources[1]!, // 使用快速加载的视频源
-        resolution: '854×480',
-        bitrate: 2000,
+        url: DEFAULT_VIDEO_SOURCES[1]!,
+        resolution: '1280x720',
+        bitrate: 3500,
+        recommended: true,
       },
     ],
   },
   {
     videoId: 3,
-    title: '美食制作教程，简单易学',
-    description: '手把手教你制作美味甜点，零失败教程',
-    duration: 245,
-    author: '美食家小厨',
-    likes: 15680,
-    comments: 2345,
-    shares: 890,
-    collects: 678,
-    createTime: '2024-01-13',
-    thumbnailUrl: 'https://picsum.photos/seed/video3/400/700',
-    qualities: [
-      {
-        quality: '1080p',
-        url: fastVideoSources[2]!, // 使用快速加载的视频源
-        resolution: '1920×1080',
-        bitrate: 8000,
-        recommended: true,
-      },
-      {
-        quality: '720p',
-        url: fastVideoSources[2]!, // 使用快速加载的视频源
-        resolution: '1280×720',
-        bitrate: 4000,
-      },
-      {
-        quality: '480p',
-        url: fastVideoSources[2]!, // 使用快速加载的视频源
-        resolution: '854×480',
-        bitrate: 2000,
-      },
-    ],
-  },
-  {
-    videoId: 4,
-    title: '健身教学，打造完美身材',
-    description: '专业教练指导，在家也能高效健身',
-    duration: 198,
-    author: '健身达人',
-    likes: 9870,
-    comments: 1567,
-    shares: 432,
-    collects: 321,
-    createTime: '2024-01-12',
-    thumbnailUrl: 'https://picsum.photos/seed/video4/400/700',
+    title: '夜景慢镜头',
+    description: '灯光与人流，适合测试评论和弹幕叠加效果。',
+    duration: 58,
+    author: '镜头观察员',
+    likes: 2780,
+    comments: 160,
+    shares: 91,
+    collects: 140,
+    createTime: '2026-03-03 21:10:00',
+    thumbnailUrl: 'https://picsum.photos/seed/interlude3/400/700',
+    views: 26800,
+    categoryId: 103,
+    pCategoryId: 1,
+    categoryName: '精选',
+    pCategoryName: '全部',
     qualities: [
       {
         quality: '720p',
-        url: fastVideoSources[0]!, // 使用快速加载的视频源
-        resolution: '1280×720',
-        bitrate: 4000,
+        url: DEFAULT_VIDEO_SOURCES[2]!,
+        resolution: '1280x720',
+        bitrate: 3500,
         recommended: true,
-      },
-      {
-        quality: '480p',
-        url: fastVideoSources[0]!, // 使用快速加载的视频源
-        resolution: '854×480',
-        bitrate: 2000,
-      },
-      {
-        quality: '360p',
-        url: fastVideoSources[0]!, // 使用快速加载的视频源
-        resolution: '640×360',
-        bitrate: 1000,
-      },
-    ],
-  },
-  {
-    videoId: 5,
-    title: '搞笑合集，笑到肚子疼',
-    description: '精选搞笑片段，专治各种不开心',
-    duration: 167,
-    author: '欢乐制造机',
-    likes: 23450,
-    comments: 3456,
-    shares: 1234,
-    collects: 890,
-    createTime: '2024-01-11',
-    thumbnailUrl: 'https://picsum.photos/seed/video5/400/700',
-    qualities: [
-      {
-        quality: '1080p',
-        url: fastVideoSources[1]!, // 使用快速加载的视频源
-        resolution: '1920×1080',
-        bitrate: 8000,
-        recommended: true,
-      },
-      {
-        quality: '720p',
-        url: fastVideoSources[1]!, // 使用快速加载的视频源
-        resolution: '1280×720',
-        bitrate: 4000,
-      },
-      {
-        quality: '480p',
-        url: fastVideoSources[1]!, // 使用快速加载的视频源
-        resolution: '854×480',
-        bitrate: 2000,
       },
     ],
   },
 ]
 
-// 弹幕内容库
 const danmuContents = [
-  '前方高能预警！',
-  '这个视频太棒了！',
-  '哈哈哈哈笑死我了',
-  '泪目了😭',
-  '这个特效太酷了',
-  '求BGM名字',
-  '已三连支持',
-  '这个up主太有才了',
-  '看到这里我哭了',
-  '这个转场绝了',
-  '求更新！',
-  '这个教程太实用了',
-  '收藏了慢慢看',
-  '这个角度拍得真好',
-  '音乐配得太好了',
-  '这个梗我能笑一年',
-  '太治愈了',
-  '这个技巧学到了',
-  'up主声音好好听',
-  '这个运镜太专业了',
-  '期待下一期',
-  '这个美食看着就好吃',
-  '这个宠物太可爱了',
-  '这个风景太美了',
-  '这个教学太详细了',
-  '这个健身动作学会了',
-  '这个搞笑片段绝了',
-  '这个特效怎么做的',
-  '求同款',
-  '这个转场怎么拍的',
-  '这个音乐叫什么',
-  '这个up主我关注了',
-  '这个视频我看了10遍',
-  '这个教程拯救了我',
-  '这个宠物成精了',
-  '这个风景想去',
-  '这个美食想学',
-  '这个健身有效果',
-  '这个搞笑停不下来',
-  '这个特效值百万',
+  '这个镜头太稳了',
+  '转场好丝滑',
+  '节奏很舒服',
+  '这个画面有电影感',
+  '继续更，没看够',
+  '卡点很准',
+  '收藏了，回头学习',
+  '这个运镜绝了',
+  '这条会火',
+  'BGM很搭',
 ]
 
-// 弹幕颜色库
 const danmuColors = [
-  '#ffffff', // 白色
-  '#ff2d55', // 红色
-  '#4cd964', // 绿色
-  '#007aff', // 蓝色
-  '#ff9500', // 橙色
-  '#ffcc00', // 黄色
-  '#5856d6', // 紫色
-  '#ff3b30', // 亮红
-  '#34c759', // 亮绿
-  '#5ac8fa', // 亮蓝
+  '#ffffff',
+  '#ff2d55',
+  '#4cd964',
+  '#007aff',
+  '#ff9500',
+  '#ffcc00',
+  '#5856d6',
+  '#ff3b30',
+  '#34c759',
+  '#5ac8fa',
 ]
 
-// 用户名称库
-const userNames = [
-  '旅行爱好者',
-  '美食家',
-  '健身达人',
-  '宠物控',
-  '摄影迷',
-  '音乐发烧友',
-  '电影爱好者',
-  '游戏玩家',
-  '读书人',
-  '科技迷',
-  '时尚达人',
-  '运动健将',
-  '艺术青年',
-  '历史爱好者',
-  '科学探索者',
-]
+const userNames = ['用户A', '用户B', '剪辑爱好者', '路人甲', '路人乙', '今天也在刷', '视频控']
 
-// 生成模拟弹幕数据
+function toNumber(value: unknown, defaultValue: number = 0): number {
+  if (typeof value === 'number' && !Number.isNaN(value)) {
+    return value
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    return Number.isNaN(parsed) ? defaultValue : parsed
+  }
+
+  return defaultValue
+}
+
+function formatDuration(seconds: number): string {
+  const safeSeconds = Math.max(0, toNumber(seconds, 0))
+  const hours = Math.floor(safeSeconds / 3600)
+  const minutes = Math.floor((safeSeconds % 3600) / 60)
+  const remainSeconds = safeSeconds % 60
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, '0')}:${String(remainSeconds).padStart(2, '0')}`
+  }
+
+  return `${minutes}:${String(remainSeconds).padStart(2, '0')}`
+}
+
+function normalizeQualities(
+  qualities: WebVideoQuality[] | undefined,
+  videoId: string | number,
+): VideoQuality[] {
+  const normalized = (qualities || [])
+    .map<VideoQuality | null>((item) => {
+      const url = item.url || item.m3u8Url
+      if (!url) {
+        return null
+      }
+
+      return {
+        quality: item.quality || '标清',
+        url,
+        resolution: item.resolution,
+        bitrate: toNumber(item.bitrate, 0) || undefined,
+        recommended: item.recommended,
+        disabled: item.disabled,
+      }
+    })
+    .filter((item): item is VideoQuality => item !== null)
+
+  if (normalized.length > 0) {
+    return normalized
+  }
+
+  const source = DEFAULT_VIDEO_SOURCES[toNumber(videoId, 1) % DEFAULT_VIDEO_SOURCES.length] || DEFAULT_VIDEO_SOURCES[0]!
+  return [
+    {
+      quality: '720p',
+      url: source,
+      resolution: '1280x720',
+      bitrate: 3500,
+      recommended: true,
+    },
+  ]
+}
+
+function mapWebVideoItemToVideoData(item: WebVideoItem): VideoData {
+  return {
+    videoId: item.videoId,
+    title: item.title || '未命名视频',
+    description: item.description,
+    duration: toNumber(item.duration, 15),
+    qualities: normalizeQualities(item.qualities, item.videoId),
+    author: item.author?.nickName || '匿名作者',
+    likes: toNumber(item.likeCount, 0),
+    comments: toNumber(item.commentCount, 0),
+    shares: toNumber(item.shareCount, 0),
+    collects: toNumber(item.collectCount, 0),
+    createTime: item.publishTime,
+    thumbnailUrl: item.coverUrl,
+    views: toNumber(item.playCount, 0),
+    categoryId: item.categoryId,
+    pCategoryId: item.pCategoryId,
+    categoryName: item.categoryName,
+    pCategoryName: item.pCategoryName,
+  }
+}
+
+function mapVideoDataToChoicenessItem(item: VideoData): ChoicenessVideoItem {
+  return {
+    id: toNumber(item.videoId, 0),
+    title: item.title,
+    category: String(item.categoryId ?? item.pCategoryId ?? 'all'),
+    categoryName: item.categoryName || item.pCategoryName || '未分类',
+    cover: item.thumbnailUrl || `https://picsum.photos/seed/interlude-${item.videoId}/400/600`,
+    likes: toNumber(item.likes, 0),
+    duration: formatDuration(item.duration),
+    author: item.author || '匿名作者',
+    views: toNumber(item.views, 0),
+    uploadTime: item.createTime || '',
+    description: item.description,
+  }
+}
+
+function getFallbackVideoPage(page: number, pageSize: number): { data: VideoData[]; total: number } {
+  const safePage = Math.max(1, page)
+  const safePageSize = Math.max(1, pageSize)
+  const start = (safePage - 1) * safePageSize
+  const end = start + safePageSize
+
+  return {
+    data: mockVideoList.slice(start, end),
+    total: mockVideoList.length,
+  }
+}
+
+function getFallbackChoicenessPage(categoryId?: number, page: number = 1, pageSize: number = 10) {
+  const filtered = typeof categoryId === 'number'
+    ? mockVideoList.filter((item) => item.categoryId === categoryId || item.pCategoryId === categoryId)
+    : mockVideoList
+
+  const safePage = Math.max(1, page)
+  const safePageSize = Math.max(1, pageSize)
+  const start = (safePage - 1) * safePageSize
+  const end = start + safePageSize
+  const list = filtered.slice(start, end).map(mapVideoDataToChoicenessItem)
+
+  return {
+    list,
+    total: filtered.length,
+  }
+}
+
 export function generateMockDanmu(videoId: string | number, duration: number): DanmuData[] {
-  const danmuCount = Math.floor(Math.random() * 50) + 30 // 30-80条弹幕
+  const safeDuration = Math.max(5, duration || 15)
+  const danmuCount = Math.floor(Math.random() * 50) + 30
   const danmus: DanmuData[] = []
 
   for (let i = 0; i < danmuCount; i++) {
-    // 随机弹幕时间（在视频时长范围内）
-    const time = Math.random() * duration
-    
-    // 随机弹幕类型
-    const typeRoll = Math.random()
-    let type: 'top' | 'bottom' | 'scroll' = 'scroll'
-    if (typeRoll < 0.05) {
-      type = 'top' // 5%顶部弹幕
-    } else if (typeRoll < 0.1) {
-      type = 'bottom' // 5%底部弹幕
-    } else {
-      type = 'scroll' // 90%滚动弹幕
-    }
-
-    // 随机弹幕内容
-    const content = danmuContents[Math.floor(Math.random() * danmuContents.length)] || '666'
-    
-    // 随机颜色（普通弹幕才有随机颜色，特殊弹幕用固定颜色）
-    let color = '#ffffff'
-    if (type === 'scroll') {
-      color = danmuColors[Math.floor(Math.random() * danmuColors.length)] || '#ffffff'
-    } else if (type === 'top') {
-      color = '#ff2d55' // 顶部弹幕用红色
-    } else if (type === 'bottom') {
-      color = '#007aff' // 底部弹幕用蓝色
-    }
-
-    // 随机速度（1-2倍速）
-    const speed = 1 + Math.random()
-
-    // 随机用户
-    const userId = `user_${Math.floor(Math.random() * 10000)}`
-    const userName = userNames[Math.floor(Math.random() * userNames.length)] ?? '匿名用户'
+    const roll = Math.random()
+    const type: 'scroll' | 'top' | 'bottom' = roll < 0.05 ? 'top' : roll < 0.1 ? 'bottom' : 'scroll'
 
     danmus.push({
-      id: `${videoId}_${i}_${Date.now()}`,
-      content,
-      time,
-      color,
+      id: `${videoId}_${Date.now()}_${i}`,
+      content: danmuContents[Math.floor(Math.random() * danmuContents.length)] || '666',
+      time: Math.random() * safeDuration,
+      color: type === 'top' ? '#ff2d55' : type === 'bottom' ? '#007aff' : danmuColors[Math.floor(Math.random() * danmuColors.length)],
       type,
-      speed,
-      userId,
-      userName,
+      speed: 1 + Math.random(),
+      userId: `user_${Math.floor(Math.random() * 10000)}`,
+      userName: userNames[Math.floor(Math.random() * userNames.length)] || '匿名用户',
     })
   }
 
-  // 按时间排序
   return danmus.sort((a, b) => a.time - b.time)
 }
 
-// 获取视频数据（模拟API调用）
-export function fetchVideoData(videoId: string | number): Promise<VideoData> {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      const video = mockVideoList.find(v => v.videoId === videoId)
-      if (video) {
-        resolve(video)
-      } else {
-        reject(new Error('视频不存在'))
-      }
-    }, 500) // 模拟网络延迟
-  })
+export async function fetchVideoData(videoId: string | number): Promise<VideoData> {
+  try {
+    const [detailResponse, playlistResponse] = await Promise.all([
+      axios.get<WebApiResponse<WebVideoItem>>(`/api/video/play/${videoId}`),
+      axios.get<WebApiResponse<WebPlayListInfo>>(`/api/video/play/${videoId}/playlist`),
+    ])
+
+    const detail = detailResponse.data?.data
+    if (!detail) {
+      throw new Error('视频详情为空')
+    }
+
+    const playlist = playlistResponse.data?.data
+    return {
+      ...mapWebVideoItemToVideoData(detail),
+      duration: toNumber(playlist?.duration, detail.duration ?? 15),
+      qualities: normalizeQualities((playlist?.qualities || []) as WebVideoQuality[], detail.videoId),
+      title: playlist?.title || detail.title || '未命名视频',
+    }
+  } catch (error) {
+    const fallback = mockVideoList.find((item) => String(item.videoId) === String(videoId))
+    if (fallback) {
+      return fallback
+    }
+    throw error
+  }
 }
 
-// 获取视频列表（模拟API调用）
-export function fetchVideoList(page: number = 1, pageSize: number = 10): Promise<{ data: VideoData[], total: number }> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const start = (page - 1) * pageSize
-      const end = start + pageSize
-      const data = mockVideoList.slice(start, end)
-      
-      resolve({
-        data,
-        total: mockVideoList.length,
-      })
-    }, 800) // 模拟网络延迟
-  })
+export async function fetchVideoList(
+  page: number = 1,
+  pageSize: number = 10,
+): Promise<{ data: VideoData[]; total: number }> {
+  try {
+    const response = await axios.get<WebApiResponse<WebPage<WebVideoItem>>>('/api/video/feed/recommend', {
+      params: {
+        pageNo: page,
+        pageSize,
+      },
+    })
+
+    const pageData = response.data?.data
+    const list = (pageData?.list || []).map(mapWebVideoItemToVideoData)
+
+    if (list.length === 0) {
+      return getFallbackVideoPage(page, pageSize)
+    }
+
+    return {
+      data: list,
+      total: toNumber(pageData?.totalCount, list.length),
+    }
+  } catch (error) {
+    console.error('加载推荐视频流失败，使用本地兜底数据：', error)
+    return getFallbackVideoPage(page, pageSize)
+  }
 }
 
-// 发送弹幕（模拟API调用）
-export function sendDanmu(videoId: string | number, content: string): Promise<{ success: boolean, danmuId: string }> {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log(`发送弹幕到视频 ${videoId}: ${content}`)
-      resolve({
-        success: true,
-        danmuId: `danmu_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      })
-    }, 300) // 模拟网络延迟
-  })
+export async function fetchChoicenessCategories(): Promise<ChoicenessCategory[]> {
+  try {
+    const response = await axios.get<WebApiResponse<WebVideoCategory[]>>('/api/video/discover/categories')
+    const categories = response.data?.data || []
+
+    debugger
+    const mappedRoots = categories
+      .filter((item) => toNumber(item.pCategoryId, 0) === 0)
+      .map((item) => ({
+        id: String(item.categoryId ?? item.categoryCode ?? ''),
+        name: item.categoryName || '未命名分类',
+        pCategoryId: item.pCategoryId,
+        categoryId: item.categoryId,
+      }))
+      .filter((item) => item.id)
+
+    if (mappedRoots.length > 0) {
+      return [{ id: 'all', name: '全部' }, ...mappedRoots]
+    }
+  } catch (error) {
+    console.error('加载精选分类失败，使用本地兜底分类：', error)
+  }
+
+  return [
+    { id: 'all', name: '全部' },
+    { id: '1', name: '推荐', pCategoryId: 0, categoryId: 1 },
+    { id: '2', name: '热门', pCategoryId: 0, categoryId: 2 },
+    { id: '3', name: '精选', pCategoryId: 0, categoryId: 3 },
+  ]
 }
 
-// 获取视频弹幕（模拟API调用）
+export async function fetchChoicenessVideos(options?: {
+  page?: number
+  pageSize?: number
+  categoryId?: number
+  pCategoryId?: number
+}): Promise<{ list: ChoicenessVideoItem[]; total: number }> {
+  const page = Math.max(1, options?.page ?? 1)
+  const pageSize = Math.max(1, options?.pageSize ?? 10)
+  const categoryId = options?.categoryId
+  const pCategoryId = options?.pCategoryId
+
+  try {
+    const response = await axios.get<WebApiResponse<WebPage<WebVideoItem>>>('/api/video/feed/category', {
+      params: {
+        pageNo: page,
+        pageSize,
+        categoryId,
+        pCategoryId,
+      },
+    })
+
+    const pageData = response.data?.data
+    const list = (pageData?.list || [])
+      .map(mapWebVideoItemToVideoData)
+      .map(mapVideoDataToChoicenessItem)
+
+    if (list.length === 0) {
+      return getFallbackChoicenessPage(categoryId ?? pCategoryId, page, pageSize)
+    }
+
+    return {
+      list,
+      total: toNumber(pageData?.totalCount, list.length),
+    }
+  } catch (error) {
+    console.error('加载精选视频失败，使用本地兜底数据：', error)
+    return getFallbackChoicenessPage(categoryId ?? pCategoryId, page, pageSize)
+  }
+}
+
 export function fetchVideoDanmu(videoId: string | number): Promise<DanmuData[]> {
   return new Promise((resolve) => {
     setTimeout(() => {
-      const video = mockVideoList.find(v => v.videoId === videoId)
-      if (video) {
-        const danmus = generateMockDanmu(videoId, video.duration)
-        resolve(danmus)
-      } else {
-        resolve([])
-      }
-    }, 600) // 模拟网络延迟
+      const video = mockVideoList.find((item) => String(item.videoId) === String(videoId))
+      resolve(generateMockDanmu(videoId, video?.duration || 15))
+    }, 200)
   })
 }
 
-// 模拟点赞/收藏/分享
-export function likeVideo(videoId: string | number): Promise<{ success: boolean, likes: number }> {
+export function sendDanmu(videoId: string | number, content: string): Promise<{ success: boolean; danmuId: string }> {
   return new Promise((resolve) => {
     setTimeout(() => {
-      const video = mockVideoList.find(v => v.videoId === videoId)
-      if (video) {
-        video.likes = (video.likes || 0) + 1
-        resolve({
-          success: true,
-          likes: video.likes,
-        })
-      } else {
-        resolve({
-          success: false,
-          likes: 0,
-        })
-      }
-    }, 200)
+      console.log(`发送弹幕 videoId=${videoId}, content=${content}`)
+      resolve({
+        success: true,
+        danmuId: `danmu_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`,
+      })
+    }, 150)
+  })
+}
+
+export function likeVideo(videoId: string | number): Promise<{ success: boolean; likes: number }> {
+  return new Promise((resolve) => {
+    const video = mockVideoList.find((item) => String(item.videoId) === String(videoId))
+    if (!video) {
+      resolve({ success: false, likes: 0 })
+      return
+    }
+
+    video.likes = (video.likes || 0) + 1
+    resolve({ success: true, likes: video.likes })
   })
 }
 
 export function collectVideo(videoId: string | number): Promise<{ success: boolean }> {
   return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log(`收藏视频 ${videoId}`)
-      resolve({ success: true })
-    }, 200)
+    const exists = mockVideoList.some((item) => String(item.videoId) === String(videoId))
+    resolve({ success: exists })
   })
 }
 
-export function shareVideo(videoId: string | number): Promise<{ success: boolean, shares: number }> {
+export function shareVideo(videoId: string | number): Promise<{ success: boolean; shares: number }> {
   return new Promise((resolve) => {
-    setTimeout(() => {
-      const video = mockVideoList.find(v => v.videoId === videoId)
-      if (video) {
-        video.shares = (video.shares || 0) + 1
-        resolve({
-          success: true,
-          shares: video.shares,
-        })
-      } else {
-        resolve({
-          success: false,
-          shares: 0,
-        })
-      }
-    }, 200)
+    const video = mockVideoList.find((item) => String(item.videoId) === String(videoId))
+    if (!video) {
+      resolve({ success: false, shares: 0 })
+      return
+    }
+
+    video.shares = (video.shares || 0) + 1
+    resolve({ success: true, shares: video.shares })
   })
 }
 
-// 导出默认
 export default {
   mockVideoList,
   generateMockDanmu,
   fetchVideoData,
   fetchVideoList,
+  fetchChoicenessCategories,
+  fetchChoicenessVideos,
   sendDanmu,
   fetchVideoDanmu,
   likeVideo,

@@ -1,13 +1,11 @@
 <template>
-  <div 
-    class="video-card" 
-    :class="{ 'featured': isFeatured }"
+  <div
+    class="video-card"
+    :class="{ featured: isFeatured }"
     :data-video-id="dataVideoId"
-    @click="$emit('click', video)"
+    @click="emit('click', video)"
   >
-    <!-- 视频封面容器 -->
     <div class="video-cover">
-      <!-- 懒加载图片 -->
       <img
         :src="placeholder"
         :data-src="video.cover"
@@ -15,117 +13,78 @@
         class="cover-image"
         @load="handleImageLoad"
       />
-      
-      <!-- 视频时长 -->
+
       <div class="video-duration">
         {{ video.duration }}
       </div>
 
-      <!-- 点赞数 -->
       <div class="video-likes">
-        <span class="like-icon">❤️</span>
+        <span class="like-icon">♥</span>
         <span class="like-count">{{ formatLikes(video.likes) }}</span>
       </div>
 
-      <!-- 播放按钮（悬停时显示） -->
       <div class="play-overlay">
-        <div class="play-button">
-          ▶
-        </div>
+        <div class="play-button">▶</div>
       </div>
     </div>
 
-    <!-- 视频信息 -->
     <div class="video-info">
       <h3 class="video-title" :title="video.title">
         {{ truncateTitle(video.title) }}
       </h3>
-      
+
       <div class="video-meta">
         <span class="video-author">{{ video.author }}</span>
         <span class="video-views">{{ formatViews(video.views) }}观看</span>
         <span class="video-time">{{ video.uploadTime }}</span>
       </div>
 
-      <!-- 分类标签 -->
       <div class="video-tags">
-        <span class="video-tag">{{ getCategoryName(video.category) }}</span>
+        <span class="video-tag">{{ video.categoryName }}</span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-
-interface Video {
-  id: number
-  title: string
-  category: string
-  cover: string
-  likes: number
-  duration: string
-  author: string
-  views: number
-  uploadTime: string
-}
+import { computed } from 'vue'
+import type { ChoicenessVideoItem } from '@/utils/mockData'
 
 interface Props {
-  video: Video
+  video: ChoicenessVideoItem
   isFeatured?: boolean
   'data-video-id'?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
   isFeatured: false,
-  'data-video-id': undefined
+  'data-video-id': undefined,
 })
 
-const dataVideoId = computed(() => props['data-video-id'] || props.video.id)
-
 const emit = defineEmits<{
-  click: [video: Video]
+  click: [video: ChoicenessVideoItem]
 }>()
 
-// 占位符图片（base64 小图）
 const placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjJmMmYyIi8+PC9zdmc+'
+const dataVideoId = computed(() => props['data-video-id'] || props.video.id)
 
-// 分类名称映射
-const categoryNames: Record<string, string> = {
-  'all': '全部',
-  'game': '游戏',
-  'anime': '二次元',
-  'music': '音乐',
-  'dance': '舞蹈',
-  'food': '美食',
-  'travel': '旅行',
-  'sports': '运动',
-  'tech': '科技',
-  'fashion': '时尚'
-}
-
-// 工具函数
 const formatLikes = (likes: number): string => {
   if (likes >= 10000) {
-    return (likes / 10000).toFixed(1) + '万'
+    return `${(likes / 10000).toFixed(1)}万`
   }
   return likes.toString()
 }
 
 const formatViews = (views: number): string => {
   if (views >= 10000) {
-    return (views / 10000).toFixed(1) + '万'
+    return `${(views / 10000).toFixed(1)}万`
   }
   return views.toString()
 }
 
 const truncateTitle = (title: string): string => {
   const maxLength = props.isFeatured ? 40 : 30
-  return title.length > maxLength ? title.substring(0, maxLength) + '...' : title
-}
-
-const getCategoryName = (categoryId: string): string => {
-  return categoryNames[categoryId] || categoryId
+  return title.length > maxLength ? `${title.substring(0, maxLength)}...` : title
 }
 
 const handleImageLoad = (event: Event) => {
@@ -171,17 +130,17 @@ const handleImageLoad = (event: Event) => {
   height: 200px;
   overflow: hidden;
   background-color: var(--hover-bg);
+}
 
-  .cover-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: opacity 0.3s ease;
-    opacity: 0;
+.cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.3s ease;
+  opacity: 0;
 
-    &.loaded {
-      opacity: 1;
-    }
+  &.loaded {
+    opacity: 1;
   }
 }
 
@@ -190,7 +149,7 @@ const handleImageLoad = (event: Event) => {
   bottom: 10px;
   right: 10px;
   background-color: rgba(0, 0, 0, 0.7);
-  color: white;
+  color: #fff;
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
@@ -206,46 +165,39 @@ const handleImageLoad = (event: Event) => {
   align-items: center;
   gap: 4px;
   background-color: rgba(0, 0, 0, 0.7);
-  color: white;
+  color: #fff;
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
   backdrop-filter: blur(4px);
-
-  .like-icon {
-    font-size: 14px;
-  }
 }
 
 .play-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background-color: rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
   transition: opacity 0.3s ease;
+}
 
-  .play-button {
-    width: 60px;
-    height: 60px;
-    background-color: rgba(255, 255, 255, 0.9);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    color: #000;
-    transition: transform 0.2s ease;
+.play-button {
+  width: 60px;
+  height: 60px;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #000;
+  transition: transform 0.2s ease;
 
-    &:hover {
-      transform: scale(1.1);
-    }
+  &:hover {
+    transform: scale(1.1);
   }
 }
 
@@ -274,39 +226,30 @@ const handleImageLoad = (event: Event) => {
   color: var(--text-secondary);
   margin-bottom: 12px;
   flex-wrap: wrap;
-
-  .video-author {
-    font-weight: 500;
-    color: var(--text-color);
-  }
-
-  .video-views,
-  .video-time {
-    opacity: 0.8;
-  }
 }
 
-.video-tags {
-  .video-tag {
-    display: inline-block;
-    padding: 4px 12px;
-    background-color: var(--hover-bg);
-    color: var(--text-secondary);
-    border-radius: 16px;
-    font-size: 12px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-
-    &:hover {
-      background-color: var(--border-color);
-    }
-  }
+.video-author {
+  font-weight: 500;
+  color: var(--text-color);
 }
 
-// 暗色主题适配
-@media (prefers-color-scheme: dark) {
-  .video-card {
-    --card-bg: #1a1a1a;
+.video-views,
+.video-time {
+  opacity: 0.8;
+}
+
+.video-tag {
+  display: inline-block;
+  padding: 4px 12px;
+  background-color: var(--hover-bg);
+  color: var(--text-secondary);
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: var(--border-color);
   }
 }
 </style>

@@ -164,6 +164,7 @@ public class VideoInfoController extends ABaseController {
         playListInfoVo.setQualities(qualities);
         return getSuccessResponseVO(playListInfoVo);
     }
+
     @RequestMapping("/delVideoInfo")
     public ResponseVO delVideoInfo(Long videoId){
         VideoInfo infoByVideoId = videoInfoService.getVideoInfoByVideoId(videoId);

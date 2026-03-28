@@ -32,6 +32,7 @@ public class WebAppConfigurer implements WebMvcConfigurer {
                         "/account/sendResetPasswordEmailCode",
                         "/account/register",
                         "/account/resetPassword",
+                        "/video/**",
                         "/error"
                 );
     }

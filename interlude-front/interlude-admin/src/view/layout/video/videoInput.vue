@@ -294,11 +294,13 @@ const UpdateSubmitForm = () => {
     if (!vaild) {
       return
     }
-    const uploadId = uploadId.value
+    debugger
+    const uploadIds = uploadId.value
+    debugger
     let res = await proxy.$Request({
       url: proxy.$Api.postVideo,
       params: {
-        uploadId,
+        uploadIds,
       },
     })
     if (!res) {
@@ -375,6 +377,7 @@ const showEdit = (data) => {
   formData.value.visibility = data.visibility
   formData.value.interactionArray = data.interactionArray?.split(',')
   uploadId.value = data.uploadId
+  debugger
 }
 
 const addFile = (file: Object) => {
