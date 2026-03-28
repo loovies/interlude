@@ -12,6 +12,7 @@
         :alt="video.title"
         class="cover-image"
         @load="handleImageLoad"
+        @error="handleImageError"
       />
 
       <div class="video-duration">
@@ -89,6 +90,26 @@ const truncateTitle = (title: string): string => {
 
 const handleImageLoad = (event: Event) => {
   const img = event.target as HTMLImageElement
+  img.classList.add('loaded')
+}
+
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  const fallback = props.video.coverFallback
+
+  if (img.dataset.fallbackApplied === 'true') {
+    img.src = placeholder
+    img.classList.add('loaded')
+    return
+  }
+
+  if (fallback) {
+    img.dataset.fallbackApplied = 'true'
+    img.src = fallback
+    return
+  }
+
+  img.src = placeholder
   img.classList.add('loaded')
 }
 </script>

@@ -22,8 +22,8 @@ spring:
   #           enable: true
   datasource:
     url: jdbc:mysql://127.0.0.1:3306/interlude_db?serverTimezone=GMT%2B8&useUnicode=true&characterEncoding=utf8&autoReconnect=true&allowMultiQueries=true&useSSL=false
-    username: slave
-    password: 123456
+    username: root
+    password: 77871219
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       pool-name: HikariCPDatasource
@@ -51,7 +51,7 @@ mybatis:
     map-underscore-to-camel-case: true
 
 project:
-  folder: c:/webser/interlude/
+  folder: F:/webser/interlude/
 log:
   root:
     level: debug

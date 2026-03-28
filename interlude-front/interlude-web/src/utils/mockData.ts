@@ -42,6 +42,7 @@ export interface ChoicenessVideoItem {
   category: string
   categoryName: string
   cover: string
+  coverFallback?: string
   likes: number
   duration: string
   author: string
@@ -110,6 +111,12 @@ interface WebVideoItem {
   pCategoryName?: string
   categoryId?: number
   categoryName?: string
+}
+
+function buildInlinePlaceholder(label: string): string {
+  const safeLabel = encodeURIComponent(label || 'Interlude')
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="600" viewBox="0 0 400 600"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1f2937"/><stop offset="1" stop-color="#374151"/></linearGradient></defs><rect width="400" height="600" fill="url(#g)"/><circle cx="310" cy="120" r="72" fill="rgba(255,255,255,0.08)"/><circle cx="86" cy="498" r="96" fill="rgba(255,255,255,0.06)"/><text x="32" y="500" fill="#f9fafb" font-size="28" font-family="Arial, sans-serif">Interlude</text><text x="32" y="538" fill="#d1d5db" font-size="20" font-family="Arial, sans-serif">${safeLabel}</text></svg>`
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`
 }
 
 interface WebVideoCategory {
@@ -333,12 +340,16 @@ function mapWebVideoItemToVideoData(item: WebVideoItem): VideoData {
 }
 
 function mapVideoDataToChoicenessItem(item: VideoData): ChoicenessVideoItem {
+  const fallbackCover = item.thumbnailUrl || placeholderCover(item.videoId, item.title)
+  const cover = item.thumbnailUrl || fallbackCover
+
   return {
     id: toNumber(item.videoId, 0),
     title: item.title,
     category: String(item.categoryId ?? item.pCategoryId ?? 'all'),
     categoryName: item.categoryName || item.pCategoryName || '未分类',
-    cover: item.thumbnailUrl || `https://picsum.photos/seed/interlude-${item.videoId}/400/600`,
+    cover,
+    coverFallback: fallbackCover,
     likes: toNumber(item.likes, 0),
     duration: formatDuration(item.duration),
     author: item.author || '匿名作者',
@@ -346,6 +357,14 @@ function mapVideoDataToChoicenessItem(item: VideoData): ChoicenessVideoItem {
     uploadTime: item.createTime || '',
     description: item.description,
   }
+}
+
+function placeholderCover(videoId: string | number, title?: string): string {
+  const safeId = String(videoId ?? '').trim()
+  if (!safeId) {
+    return buildInlinePlaceholder(title || 'Video')
+  }
+  return buildInlinePlaceholder(title || `Video ${safeId}`)
 }
 
 function getFallbackVideoPage(page: number, pageSize: number): { data: VideoData[]; total: number } {
@@ -463,7 +482,6 @@ export async function fetchChoicenessCategories(): Promise<ChoicenessCategory[]>
     const response = await axios.get<WebApiResponse<WebVideoCategory[]>>('/api/video/discover/categories')
     const categories = response.data?.data || []
 
-    debugger
     const mappedRoots = categories
       .filter((item) => toNumber(item.pCategoryId, 0) === 0)
       .map((item) => ({

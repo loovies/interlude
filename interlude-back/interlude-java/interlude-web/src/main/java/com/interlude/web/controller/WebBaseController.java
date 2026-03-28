@@ -1,6 +1,7 @@
 package com.interlude.web.controller;
 
 import com.interlude.component.RedisComponent;
+import com.interlude.entity.config.AppConfig;
 import com.interlude.entity.constants.Constants;
 import com.interlude.entity.dto.TokenUserInfoDto;
 import com.interlude.entity.vo.ResponseVO;
@@ -13,6 +14,10 @@ import javax.annotation.Resource;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Base controller for web APIs.
@@ -25,6 +30,9 @@ public class WebBaseController {
 
     @Resource
     private RedisComponent redisComponent;
+
+    @Resource
+    private AppConfig appConfig;
 
     /**
      * Build a standard success response.
@@ -106,5 +114,41 @@ public class WebBaseController {
         cookie.setHttpOnly(true);
         cookie.setMaxAge(0);
         response.addCookie(cookie);
+    }
+
+    /**
+     * Read a stored file and write it to the current response.
+     */
+    protected boolean readFile(HttpServletResponse response, String path) {
+        if (response == null || StringTools.isEmpty(path) || !StringTools.pathIsOk(path)) {
+            return false;
+        }
+
+        File file = resolveStoredFile(path);
+        if (!file.exists() || !file.isFile()) {
+            return false;
+        }
+
+        try (OutputStream os = response.getOutputStream(); InputStream is = new FileInputStream(file)) {
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = is.read(buffer)) != -1) {
+                os.write(buffer, 0, len);
+            }
+            os.flush();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private File resolveStoredFile(String path) {
+        String projectFolder = appConfig.getProjectFolder();
+        File directFile = new File(projectFolder, path);
+        if (directFile.exists() && directFile.isFile()) {
+            return directFile;
+        }
+
+        return new File(projectFolder + Constants.FILE_FOLDER + path);
     }
 }

@@ -71,6 +71,7 @@
                 v-for="video in smallVideos"
                 :key="video.id"
                 class="small-video-item"
+                :data-video-id="video.id"
                 @click="handleVideoClick(video)"
               >
                 <div class="small-video-cover">
@@ -79,6 +80,7 @@
                     :data-src="video.cover"
                     :alt="video.title"
                     class="small-cover-image"
+                    @error="handleSmallImageError($event, video)"
                   />
                   <div class="small-video-duration">{{ video.duration }}</div>
                   <div class="small-video-likes">
@@ -172,6 +174,7 @@ const pageSize = 12
 const total = ref(0)
 const observer = ref<IntersectionObserver | null>(null)
 const loadedVideos = ref<Set<number>>(new Set())
+const observedElements = new WeakSet<Element>()
 
 const featuredVideo = computed(() => videoItems.value[0] ?? null)
 const smallVideos = computed(() => videoItems.value.slice(1, 5))
@@ -207,6 +210,12 @@ const getCurrentCategoryParams = () => {
     return {}
   }
 
+  if (currentCategory.pCategoryId === 0 && currentCategory.categoryId) {
+    return {
+      pCategoryId: currentCategory.categoryId,
+    }
+  }
+
   return {
     categoryId: currentCategory.categoryId,
     pCategoryId: currentCategory.pCategoryId,
@@ -214,37 +223,50 @@ const getCurrentCategoryParams = () => {
 }
 
 const initLazyLoad = () => {
-  observer.value?.disconnect()
-  observer.value = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (!entry.isIntersecting) {
-        return
-      }
+  if (!observer.value) {
+    observer.value = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) {
+          return
+        }
 
-      const videoCard = entry.target as HTMLElement
-      const videoId = Number(videoCard.getAttribute('data-video-id') || '0')
-      if (loadedVideos.value.has(videoId)) {
-        return
-      }
+        const videoCard = entry.target as HTMLElement
+        const videoId = Number(videoCard.getAttribute('data-video-id') || '0')
+        if (videoId > 0 && loadedVideos.value.has(videoId)) {
+          observer.value?.unobserve(videoCard)
+          return
+        }
 
-      const images = videoCard.querySelectorAll('img[data-src]')
-      images.forEach((imgNode) => {
-        const img = imgNode as HTMLImageElement
-        const dataSrc = img.getAttribute('data-src')
-        if (dataSrc) {
+        const images = videoCard.querySelectorAll('img[data-src]')
+        images.forEach((imgNode) => {
+          const img = imgNode as HTMLImageElement
+          const dataSrc = img.getAttribute('data-src')
+          if (!dataSrc || dataSrc === placeholder) {
+            img.removeAttribute('data-src')
+            return
+          }
+
           img.src = dataSrc
           img.removeAttribute('data-src')
+        })
+
+        if (videoId > 0) {
+          loadedVideos.value.add(videoId)
         }
+        observer.value?.unobserve(videoCard)
       })
-      loadedVideos.value.add(videoId)
+    }, {
+      rootMargin: '120px',
+      threshold: 0.01,
     })
-  }, {
-    rootMargin: '100px',
-    threshold: 0.01,
-  })
+  }
 
   nextTick(() => {
     document.querySelectorAll<HTMLElement>('[data-video-id]').forEach((card) => {
+      if (observedElements.has(card)) {
+        return
+      }
+      observedElements.add(card)
       observer.value?.observe(card)
     })
   })
@@ -272,6 +294,7 @@ const loadVideos = async (reset: boolean = false) => {
       videoItems.value = result.list
       pageNo.value = 2
       loadedVideos.value = new Set()
+      observer.value?.disconnect()
     } else {
       videoItems.value.push(...result.list)
       pageNo.value += 1
@@ -313,6 +336,23 @@ const handleMoreDropdownVisibleChange = (value: boolean) => {
 
 const handleVideoClick = (video: ChoicenessVideoItem) => {
   console.log('点击视频:', video)
+}
+
+const handleSmallImageError = (event: Event, video: ChoicenessVideoItem) => {
+  const img = event.target as HTMLImageElement
+
+  if (img.dataset.fallbackApplied === 'true') {
+    img.src = placeholder
+    return
+  }
+
+  if (video.coverFallback) {
+    img.dataset.fallbackApplied = 'true'
+    img.src = video.coverFallback
+    return
+  }
+
+  img.src = placeholder
 }
 
 const handleScroll = () => {

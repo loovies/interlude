@@ -190,6 +190,14 @@ public class WebVideoQueryService {
     }
 
     /**
+     * Get the cover path of a published video by video ID.
+     */
+    public String getVideoCover(Long videoId) {
+        VideoInfo videoInfo = getPublishedVideoOrThrow(videoId);
+        return videoInfo.getVideoCover();
+    }
+
+    /**
      * 按视频 ID 组装播放器清晰度与播放地址。
      */
     public PlayListInfoVo getPlayList(Long videoId) {
@@ -368,7 +376,7 @@ public class WebVideoQueryService {
         card.setVideoId(videoInfo.getVideoId());
         card.setTitle(videoInfo.getVideoName());
         card.setDescription(videoInfo.getDescription());
-        card.setCoverUrl(videoInfo.getVideoCover());
+        card.setCoverUrl(buildCoverUrl(videoInfo));
         card.setPublishTime(formatDate(videoInfo.getPublishTime() == null ? videoInfo.getCreateTime() : videoInfo.getPublishTime()));
         card.setTags(videoInfo.getTags());
         card.setInteractionSettings(videoInfo.getInteractionSettings());
@@ -600,6 +608,24 @@ public class WebVideoQueryService {
             return normalized;
         }
         return "/file/video/" + normalized + "/index.m3u8";
+    }
+
+    private String buildCoverUrl(VideoInfo videoInfo) {
+        if (videoInfo == null || videoInfo.getVideoId() == null) {
+            return "";
+        }
+
+        String coverPath = videoInfo.getVideoCover();
+        if (StringTools.isEmpty(coverPath)) {
+            return "";
+        }
+
+        String normalized = coverPath.trim();
+        if (normalized.startsWith("http://") || normalized.startsWith("https://")) {
+            return normalized;
+        }
+
+        return "/api/video/discover/" + videoInfo.getVideoId() + "/cover";
     }
 
     private String normalizePath(String path) {
