@@ -26,56 +26,6 @@
         </svg>
       </div>
 
-      <!-- 视频信息区域（左下角） -->
-      <div class="video-info" v-if="controlsVisible && videoData.author">
-        <div class="author-info">
-          <span class="author-name">@{{ videoData.author }}</span>
-          <span class="publish-time">{{ formatPublishTime(videoData.createTime) }}</span>
-        </div>
-        <div class="video-description" v-if="videoData.description">
-          {{ videoData.description }}
-        </div>
-      </div>
-
-      <!-- 侧边栏操作区域 -->
-      <div class="sidebar-actions" v-if="controlsVisible">
-        <!-- 用户头像 -->
-        <div class="user-avatar">
-          <img src="https://picsum.photos/seed/avatar/40/40" alt="用户头像" />
-        </div>
-        
-        <!-- 互动按钮 -->
-        <div class="action-buttons">
-          <button class="action-btn like-btn" @click.stop="handleLike">
-            <svg class="action-icon" viewBox="0 0 24 24">
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-            </svg>
-            <span class="action-count">{{ videoData.likes || 0 }}</span>
-          </button>
-          
-          <button class="action-btn comment-btn" @click.stop="handleComment">
-            <svg class="action-icon" viewBox="0 0 24 24">
-              <path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
-            </svg>
-            <span class="action-count">{{ videoData.comments || 0 }}</span>
-          </button>
-          
-          <button class="action-btn share-btn" @click.stop="handleShare">
-            <svg class="action-icon" viewBox="0 0 24 24">
-              <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
-            </svg>
-            <span class="action-count">{{ videoData.shares || 0 }}</span>
-          </button>
-          
-          <button class="action-btn collect-btn" @click.stop="handleCollect">
-            <svg class="action-icon" viewBox="0 0 24 24">
-              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-            </svg>
-            <span class="action-count">{{ videoData.collects || 0 }}</span>
-          </button>
-        </div>
-      </div>
-
       <!-- 加载遮罩 -->
       <div v-if="loading" class="loading-overlay">
         <div class="spinner"></div>
@@ -91,6 +41,56 @@
           <p class="error-text">{{ error }}</p>
           <button class="retry-btn" @click.stop="retry">重试</button>
         </div>
+      </div>
+    </div>
+
+    <!-- 侧边栏操作区域 -->
+    <div class="sidebar-actions" v-if="controlsVisible">
+      <!-- 用户头像 -->
+      <div class="user-avatar">
+        <img src="https://picsum.photos/seed/avatar/40/40" alt="用户头像" />
+      </div>
+      
+      <!-- 互动按钮 -->
+      <div class="action-buttons">
+        <button class="action-btn like-btn" @click.stop="handleLike">
+          <svg class="action-icon" viewBox="0 0 24 24">
+            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+          </svg>
+          <span class="action-count">{{ videoData.likes || 0 }}</span>
+        </button>
+        
+        <button class="action-btn comment-btn" @click.stop="handleComment">
+          <svg class="action-icon" viewBox="0 0 24 24">
+            <path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+          </svg>
+          <span class="action-count">{{ videoData.comments || 0 }}</span>
+        </button>
+        
+        <button class="action-btn share-btn" @click.stop="handleShare">
+          <svg class="action-icon" viewBox="0 0 24 24">
+            <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
+          </svg>
+          <span class="action-count">{{ videoData.shares || 0 }}</span>
+        </button>
+        
+        <button class="action-btn collect-btn" @click.stop="handleCollect">
+          <svg class="action-icon" viewBox="0 0 24 24">
+            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+          </svg>
+          <span class="action-count">{{ videoData.collects || 0 }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 视频信息区域（左下角） -->
+    <div class="video-info" v-if="controlsVisible && videoData.author">
+      <div class="author-info">
+        <span class="author-name">@{{ videoData.author }}</span>
+        <span class="publish-time">{{ formatPublishTime(videoData.createTime) }}</span>
+      </div>
+      <div class="video-description" v-if="videoData.description">
+        {{ videoData.description }}
       </div>
     </div>
 
@@ -1493,25 +1493,31 @@ defineExpose({
 /* 视频信息区域 */
 .video-info {
   position: absolute;
-  bottom: 20px; /* 向下移动更多 */
-  left: 0px;
-  max-width: 70%;
+  bottom: 75px;
+  left: 15px;
+  right: auto;
+  max-width: 55%;
   color: #fff;
   z-index: 20;
-  /* 移除背景色和边框 */
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
 }
 
 .author-info {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px; /* 增加间距 */
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
 }
 
 .author-name {
-  font-size: 25px; /* 增大字体 */
-  font-weight: 700; /* 加粗 */
+  font-size: 25px;
+  font-weight: 700;
   color: #fff;
 }
 
@@ -1521,8 +1527,8 @@ defineExpose({
 }
 
 .video-description {
-  font-size: 18px; /* 增大字体 */
-  line-height: 1.6; /* 增加行高 */
+  font-size: 18px;
+  line-height: 1.6;
   color: rgba(255, 255, 255, 0.95);
   max-height: 60px;
   overflow: hidden;
@@ -1530,7 +1536,7 @@ defineExpose({
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  margin-top: 6px; /* 增加上边距 */
+  margin-top: 6px;
 }
 
 /* 底部控制栏 */
@@ -2097,10 +2103,13 @@ defineExpose({
 /* 响应式设计 */
 @media (max-width: 1024px) {
   .video-info {
-    bottom: 190px;
-    left: 15px;
-    max-width: 80%;
-    padding: 10px 14px;
+    bottom: 170px;
+    left: 12px;
+    right: auto;
+    max-width: 65%;
+    padding: 8px 0;
+    align-items: flex-start;
+    text-align: left;
   }
   
   .author-name {
@@ -2123,9 +2132,10 @@ defineExpose({
   
   .video-info {
     bottom: 210px;
-    left: 10px;
+    left: 12px;
+    right: auto;
     max-width: 85%;
-    padding: 8px 12px;
+    padding: 6px 0;
   }
   
   .author-info {
@@ -2230,6 +2240,8 @@ defineExpose({
 @media (max-width: 480px) {
   .video-info {
     bottom: 230px;
+    left: 10px;
+    right: auto;
     max-width: 90%;
   }
   
@@ -2307,7 +2319,7 @@ defineExpose({
 /* 侧边栏操作区域 */
 .sidebar-actions {
   position: absolute;
-  right: 30px;
+  right: 15px;
   bottom: 70px;
   display: flex;
   flex-direction: column;
@@ -2374,26 +2386,17 @@ defineExpose({
   font-weight: 600;
 }
 
-.like-btn .action-icon {
-  fill: #ff2d55;
-}
-
-.comment-btn .action-icon {
-  fill: #4cd964;
-}
-
-.share-btn .action-icon {
-  fill: #007aff;
-}
-
+.like-btn .action-icon,
+.comment-btn .action-icon,
+.share-btn .action-icon,
 .collect-btn .action-icon {
-  fill: #ffcc00;
+  fill: #fff;
 }
 
 /* 响应式设计 */
 @media (max-width: 768px) {
   .sidebar-actions {
-    right: 12px;
+    right: 15px;
     bottom: 95px;
     gap: 16px;
   }
