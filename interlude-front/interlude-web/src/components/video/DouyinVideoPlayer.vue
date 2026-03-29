@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div 
     class="douyin-video-player" 
     ref="playerContainer"
@@ -6,77 +6,96 @@
     @mouseleave="startHideTimer"
     @click="togglePlay"
   >
-    <!-- 视频容器 -->
-    <div class="video-container" ref="videoContainer"></div>
+    <div class="video-stage" :style="videoStageStyle">
+      <!-- 视频容器 -->
+      <div class="video-container" ref="videoContainer"></div>
 
-    <!-- 弹幕层 -->
-    <DanmuLayer
-      v-if="showDanmu"
-      :danmu-list="danmuList"
-      :current-time="currentTime"
-      :is-playing="isPlaying"
-      @send-danmu="handleSendDanmu"
-    />
+      <!-- 弹幕层 -->
+      <DanmuLayer
+        v-if="showDanmu"
+        :danmu-list="danmuList"
+        :current-time="currentTime"
+        :is-playing="isPlaying"
+        @send-danmu="handleSendDanmu"
+      />
 
-    <!-- 中央播放按钮（暂停时显示） -->
-    <div class="center-play-button" v-if="!isPlaying && !loading && !error" @click.stop="togglePlay">
-      <svg class="play-icon" viewBox="0 0 24 24">
-        <path d="M8 5v14l11-7z" />
-      </svg>
-    </div>
-
-    <!-- 视频信息区域（左下角） -->
-    <div class="video-info" v-if="controlsVisible && videoData.author">
-      <div class="author-info">
-        <span class="author-name">@{{ videoData.author }}</span>
-        <span class="publish-time">{{ formatPublishTime(videoData.createTime) }}</span>
+      <!-- 中央播放按钮（暂停时显示） -->
+      <div class="center-play-button" v-if="!isPlaying && !loading && !error" @click.stop="togglePlay">
+        <svg class="play-icon" viewBox="0 0 24 24">
+          <path d="M8 5v14l11-7z" />
+        </svg>
       </div>
-      <div class="video-description" v-if="videoData.description">
-        {{ videoData.description }}
-      </div>
-    </div>
 
-    <!-- 侧边栏操作区域 -->
-    <div class="sidebar-actions" v-if="controlsVisible">
-      <!-- 用户头像 -->
-      <div class="user-avatar">
-        <img src="https://picsum.photos/seed/avatar/40/40" alt="用户头像" />
+      <!-- 视频信息区域（左下角） -->
+      <div class="video-info" v-if="controlsVisible && videoData.author">
+        <div class="author-info">
+          <span class="author-name">@{{ videoData.author }}</span>
+          <span class="publish-time">{{ formatPublishTime(videoData.createTime) }}</span>
+        </div>
+        <div class="video-description" v-if="videoData.description">
+          {{ videoData.description }}
+        </div>
       </div>
-      
-      <!-- 互动按钮 -->
-      <div class="action-buttons">
-        <button class="action-btn like-btn" @click.stop="handleLike">
-          <svg class="action-icon" viewBox="0 0 24 24">
-            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-          </svg>
-          <span class="action-count">{{ videoData.likes || 0 }}</span>
-        </button>
+
+      <!-- 侧边栏操作区域 -->
+      <div class="sidebar-actions" v-if="controlsVisible">
+        <!-- 用户头像 -->
+        <div class="user-avatar">
+          <img src="https://picsum.photos/seed/avatar/40/40" alt="用户头像" />
+        </div>
         
-        <button class="action-btn comment-btn" @click.stop="handleComment">
-          <svg class="action-icon" viewBox="0 0 24 24">
-            <path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+        <!-- 互动按钮 -->
+        <div class="action-buttons">
+          <button class="action-btn like-btn" @click.stop="handleLike">
+            <svg class="action-icon" viewBox="0 0 24 24">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+            <span class="action-count">{{ videoData.likes || 0 }}</span>
+          </button>
+          
+          <button class="action-btn comment-btn" @click.stop="handleComment">
+            <svg class="action-icon" viewBox="0 0 24 24">
+              <path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+            </svg>
+            <span class="action-count">{{ videoData.comments || 0 }}</span>
+          </button>
+          
+          <button class="action-btn share-btn" @click.stop="handleShare">
+            <svg class="action-icon" viewBox="0 0 24 24">
+              <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
+            </svg>
+            <span class="action-count">{{ videoData.shares || 0 }}</span>
+          </button>
+          
+          <button class="action-btn collect-btn" @click.stop="handleCollect">
+            <svg class="action-icon" viewBox="0 0 24 24">
+              <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+            </svg>
+            <span class="action-count">{{ videoData.collects || 0 }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 加载遮罩 -->
+      <div v-if="loading" class="loading-overlay">
+        <div class="spinner"></div>
+        <p class="loading-text">视频加载中...</p>
+      </div>
+
+      <!-- 错误提示 -->
+      <div v-if="error" class="error-overlay">
+        <div class="error-content">
+          <svg class="error-icon" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
           </svg>
-          <span class="action-count">{{ videoData.comments || 0 }}</span>
-        </button>
-        
-        <button class="action-btn share-btn" @click.stop="handleShare">
-          <svg class="action-icon" viewBox="0 0 24 24">
-            <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
-          </svg>
-          <span class="action-count">{{ videoData.shares || 0 }}</span>
-        </button>
-        
-        <button class="action-btn collect-btn" @click.stop="handleCollect">
-          <svg class="action-icon" viewBox="0 0 24 24">
-            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
-          </svg>
-          <span class="action-count">{{ videoData.collects || 0 }}</span>
-        </button>
+          <p class="error-text">{{ error }}</p>
+          <button class="retry-btn" @click.stop="retry">重试</button>
+        </div>
       </div>
     </div>
 
     <!-- 底部控制栏 -->
-    <div class="video-control-bar" v-if="controlsVisible">
+    <div class="video-control-bar" v-if="controlsVisible" ref="controlBarRef">
       <!-- 第一行：进度条独占一行 -->
       <div class="progress-row">
         <div class="progress-bar" ref="progressBar" @click.stop="seekToPosition">
@@ -324,27 +343,12 @@
       </div>
     </div>
 
-    <!-- 加载遮罩 -->
-    <div v-if="loading" class="loading-overlay">
-      <div class="spinner"></div>
-      <p class="loading-text">视频加载中...</p>
-    </div>
-
-    <!-- 错误提示 -->
-    <div v-if="error" class="error-overlay">
-      <div class="error-content">
-        <svg class="error-icon" viewBox="0 0 24 24">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-        </svg>
-        <p class="error-text">{{ error }}</p>
-        <button class="retry-btn" @click.stop="retry">重试</button>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import type { CSSProperties } from 'vue'
 import Player from 'xgplayer'
 import 'xgplayer/dist/index.min.css'
 import { ElSwitch } from 'element-plus'
@@ -376,7 +380,19 @@ const emit = defineEmits(['ready', 'play', 'pause', 'ended', 'error'])
 const playerContainer = ref<HTMLElement | null>(null)
 const videoContainer = ref<HTMLElement | null>(null)
 const progressBar = ref<HTMLElement | null>(null)
+const controlBarRef = ref<HTMLElement | null>(null)
 const volumeSlider = ref<HTMLElement | null>(null)
+
+const VIDEO_BOTTOM_GAP = 2
+const CONTROL_BAR_VISUAL_OFFSET = 60
+const videoStageStyle = ref<CSSProperties>({
+  width: '100%',
+  height: '100%',
+})
+
+let lastStageScale = 1
+let containerResizeObserver: ResizeObserver | null = null
+let replayTimeout: ReturnType<typeof setTimeout> | null = null
 
 const player = ref<Player | null>(null)
 
@@ -448,6 +464,77 @@ const lastBufferingTime = ref(0) // 上次缓冲时间
 const networkQuality = ref<'good' | 'medium' | 'poor'>('good') // 网络质量
 const autoDegradeEnabled = ref(true) // 是否启用自动降级
 
+const clearReplayTimeout = () => {
+  if (replayTimeout) {
+    clearTimeout(replayTimeout)
+    replayTimeout = null
+  }
+}
+
+const scheduleAutoReplay = () => {
+  clearReplayTimeout()
+  if (typeof window === 'undefined') return
+  replayTimeout = window.setTimeout(() => {
+    if (player.value) {
+      try {
+        player.value.currentTime = 0
+      } catch (e) {
+        console.log('重置播放时间失败:', e)
+      }
+      player.value
+        .play()
+        .then(() => {
+          isPlaying.value = true
+        })
+        .catch((e: any) => {
+        console.log('自动重播失败:', e)
+        isPlaying.value = false
+      })
+    }
+  }, 2000)
+}
+
+const updateVideoStageSize = () => {
+  const containerEl = playerContainer.value
+  if (!containerEl) return
+
+  const containerRect = containerEl.getBoundingClientRect()
+  if (!containerRect.width || !containerRect.height) return
+
+  let scale = lastStageScale
+
+  let referenceTop: number | null = null
+  if (progressBar.value) {
+    referenceTop = progressBar.value.getBoundingClientRect().top
+  } else if (controlBarRef.value) {
+    referenceTop = controlBarRef.value.getBoundingClientRect().top + CONTROL_BAR_VISUAL_OFFSET
+  }
+
+  if (referenceTop !== null && referenceTop !== undefined) {
+    const availableHeight = Math.max(referenceTop - containerRect.top - VIDEO_BOTTOM_GAP, 0)
+    if (availableHeight > 0) {
+      scale = Math.min(availableHeight / containerRect.height, 1)
+      lastStageScale = scale
+    }
+  } else {
+    scale = 1
+    lastStageScale = 1
+  }
+
+  if (!Number.isFinite(scale) || scale <= 0) {
+    scale = 1
+    lastStageScale = 1
+  }
+
+  const stageHeight = containerRect.height * scale
+  const stageWidth = containerRect.width * scale
+
+  videoStageStyle.value = {
+    width: `${stageWidth}px`,
+    height: `${stageHeight}px`,
+  }
+}
+
 // 初始化播放器
 const initPlayer = () => {
   console.log('初始化抖音风格播放器')
@@ -460,6 +547,7 @@ const initPlayer = () => {
   loading.value = true
   error.value = ''
   controlsVisible.value = true
+  clearReplayTimeout()
   
   // 预加载优化：如果之前有播放器，先暂停并清理
   if (player.value) {
@@ -492,7 +580,7 @@ const initPlayer = () => {
       autoplay: props.autoplay,
       muted: isMuted.value,
       volume: volume.value,
-      fitVideoSize: 'fixWidth',
+      fitVideoSize: 'contain',
       controls: false, // 使用自定义控制栏
       playbackRate: [0.5, 0.75, 1.0, 1.25, 1.5, 2.0],
       lang: 'zh-cn',
@@ -615,8 +703,9 @@ const initPlayer = () => {
 
     // 生成模拟弹幕数据
     generateDanmuData()
-
+    
     console.log('抖音风格播放器初始化完成')
+    nextTick(() => updateVideoStageSize())
   } catch (err: any) {
     console.error('播放器初始化失败:', err)
     error.value = `播放器初始化失败: ${err.message}`
@@ -692,11 +781,13 @@ const setupPlayerEvents = () => {
   if (!player.value) return
 
   player.value.on('play', () => {
+    clearReplayTimeout()
     isPlaying.value = true
     emit('play')
   })
 
   player.value.on('pause', () => {
+    clearReplayTimeout()
     isPlaying.value = false
     emit('pause')
   })
@@ -704,6 +795,7 @@ const setupPlayerEvents = () => {
   player.value.on('ended', () => {
     isPlaying.value = false
     emit('ended')
+    scheduleAutoReplay()
   })
 
   player.value.on('error', (err: any) => {
@@ -732,6 +824,7 @@ const setupPlayerEvents = () => {
 
   player.value.on('fullscreenchange', (isFull: boolean) => {
     isFullscreen.value = isFull
+    nextTick(() => updateVideoStageSize())
   })
 
   // 缓冲监控
@@ -774,6 +867,7 @@ const setupPlayerEvents = () => {
 
 // 显示控制条
 const showControls = () => {
+  const wasHidden = !controlsVisible.value
   controlsVisible.value = true
   if (hideTimer.value) {
     clearTimeout(hideTimer.value)
@@ -784,6 +878,10 @@ const showControls = () => {
     hideTimer.value = setTimeout(() => {
       controlsVisible.value = false
     }, 5000) // 5秒后隐藏
+  }
+
+  if (wasHidden) {
+    nextTick(() => updateVideoStageSize())
   }
 }
 
@@ -1195,6 +1293,31 @@ watch(
   }
 )
 
+watch(
+  () => progressBar.value,
+  (bar) => {
+    if (bar) {
+      nextTick(() => updateVideoStageSize())
+    }
+  }
+)
+
+watch(
+  () => controlBarRef.value,
+  (bar) => {
+    if (bar) {
+      nextTick(() => updateVideoStageSize())
+    }
+  }
+)
+
+watch(
+  () => controlsVisible.value,
+  () => {
+    nextTick(() => updateVideoStageSize())
+  }
+)
+
 // 点击外部关闭菜单
 const handleClickOutside = (event: MouseEvent) => {
   // 关闭弹幕设置菜单
@@ -1236,10 +1359,21 @@ const handleCollect = () => {
 onMounted(() => {
   nextTick(() => {
     initPlayer()
+    updateVideoStageSize()
+
+    if (playerContainer.value && typeof ResizeObserver !== 'undefined') {
+      containerResizeObserver = new ResizeObserver(() => {
+        updateVideoStageSize()
+      })
+      containerResizeObserver.observe(playerContainer.value)
+    }
   })
   
   // 添加点击外部关闭菜单的监听
   document.addEventListener('click', handleClickOutside)
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', updateVideoStageSize)
+  }
 })
 
 // 组件卸载
@@ -1250,8 +1384,16 @@ onBeforeUnmount(() => {
   if (hideTimer.value) {
     clearTimeout(hideTimer.value)
   }
+  clearReplayTimeout()
   document.removeEventListener('keydown', handleKeydown)
   document.removeEventListener('click', handleClickOutside)
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('resize', updateVideoStageSize)
+  }
+  if (containerResizeObserver) {
+    containerResizeObserver.disconnect()
+    containerResizeObserver = null
+  }
 })
 
 // 暴露方法给父组件
@@ -1276,6 +1418,20 @@ defineExpose({
   background: #000;
   overflow: hidden;
   cursor: pointer;
+}
+
+.video-stage {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  z-index: 5;
+  max-width: 100%;
+  max-height: 100%;
+  transition: width 0.2s ease, height 0.2s ease;
 }
 
 .video-container {
@@ -1337,8 +1493,8 @@ defineExpose({
 /* 视频信息区域 */
 .video-info {
   position: absolute;
-  bottom: 100px; /* 向下移动更多 */
-  left: 20px;
+  bottom: 20px; /* 向下移动更多 */
+  left: 0px;
   max-width: 70%;
   color: #fff;
   z-index: 20;
@@ -1354,7 +1510,7 @@ defineExpose({
 }
 
 .author-name {
-  font-size: 18px; /* 增大字体 */
+  font-size: 25px; /* 增大字体 */
   font-weight: 700; /* 加粗 */
   color: #fff;
 }
@@ -1365,7 +1521,7 @@ defineExpose({
 }
 
 .video-description {
-  font-size: 16px; /* 增大字体 */
+  font-size: 18px; /* 增大字体 */
   line-height: 1.6; /* 增加行高 */
   color: rgba(255, 255, 255, 0.95);
   max-height: 60px;
@@ -1384,14 +1540,14 @@ defineExpose({
   left: 0;
   right: 0;
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
-  padding: 12px 20px;
+  padding: 0 20px 10px;
   transition: all 0.3s ease;
   z-index: 20;
 }
 
 /* 进度条行 */
 .progress-row {
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 .progress-bar {
@@ -1444,7 +1600,7 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
 }
 
 .control-left {
@@ -1462,7 +1618,7 @@ defineExpose({
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 6px 8px;
+  padding: 4px 6px;
   border-radius: 6px;
   transition: all 0.2s;
   gap: 4px;
@@ -1473,13 +1629,13 @@ defineExpose({
 }
 
 .control-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   fill: #fff;
 }
 
 .btn-text {
-  font-size: 12px;
+  font-size: 11px;
   color: #fff;
   white-space: nowrap;
 }
@@ -1670,7 +1826,7 @@ defineExpose({
   align-items: center;
   background: rgba(0, 0, 0, 0.8);
   border-radius: 20px;
-  padding: 6px 12px;
+  padding: 4px 10px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   /* margin-left 已移到父元素 */
 }
@@ -1680,8 +1836,8 @@ defineExpose({
   background: transparent;
   border: none;
   color: #fff;
-  font-size: 13px;
-  padding: 4px 12px; /* 增加内边距 */
+  font-size: 12px;
+  padding: 2px 10px;
   outline: none;
   width: 100%;
 }
@@ -1694,8 +1850,8 @@ defineExpose({
   background: #ff2d55;
   border: none;
   border-radius: 50%;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2151,21 +2307,21 @@ defineExpose({
 /* 侧边栏操作区域 */
 .sidebar-actions {
   position: absolute;
-  right: 20px;
-  bottom: 150px;
+  right: 30px;
+  bottom: 70px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   z-index: 100;
 }
 
 .user-avatar {
-  width: 50px;
-  height: 50px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  border: 4px solid rgba(255, 255, 255, 0.35);
   cursor: pointer;
   transition: all 0.3s;
 }
@@ -2184,7 +2340,7 @@ defineExpose({
 .action-buttons {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 18px;
 }
 
 .action-btn {
@@ -2193,11 +2349,12 @@ defineExpose({
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
+  padding: 10px;
+  border-radius: 10px;
   transition: all 0.2s;
+  min-width: 72px;
 }
 
 .action-btn:hover {
@@ -2206,15 +2363,15 @@ defineExpose({
 }
 
 .action-icon {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   fill: #fff;
 }
 
 .action-count {
   color: #fff;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .like-btn .action-icon {
@@ -2236,14 +2393,14 @@ defineExpose({
 /* 响应式设计 */
 @media (max-width: 768px) {
   .sidebar-actions {
-    right: 10px;
-    bottom: 120px;
-    gap: 15px;
+    right: 12px;
+    bottom: 95px;
+    gap: 16px;
   }
   
   .user-avatar {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
   }
   
   .action-buttons {
@@ -2255,12 +2412,12 @@ defineExpose({
   }
   
   .action-icon {
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
   }
   
   .action-count {
-    font-size: 11px;
+    font-size: 12px;
   }
 }
 </style>
