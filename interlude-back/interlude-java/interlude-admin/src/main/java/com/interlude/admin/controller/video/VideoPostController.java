@@ -63,6 +63,8 @@ public class VideoPostController extends ABaseController {
         Integer status = fileInfoByKey.getStatus().equals("success") ? 0 : -1;
         videoInfo.setStatus(status);
         videoInfo.setPublishTime(new Date());
+        videoInfo.setCreateTime(new Date());
+        videoInfo.setUpdateTime(new Date());
 
         videoInfoService.saveVideoInfo(videoInfo,uploadId);
 

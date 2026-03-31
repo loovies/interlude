@@ -294,9 +294,7 @@ const UpdateSubmitForm = () => {
     if (!vaild) {
       return
     }
-    debugger
     const uploadIds = uploadId.value
-    debugger
     let res = await proxy.$Request({
       url: proxy.$Api.postVideo,
       params: {

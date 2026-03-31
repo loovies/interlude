@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import com.interlude.exception.BusinessException;
 import com.interlude.mapper.video.*;
 import com.interlude.service.video.VideoInfoService;
+import com.interlude.service.video.VideoStatsService;
 import com.interlude.utils.FFmpegUtils;
 import com.interlude.utils.StringTools;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +58,9 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 
 	@Resource
 	private FFmpegUtils fFmpegUtils;
+
+	@Resource
+	private VideoStatsService videoStatsService;
 
 	/**
 	 * 根据条件查询列表
@@ -176,12 +180,21 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 			if(videoAudit != null){
 				throw new BusinessException(ResponseCodeEnum.CODE_600);
 			}
+
 			VideoAudit audit = new VideoAudit();
 			audit.setVideoId(videoId);
 			audit.setUserId(videoInfo.getUserId());
 			audit.setAuditStatus(VideoAuditEnum.PENDING.getStatus());
 			audit.setSubmitTime(new Date());
 			videoAuditMapper.insert(audit);
+
+			// 新增视频统计数据表
+			VideoStats videoStats = new VideoStats();
+			videoStats.setVideoId(videoId);
+			videoStats.setUpdateTime(new Date());
+			videoStats.setLastPlayTime(new Date());
+
+			videoStatsService.add(videoStats);
 		}else{
 
 		}

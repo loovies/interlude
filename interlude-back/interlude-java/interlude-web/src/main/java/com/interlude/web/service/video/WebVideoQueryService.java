@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -179,6 +180,53 @@ public class WebVideoQueryService {
         List<WebVideoCardVO> cards = toCards(page == null ? null : page.getList());
         Integer total = page == null || page.getTotalCount() == null ? cards.size() : page.getTotalCount();
         return buildPage(cards, safePageNo, safePageSize, total);
+    }
+
+    /**
+     * 闅忔満鎾斁鍒楄〃锛堣烦杞埌棣栭〉鎾斁锛夛紝鍙互浼犲叆璧峰瑙嗛 ID 鎺掔銆?
+     */
+    public PaginationResultVO<WebVideoCardVO> getRandomFeed(Long seedVideoId,
+                                                            Integer pageNo,
+                                                            Integer pageSize) {
+        int safePageNo = normalizePageNo(pageNo);
+        int safePageSize = normalizePageSize(pageSize);
+
+        VideoInfoQuery query = buildPublicVideoQuery(DEFAULT_PAGE_NO, safePageSize * 5);
+        query.setOrderBy("publish_time desc, create_time desc");
+        PaginationResultVO<VideoInfo> page = videoInfoService.findListByPage(query);
+
+        List<VideoInfo> candidates = page == null || page.getList() == null
+                ? new ArrayList<>()
+                : new ArrayList<>(page.getList());
+        Collections.shuffle(candidates);
+
+        List<VideoInfo> randomized = new ArrayList<>();
+        if (seedVideoId != null) {
+            VideoInfo seedVideo = videoInfoService.getVideoInfoByVideoId(seedVideoId);
+            if (isPublicPublishedVideo(seedVideo)) {
+                randomized.add(seedVideo);
+            }
+        }
+
+        for (VideoInfo item : candidates) {
+            if (item == null) {
+                continue;
+            }
+            if (seedVideoId != null && seedVideoId.equals(item.getVideoId())) {
+                continue;
+            }
+            randomized.add(item);
+            if (randomized.size() >= safePageSize) {
+                break;
+            }
+        }
+
+        if (randomized.isEmpty()) {
+            randomized.addAll(candidates);
+        }
+
+        List<WebVideoCardVO> cards = toCards(limitVideos(randomized, safePageSize));
+        return buildPage(cards, safePageNo, safePageSize, cards.size());
     }
 
     /**

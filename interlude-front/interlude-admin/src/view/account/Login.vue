@@ -90,7 +90,7 @@ const rules: FormRules = {
   account: [{ required: true, message: '请输入账号' }],
   password: [
     { required: true, message: '请输入密码' },
-    { validator: proxy.$Verify.password, message: '密码只能是数字,字母,特殊字符8-18位' },
+    // { validator: proxy.$Verify.password, message: '密码只能是数字,字母,特殊字符8-18位' },
   ],
   checkCode: [{ required: true, message: '请输入图片验证码' }],
 }

@@ -8,14 +8,15 @@
       ref="videoPlayers"
       @play="handleVideoPlay(index)"
       @pause="handleVideoPause(index)"
+      @fullscreen-change="handleFullscreenChange"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch, withDefaults } from 'vue'
 import DouyinVideoPlayer from './DouyinVideoPlayer.vue'
-import { fetchVideoList } from '@/utils/mockData'
+import { fetchVideoData, fetchVideoList, fetchRandomVideoList } from '@/utils/mockData'
 
 // 防抖函数
 function debounce<T extends (...args: any[]) => any>(fn: T, delay: number): T {
@@ -47,8 +48,19 @@ function throttle<T extends (...args: any[]) => any>(fn: T, interval: number): T
   } as T
 }
 
+type FeedMode = 'recommend' | 'random'
+
+const props = withDefaults(defineProps<{
+  feedMode?: FeedMode
+  initialVideoId?: string | number | null
+}>(), {
+  feedMode: 'recommend',
+  initialVideoId: null,
+})
+
 const emit = defineEmits<{
   activeVideoChange: [index: number, video: any]
+  fullscreenChange: [val: boolean]
 }>()
 
 const feedRef = ref<HTMLElement | null>(null)
@@ -57,6 +69,17 @@ const videoPlayers = ref<InstanceType<typeof DouyinVideoPlayer>[]>([])
 // 视频列表数据
 const videoList = ref<any[]>([])
 const loading = ref(false)
+const FEED_PAGE_SIZE = 10
+const isRandomMode = computed(() => props.feedMode === 'random')
+const seedHandled = ref(false)
+const lastAppliedSeedId = ref<string | null>(null)
+const pendingSeedId = computed(() => {
+  if (props.initialVideoId === null || props.initialVideoId === undefined) {
+    return null
+  }
+  const value = String(props.initialVideoId)
+  return value.length === 0 ? null : value
+})
 
 // activeIndex 用于滚动计算，activeIndexInternal 用于实际控制播放
 const activeIndex = ref(0)
@@ -69,6 +92,50 @@ const itemHeight = ref(window.innerHeight)
 
 // 标志位，用于区分是用户滚动还是程序化滚动
 let isProgrammaticScroll = false
+
+const resetFeedState = () => {
+  activeIndex.value = 0
+  activeIndexInternal.value = 0
+  lastActiveIndexBeforeFullscreen.value = 0
+  if (!feedRef.value) {
+    return
+  }
+  isProgrammaticScroll = true
+  feedRef.value.scrollTo({
+    top: 0,
+    behavior: 'auto',
+  })
+  isProgrammaticScroll = false
+}
+
+const ensureSeedAtTop = async (list: any[], seedId: string | null) => {
+  if (!seedId) {
+    return list
+  }
+  const targetIndex = list.findIndex((item) => item && String(item.videoId) === seedId)
+  if (targetIndex === 0) {
+    return list
+  }
+  if (targetIndex > 0) {
+    const [seedItem] = list.splice(targetIndex, 1)
+    list.unshift(seedItem)
+    return list
+  }
+  try {
+    const detail = await fetchVideoData(seedId)
+    if (detail) {
+      list.unshift(detail)
+    }
+  } catch (error) {
+    console.warn('根据 videoId 获取详情失败:', error)
+  }
+  return list
+}
+
+const reloadVideos = (forceSeed: boolean = false) => {
+  resetFeedState()
+  loadVideoList({ forceSeed })
+}
 
 // 更新内部激活索引（只有非全屏时才同步）
 const updateActiveIndexInternal = (index: number) => {
@@ -98,13 +165,29 @@ const emitActiveVideoChange = () => {
 }
 
 // 加载视频列表
-const loadVideoList = async () => {
+const loadVideoList = async (options?: { forceSeed?: boolean }) => {
   if (loading.value) return
-  
+
   loading.value = true
+  const shouldInjectSeed = isRandomMode.value && (options?.forceSeed || (!seedHandled.value && !!pendingSeedId.value))
+  const normalizedSeed = shouldInjectSeed ? pendingSeedId.value : null
+
   try {
-    const result = await fetchVideoList(1, 10)
-    videoList.value = result.data
+    let fetchedVideos: any[] = []
+    if (isRandomMode.value) {
+      const result = await fetchRandomVideoList({
+        page: 1,
+        pageSize: FEED_PAGE_SIZE,
+        seedVideoId: normalizedSeed ?? undefined,
+      })
+      fetchedVideos = result.data || []
+      await ensureSeedAtTop(fetchedVideos, normalizedSeed)
+    } else {
+      const result = await fetchVideoList(1, FEED_PAGE_SIZE)
+      fetchedVideos = result.data || []
+    }
+
+    videoList.value = fetchedVideos
     // 通知第一个视频激活
     nextTick(() => {
       emitActiveVideoChange()
@@ -112,6 +195,18 @@ const loadVideoList = async () => {
   } catch (error) {
     console.error('加载视频列表失败:', error)
   } finally {
+    if (isRandomMode.value) {
+      if (normalizedSeed) {
+        seedHandled.value = true
+        lastAppliedSeedId.value = normalizedSeed
+      } else if (!pendingSeedId.value) {
+        seedHandled.value = false
+        lastAppliedSeedId.value = null
+      }
+    } else {
+      seedHandled.value = false
+      lastAppliedSeedId.value = null
+    }
     loading.value = false
   }
 }
@@ -144,6 +239,32 @@ watch(activeIndexInternal, (newVal, oldVal) => {
   if (newVal !== undefined) {
     emitActiveVideoChange()
   }
+})
+
+watch(() => props.feedMode, () => {
+  seedHandled.value = false
+  lastAppliedSeedId.value = null
+  reloadVideos(true)
+})
+
+watch(() => props.initialVideoId, (newVal, oldVal) => {
+  if (!isRandomMode.value) {
+    return
+  }
+  if (newVal === oldVal) {
+    return
+  }
+  if (newVal === null || newVal === undefined) {
+    return
+  }
+  const normalized = String(newVal)
+  if (normalized.length === 0) {
+    return
+  }
+  if (seedHandled.value && lastAppliedSeedId.value === normalized) {
+    return
+  }
+  reloadVideos(true)
 })
 
 // 处理视频播放
@@ -228,6 +349,7 @@ const handleFullscreenChange = (val: boolean) => {
     isProgrammaticScroll = false
   }
   isFullScreen.value = val
+  emit('fullscreenChange', val)
 }
 
 // IntersectionObserver 精确监听视频可见性
@@ -235,7 +357,7 @@ let observer: IntersectionObserver | null = null
 
 onMounted(() => {
   // 加载视频列表
-  loadVideoList()
+  reloadVideos(true)
 
   // 初始计算
   updateActiveIndexFromScroll()

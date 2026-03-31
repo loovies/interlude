@@ -151,6 +151,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElDropdown, ElDropdownItem, ElDropdownMenu } from 'element-plus'
 import VideoCard from './components/VideoCard.vue'
 import {
@@ -161,6 +162,7 @@ import {
 } from '@/utils/mockData'
 
 const placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjJmMmYyIi8+PC9zdmc+'
+const router = useRouter()
 
 const categories = ref<ChoicenessCategory[]>([{ id: 'all', name: '全部' }])
 const activeCategory = ref('all')
@@ -335,7 +337,18 @@ const handleMoreDropdownVisibleChange = (value: boolean) => {
 }
 
 const handleVideoClick = (video: ChoicenessVideoItem) => {
-  console.log('点击视频:', video)
+  if (!video?.id) {
+    return
+  }
+  router.push({
+    name: 'recommendWithVideo',
+    params: {
+      videoId: String(video.id),
+    },
+    state: {
+      from: 'choiceness',
+    },
+  })
 }
 
 const handleSmallImageError = (event: Event, video: ChoicenessVideoItem) => {

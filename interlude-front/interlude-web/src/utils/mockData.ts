@@ -396,6 +396,29 @@ function getFallbackChoicenessPage(categoryId?: number, page: number = 1, pageSi
   }
 }
 
+function shuffleArray<T>(items: T[]): T[] {
+  const list = [...items]
+  for (let i = list.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1))
+    const current = list[i]
+    list[i] = list[j] as T
+    list[j] = current as T
+  }
+  return list
+}
+
+function getFallbackRandomList(page: number, pageSize: number) {
+  const safePage = Math.max(1, page)
+  const safePageSize = Math.max(1, pageSize)
+  const shuffled = shuffleArray(mockVideoList)
+  const start = (safePage - 1) * safePageSize
+  const end = start + safePageSize
+  return {
+    data: shuffled.slice(start, end),
+    total: shuffled.length,
+  }
+}
+
 export function generateMockDanmu(videoId: string | number, duration: number): DanmuData[] {
   const safeDuration = Math.max(5, duration || 15)
   const danmuCount = Math.floor(Math.random() * 50) + 30
@@ -474,6 +497,58 @@ export async function fetchVideoList(
   } catch (error) {
     console.error('加载推荐视频流失败，使用本地兜底数据：', error)
     return getFallbackVideoPage(page, pageSize)
+  }
+}
+
+export async function fetchRandomVideoList(options?: {
+  page?: number
+  pageSize?: number
+  seedVideoId?: string | number
+}): Promise<{ data: VideoData[]; total: number }> {
+  const page = Math.max(1, options?.page ?? 1)
+  const pageSize = Math.max(1, options?.pageSize ?? 10)
+  const seedVideoId = options?.seedVideoId
+
+  try {
+    const params: Record<string, unknown> = {
+      pageNo: page,
+      pageSize,
+    }
+    if (seedVideoId !== undefined && seedVideoId !== null && seedVideoId !== '') {
+      params.seedVideoId = seedVideoId
+    }
+
+    const response = await axios.get<WebApiResponse<WebPage<WebVideoItem>>>('/api/video/feed/random', {
+      params,
+    })
+
+    const pageData = response.data?.data
+    const list = (pageData?.list || []).map(mapWebVideoItemToVideoData)
+
+    if (list.length === 0) {
+      const recommend = await fetchVideoList(page, pageSize)
+      return {
+        data: shuffleArray(recommend.data).slice(0, pageSize),
+        total: recommend.total,
+      }
+    }
+
+    return {
+      data: list,
+      total: toNumber(pageData?.totalCount, list.length),
+    }
+  } catch (error) {
+    console.error('加载随机播放列表失败，尝试使用推荐流作为兜底：', error)
+    try {
+      const recommend = await fetchVideoList(page, pageSize)
+      return {
+        data: shuffleArray(recommend.data).slice(0, pageSize),
+        total: recommend.total,
+      }
+    } catch (innerError) {
+      console.error('推荐流兜底失败，使用本地随机列表：', innerError)
+      return getFallbackRandomList(page, pageSize)
+    }
   }
 }
 
@@ -606,6 +681,7 @@ export default {
   generateMockDanmu,
   fetchVideoData,
   fetchVideoList,
+  fetchRandomVideoList,
   fetchChoicenessCategories,
   fetchChoicenessVideos,
   sendDanmu,

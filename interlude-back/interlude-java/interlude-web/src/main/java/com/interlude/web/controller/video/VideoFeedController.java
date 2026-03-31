@@ -33,6 +33,17 @@ public class VideoFeedController extends WebBaseController {
     }
 
     /**
+     * 闅忔満鎾斁娴併€?
+     */
+    @GetMapping("/random")
+    public ResponseVO<PaginationResultVO<WebVideoCardVO>> random(
+            @RequestParam(value = "seedVideoId", required = false) Long seedVideoId,
+            @RequestParam(value = "pageNo", required = false) Integer pageNo,
+            @RequestParam(value = "pageSize", required = false) Integer pageSize) {
+        return getSuccessResponseVO(webVideoQueryService.getRandomFeed(seedVideoId, pageNo, pageSize));
+    }
+
+    /**
      * 最新发布流。
      */
     @GetMapping("/latest")
