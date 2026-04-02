@@ -9,7 +9,6 @@
       <span class="close-icon">&times;</span>
     </button>
     <VideoFeed
-      :key="routeKey"
       :feed-mode="feedMode"
       :initial-video-id="seedVideoId"
       @fullscreen-change="handleFullscreenChange"
@@ -33,8 +32,6 @@ const currentVideo = ref<any>(null)
 const seedVideoId = ref<string | null>(null)
 const ignoreNextRouteSeedUpdate = ref(false)
 const isFullscreen = ref(false)
-const routeKey = computed(() => route.fullPath)
-
 const feedMode = computed<FeedMode>(() => (route.name === 'recommendWithVideo' ? 'random' : 'recommend'))
 const showChoicenessBack = computed(() => feedMode.value === 'random' && !isFullscreen.value)
 

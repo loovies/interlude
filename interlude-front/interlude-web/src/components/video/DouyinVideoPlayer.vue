@@ -26,11 +26,6 @@
         </svg>
       </div>
 
-      <!-- 加载遮罩 -->
-      <div v-if="loading" class="loading-overlay">
-        <div class="spinner"></div>
-        <p class="loading-text">视频加载中...</p>
-      </div>
 
       <!-- 错误遮罩 -->
       <div v-if="error" class="error-overlay">
