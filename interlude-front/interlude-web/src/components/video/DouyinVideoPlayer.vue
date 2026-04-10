@@ -1,4 +1,4 @@
-﻿<template>
+﻿﻿<template>
   <div 
     class="douyin-video-player" 
     ref="playerContainer"
@@ -43,16 +43,25 @@
     <div class="sidebar-actions" v-if="controlsVisible">
       <!-- 用户头像 -->
       <div class="user-avatar">
-        <img src="https://picsum.photos/seed/avatar/40/40" alt="用户头像" />
+        <img
+          :src="authorAvatarUrl"
+          :alt="`${videoData.author || '用户'}头像`"
+          @error="handleAvatarLoadError"
+        />
       </div>
       
       <!-- 互动按钮 -->
       <div class="action-buttons">
-        <button class="action-btn like-btn" @click.stop="handleLike">
+        <button
+          class="action-btn like-btn"
+          :class="{ active: isLiked }"
+          :disabled="reactionMutating"
+          @click.stop="handleLike"
+        >
           <svg class="action-icon" viewBox="0 0 24 24">
             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
           </svg>
-          <span class="action-count">{{ videoData.likes || 0 }}</span>
+          <span class="action-count">{{ likeCount }}</span>
         </button>
         
         <button class="action-btn comment-btn" @click.stop="handleComment">
@@ -62,18 +71,28 @@
           <span class="action-count">{{ videoData.comments || 0 }}</span>
         </button>
         
-        <button class="action-btn share-btn" @click.stop="handleShare">
+        <button
+          class="action-btn share-btn"
+          :class="{ active: isShared }"
+          :disabled="reactionMutating"
+          @click.stop="handleShare"
+        >
           <svg class="action-icon" viewBox="0 0 24 24">
             <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/>
           </svg>
-          <span class="action-count">{{ videoData.shares || 0 }}</span>
+          <span class="action-count">{{ shareCount }}</span>
         </button>
         
-        <button class="action-btn collect-btn" @click.stop="handleCollect">
+        <button
+          class="action-btn collect-btn"
+          :class="{ active: isCollected }"
+          :disabled="reactionMutating"
+          @click.stop="handleCollect"
+        >
           <svg class="action-icon" viewBox="0 0 24 24">
             <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
           </svg>
-          <span class="action-count">{{ videoData.collects || 0 }}</span>
+          <span class="action-count">{{ collectCount }}</span>
         </button>
       </div>
     </div>
@@ -125,7 +144,7 @@
         <!-- 中间：弹幕控制 -->
         <div class="control-center">
           <!-- 弹幕开关 -->
-          <div class="danmu-switch-container" @click.stop>
+          <div class="danmu-switch-container">
             <span class="switch-label">弹幕</span>
             <ElSwitch
               v-model="showDanmu"
@@ -342,27 +361,57 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import { ElSwitch } from 'element-plus'
 import 'element-plus/dist/index.css'
 import DanmuLayer from './DanmuLayer.vue'
 import QualitySelector from './QualitySelector.vue'
 import { useDouyinVideoPlayer } from './composables/useDouyinVideoPlayer'
+import type { DouyinVideoData } from './composables/useDouyinVideoPlayer'
 
-const props = defineProps({
-  videoData: {
-    type: Object,
-    default: () => ({
-      videoId: null,
-      title: '',
-      duration: 0,
-      qualities: [],
-    }),
-  },
-  autoplay: {
-    type: Boolean,
-    default: true,
-  },
+const props = withDefaults(defineProps<{
+  videoData: DouyinVideoData
+  autoplay?: boolean
+}>(), {
+  autoplay: true,
 })
+
+const resolveAvatarUrl = (avatar?: string): string => {
+  if (!avatar) {
+    return ''
+  }
+  if (/^(https?:)?\/\//.test(avatar) || avatar.startsWith('data:image/')) {
+    return avatar
+  }
+  if (avatar.startsWith('/file/')) {
+    return avatar
+  }
+  const cleaned = avatar.replace(/^\/+/, '')
+  if (cleaned.startsWith('file/')) {
+    return `/${cleaned}`
+  }
+  return `/file/${cleaned}`
+}
+
+const buildAvatarFallback = (): string => {
+  const seedSource = props.videoData.authorId ?? props.videoData.videoId ?? 'author'
+  const seed = encodeURIComponent(String(seedSource))
+  return `https://picsum.photos/seed/avatar-${seed}/80/80`
+}
+
+const authorAvatarUrl = computed(() => {
+  const resolved = resolveAvatarUrl(props.videoData.authorAvatar?.trim())
+  return resolved || buildAvatarFallback()
+})
+
+const handleAvatarLoadError = (event: Event) => {
+  const target = event.target as HTMLImageElement | null
+  if (!target) {
+    return
+  }
+  target.onerror = null
+  target.src = buildAvatarFallback()
+}
 
 const emit = defineEmits(['ready', 'play', 'pause', 'ended', 'error', 'fullscreen-change'])
 
@@ -386,6 +435,13 @@ const {
   showDanmu,
   danmuList,
   danmuInputText,
+  likeCount,
+  collectCount,
+  shareCount,
+  isLiked,
+  isCollected,
+  isShared,
+  reactionMutating,
   showDanmuSettings,
   danmuFontSize,
   danmuOpacity,
@@ -427,9 +483,3 @@ defineExpose(exposed)
 </script>
 
 <style scoped lang="scss" src="./styles/DouyinVideoPlayer.scss"></style>
-
-
-
-
-
-

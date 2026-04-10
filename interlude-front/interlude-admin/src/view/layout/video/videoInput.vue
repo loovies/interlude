@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="menu-container">
     <ul class="horizontal-menu">
       <li
@@ -72,7 +72,7 @@
           <el-input
             v-model="formData.originInfo"
             clearable
-            placeholder="转载视频请注明来源,时间,地点(例: 转自https://www.xxxx.com/yyyy). 注明来源更快的通过审核哦"
+            placeholder="转载视频请注明来源、时间、地点(示例: 转自https://www.xxxx.com/yyyy), 注明来源可以更快通过审核"
             maxlength="200"
             show-word-limit
             @change="handleChange"
@@ -156,14 +156,47 @@ const props = defineProps({
 
 const activeIndex = ref(0)
 const isSaveVideoInfo = ref(true)
+const editingVideoId = ref<number | null>(null)
+
+const resolveCategoryIds = (categoryArray?: Array<number>) => {
+  let pCategoryId = 0
+  let categoryId = null
+  if (Array.isArray(categoryArray) && categoryArray.length > 0) {
+    if (categoryArray.length > 1) {
+      pCategoryId = categoryArray[0]
+      categoryId = categoryArray[1]
+    } else {
+      categoryId = categoryArray[0]
+    }
+  }
+  return { pCategoryId, categoryId }
+}
 
 const handleChange = () => {
   isSaveVideoInfo.value = false
 }
 
+const buildUpdatePayload = () => {
+  const params: Record<string, any> = {
+    videoName: formData.value.videoName,
+    description: formData.value.description,
+    videoCover: formData.value.videoCoverFile,
+    videoType: formData.value.postType,
+    visibility: formData.value.visibility,
+    tags: Array.isArray(formData.value.tags) ? formData.value.tags.join(',') : '',
+    interactionSettings: Array.isArray(formData.value.interactionArray)
+      ? formData.value.interactionArray.join(',')
+      : '',
+  }
+  const { pCategoryId, categoryId } = resolveCategoryIds(formData.value.categoryArray)
+  params.pCategoryId = pCategoryId
+  params.categoryId = categoryId
+  return params
+}
+
 const setActive = async (index: number): Promise<void> => {
   if (!isSaveVideoInfo.value) {
-    ElMessageBox.confirm('有未保存的草稿,是否保存?', 'Warning', {
+    ElMessageBox.confirm('有未保存的草稿, 是否保存?', 'Warning', {
       confirmButtonText: '保存',
       cancelButtonText: '取消',
       type: 'warning',
@@ -231,7 +264,7 @@ const rules = {
   visibility: [{ required: true, message: '可见性不能为空' }],
 }
 
-const emit = defineEmits(['update:fileList', 'addFile'])
+const emit = defineEmits(['update:fileList', 'addFile', 'updated'])
 const loadDraftInfo = async (): Promise<void> => {
   let res = await proxy.$Request({
     url: proxy.$Api.getDraftInfoByUserId,
@@ -262,7 +295,7 @@ const submitForm = () => {
     }
     proxy.$Message.success('投稿成功')
 
-    // 立即删除当前项
+    // 立即删除当前文件
     const newFileList = [...props.fileList]
     newFileList.splice(currentIndex, 1)
     emit('update:fileList', newFileList)
@@ -290,24 +323,26 @@ const submitForm = () => {
 }
 
 const UpdateSubmitForm = () => {
+  if (!editingVideoId.value) {
+    proxy.$Message.error('未定义视频记录变更消息，请重说）')
+    return
+  }
   formDataRef.value.validate(async (vaild) => {
     if (!vaild) {
       return
     }
-    const uploadIds = uploadId.value
-    let res = await proxy.$Request({
-      url: proxy.$Api.postVideo,
-      params: {
-        uploadIds,
-      },
+    const params = buildUpdatePayload()
+    params.videoId = editingVideoId.value
+    const res = await proxy.$Request({
+      url: proxy.$Api.updateVideoInfo,
+      params,
     })
     if (!res) {
       return
     }
     proxy.$Message.success('更新成功')
-    setTimeout(() => {
-      location.reload()
-    }, 500)
+    isSaveVideoInfo.value = true
+    emit('updated')
   })
 }
 
@@ -319,11 +354,14 @@ const saveDraftInfo = async (showMsg: boolean = false): Promise<void> => {
   if (props.fileList[activeIndex.value]) {
     params.uploadId = props.fileList[activeIndex.value].uploadId
   }
-  if (params.categoryArray.length > 1) {
-    params.pCategoryId = params.categoryArray[0]
-    params.categoryId = params.categoryArray[1]
-  } else {
-    params.categoryId = params.categoryArray[0]
+  if (Array.isArray(params.categoryArray) && params.categoryArray.length > 0) {
+    if (params.categoryArray.length > 1) {
+      params.pCategoryId = params.categoryArray[0]
+      params.categoryId = params.categoryArray[1]
+    } else {
+      params.pCategoryId = 0
+      params.categoryId = params.categoryArray[0]
+    }
   }
   if (params.interactionArray) {
     params.interactionSettings = params.interactionArray.join(',')
@@ -360,22 +398,25 @@ const uploadId = ref('')
 
 const showEdit = (data) => {
   isUpdateVideo.value = false
-  fileName.value = data.nickName + '-' + data.videoName
+  editingVideoId.value = data.videoId || null
+  fileName.value = `${data.nickName || ''}-${data.videoName || ''}`
   formData.value.videoCoverFile = data.videoCover
   formData.value.videoName = data.videoName
   formData.value.postType = data.videoType
-  formData.value.tags = data.tags.split(',')
+  formData.value.tags = data.tags ? data.tags.split(',').filter((item) => item) : []
   formData.value.categoryArray = []
-  if (data.pCategoryId != 0) {
+  if (data.pCategoryId && data.pCategoryId !== 0) {
     formData.value.categoryArray = [data.pCategoryId, data.categoryId]
-  } else {
+  } else if (data.categoryId) {
     formData.value.categoryArray = [data.categoryId]
   }
   formData.value.description = data.description
   formData.value.visibility = data.visibility
-  formData.value.interactionArray = data.interactionArray?.split(',')
+  formData.value.interactionArray = data.interactionArray
+    ? data.interactionArray.split(',').filter((item) => item !== '')
+    : []
   uploadId.value = data.uploadId
-  debugger
+  isSaveVideoInfo.value = true
 }
 
 const addFile = (file: Object) => {
@@ -484,3 +525,8 @@ h1 {
   }
 }
 </style>
+
+
+
+
+

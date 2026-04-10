@@ -43,6 +43,7 @@ const Api = {
   // video
   getLoadVideoInfo: '/videoInfo/loadVideoInfo',
   getDelVideoInfo: '/videoInfo/delVideoInfo',
+  updateVideoInfo: '/videoInfo/updateVideoInfo',
   getVideoAuditInfo: '/audit/loadVideoAuditInfo',
   updateVideoAudit: '/audit/updateVideoAudit',
 }

@@ -2,7 +2,7 @@
   <div class="test-container">
     <h2>抖音风格视频播放器测试</h2>
     <div class="player-wrapper">
-      <DouyinVideoPlayer :video-data="testVideoData" />
+      <DouyinVideoPlayer ref="playerRef" :video-data="testVideoData" :autoplay="true" />
     </div>
     
     <div class="test-controls">

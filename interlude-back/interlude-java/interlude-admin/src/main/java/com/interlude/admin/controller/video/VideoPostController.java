@@ -37,9 +37,10 @@ public class VideoPostController extends ABaseController {
     private RedisComponent redisComponent;
 
     @RequestMapping("postVideo")
-    public ResponseVO postVideo(@NotNull String uploadId,Long videoId){
+    public ResponseVO postVideo(String uploadId,Long videoId){
         TokenUserInfoDto tokenUserInfo = getTokenUserInfo();
 
+        System.out.println(uploadId);
         UploadResultDto fileInfoByKey = redisComponent.getUploadVideoFileInfoByKey(Constants.REDIS_KEY_UPLOADING_FILE + tokenUserInfo.getUserId() + uploadId);
         if(fileInfoByKey == null){
             throw new BusinessException("文件不存在");

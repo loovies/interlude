@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, ref, watch, withDefaults } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import DouyinVideoPlayer from './DouyinVideoPlayer.vue'
 import { fetchVideoData, fetchVideoList, fetchRandomVideoList } from '@/utils/mockData'
 

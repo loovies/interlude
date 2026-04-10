@@ -92,9 +92,9 @@ public class VideoAuditController extends ABaseController {
 
         List<VideoInfoVo> infoVos = new ArrayList<>();
         listByPage.getList().stream().forEach(item -> {
-            if(item.getStatus() != 0){
-                return;
-            }
+//            if(item.getStatus() != 0){
+//                return;
+//            }
             VideoAudit videoAuditByVideoId = videoAuditService.getVideoAuditByVideoId(item.getVideoId());
             if(videoAuditByVideoId == null){
                 return;
@@ -194,6 +194,11 @@ public class VideoAuditController extends ABaseController {
             videoAuditQuery.setAuditStatus(VideoAuditEnum.REJECTED.getStatus());
             videoAuditQuery.setAuditComment(videoAuditQuery.getAuditComment());
             videoAuditQuery.setRejectReason(videoAuditQuery.getRejectReason());
+
+            // 更新 videoInfo的status信息
+            VideoInfo videoInfo = new VideoInfo();
+            videoInfo.setStatus(VideoStatusEnum.OFFLINE.getStatus());
+            videoInfoService.updateVideoInfoByVideoId(videoInfo,videoAuditQuery.getVideoId());
 
             // 新增log和更新audit
             VideoAudit audit = new VideoAudit();

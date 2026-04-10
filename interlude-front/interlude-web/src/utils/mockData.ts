@@ -15,7 +15,9 @@ export interface VideoData {
   description?: string
   duration: number
   qualities: VideoQuality[]
+  authorId?: string | number
   author?: string
+  authorAvatar?: string
   likes?: number
   comments?: number
   shares?: number
@@ -324,7 +326,9 @@ function mapWebVideoItemToVideoData(item: WebVideoItem): VideoData {
     description: item.description,
     duration: toNumber(item.duration, 15),
     qualities: normalizeQualities(item.qualities, item.videoId),
+    authorId: item.author?.userId,
     author: item.author?.nickName || '匿名作者',
+    authorAvatar: item.author?.avatar,
     likes: toNumber(item.likeCount, 0),
     comments: toNumber(item.commentCount, 0),
     shares: toNumber(item.shareCount, 0),

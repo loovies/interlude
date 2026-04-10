@@ -99,6 +99,7 @@
     v-if="!isVideoInput"
     ref="videoInputRef"
     @addFile="changeVideoFile"
+    @updated="handleVideoUpdated"
     :updateFileList="updateFileList"
   ></videoInput>
 </template>
@@ -253,7 +254,6 @@ const uploadVideo4Draft = async (uid: number, chunkIndex: number): Promise<void>
   const chunks = Math.ceil(fileSize / CHUNK_SIZE) // 当前视频的分片数量
 
   // 如果文件没上传id 就上传视频, 并保存草稿表
-  debugger
   if (!currentFile.uploadId) {
     let result = await proxy.$Request({
       url: proxy.$Api.preUploadVideo,
@@ -365,7 +365,6 @@ const changeVideoFile = (file: Object, uploadId: string) => {
   fileList.value = []
   isUploadVideo.value = true
   nextTick(() => {
-    debugger
     uploadFile(file, uploadId.uploadId)
   })
 }
@@ -439,6 +438,10 @@ const showUpdateEdit = (data) => {
   nextTick(() => {
     videoInputRef.value.showEdit(data)
   })
+}
+
+const handleVideoUpdated = () => {
+  emit('closeVideoEdit')
 }
 
 defineExpose({

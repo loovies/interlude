@@ -1,4 +1,4 @@
-import { createApp } from 'vue'
+﻿import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import type { Emitter } from 'mitt'
 import ElementPlus from 'element-plus'
@@ -20,5 +20,7 @@ declare module '@vue/runtime-core' {
 
 app.use(createPinia())
 app.use(router)
+app.use(ElementPlus)
 
 app.mount('#app')
+

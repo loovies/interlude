@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.interlude.mapper.video.VideoReactionMapper">
+
+    <resultMap id="base_result_map" type="com.interlude.entity.po.video.VideoReaction">
+        <id column="reaction_id" property="reactionId"/>
+        <result column="video_id" property="videoId"/>
+        <result column="user_id" property="userId"/>
+        <result column="author_id" property="authorId"/>
+        <result column="reaction_type" property="reactionType"/>
+        <result column="status" property="status"/>
+    </resultMap>
+
+    <sql id="base_column_list">
+        reaction_id,video_id,user_id,author_id,reaction_type,status
+    </sql>
+
+    <sql id="base_query_condition">
+        <if test="query.reactionId != null">
+            and reaction_id = #{query.reactionId}
+        </if>
+        <if test="query.videoId != null">
+            and video_id = #{query.videoId}
+        </if>
+        <if test="query.videoIdList != null and query.videoIdList.size > 0">
+            and video_id in
+            <foreach collection="query.videoIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="query.userId != null and query.userId != ''">
+            and user_id = #{query.userId}
+        </if>
+        <if test="query.userIdFuzzy != null and query.userIdFuzzy != ''">
+            and user_id like concat('%', #{query.userIdFuzzy}, '%')
+        </if>
+        <if test="query.reactionType != null">
+            and reaction_type = #{query.reactionType}
+        </if>
+    </sql>
+
+    <sql id="base_query_condition_extend">
+    </sql>
+
+    <sql id="query_condition">
+        <where>
+            <include refid="base_query_condition"/>
+            <include refid="base_query_condition_extend"/>
+        </where>
+    </sql>
+
+    <select id="selectList" resultMap="base_result_map">
+        SELECT <include refid="base_column_list"/> FROM video_reactions <include refid="query_condition"/>
+        <if test="query.orderBy != null and query.orderBy != ''">
+            order by ${query.orderBy}
+        </if>
+        <if test="query.simplePage != null">
+            limit #{query.simplePage.start},#{query.simplePage.end}
+        </if>
+    </select>
+
+    <select id="selectCount" resultType="java.lang.Integer">
+        SELECT count(1) FROM video_reactions <include refid="query_condition"/>
+    </select>
+
+    <insert id="insert" parameterType="com.interlude.entity.po.video.VideoReaction">
+        INSERT INTO video_reactions
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="bean.reactionId != null">
+                reaction_id,
+            </if>
+            <if test="bean.videoId != null">
+                video_id,
+            </if>
+            <if test="bean.userId != null">
+                user_id,
+            </if>
+            <if test="bean.authorId != null">
+                author_id,
+            </if>
+            <if test="bean.reactionType != null">
+                reaction_type,
+            </if>
+            <if test="bean.status != null">
+                status,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="bean.reactionId != null">
+                #{bean.reactionId},
+            </if>
+            <if test="bean.videoId != null">
+                #{bean.videoId},
+            </if>
+            <if test="bean.userId != null">
+                #{bean.userId},
+            </if>
+            <if test="bean.authorId != null">
+                #{bean.authorId},
+            </if>
+            <if test="bean.reactionType != null">
+                #{bean.reactionType},
+            </if>
+            <if test="bean.status != null">
+                #{bean.status},
+            </if>
+        </trim>
+    </insert>
+
+    <insert id="insertOrUpdate" parameterType="com.interlude.entity.po.video.VideoReaction">
+        INSERT INTO video_reactions
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="bean.reactionId != null">
+                reaction_id,
+            </if>
+            <if test="bean.videoId != null">
+                video_id,
+            </if>
+            <if test="bean.userId != null">
+                user_id,
+            </if>
+            <if test="bean.authorId != null">
+                author_id,
+            </if>
+            <if test="bean.reactionType != null">
+                reaction_type,
+            </if>
+            <if test="bean.status != null">
+                status,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="bean.reactionId != null">
+                #{bean.reactionId},
+            </if>
+            <if test="bean.videoId != null">
+                #{bean.videoId},
+            </if>
+            <if test="bean.userId != null">
+                #{bean.userId},
+            </if>
+            <if test="bean.authorId != null">
+                #{bean.authorId},
+            </if>
+            <if test="bean.reactionType != null">
+                #{bean.reactionType},
+            </if>
+            <if test="bean.status != null">
+                #{bean.status},
+            </if>
+        </trim>
+        ON DUPLICATE KEY UPDATE
+        <trim suffixOverrides=",">
+            <if test="bean.videoId != null">
+                video_id = VALUES(video_id),
+            </if>
+            <if test="bean.userId != null">
+                user_id = VALUES(user_id),
+            </if>
+            <if test="bean.authorId != null">
+                author_id = VALUES(author_id),
+            </if>
+            <if test="bean.reactionType != null">
+                reaction_type = VALUES(reaction_type),
+            </if>
+            <if test="bean.status != null">
+                status = VALUES(status),
+            </if>
+        </trim>
+    </insert>
+
+    <insert id="insertBatch" parameterType="com.interlude.entity.po.video.VideoReaction">
+        INSERT INTO video_reactions(reaction_id,video_id,user_id,author_id,reaction_type,status) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.reactionId},#{item.videoId},#{item.userId},#{item.authorId},#{item.reactionType},#{item.status})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" parameterType="com.interlude.entity.po.video.VideoReaction">
+        INSERT INTO video_reactions(reaction_id,video_id,user_id,author_id,reaction_type,status) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.reactionId},#{item.videoId},#{item.userId},#{item.authorId},#{item.reactionType},#{item.status})
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        video_id = VALUES(video_id),
+        user_id = VALUES(user_id),
+        author_id = VALUES(author_id),
+        reaction_type = VALUES(reaction_type),
+        status = VALUES(status)
+    </insert>
+
+    <select id="selectByReactionId" resultMap="base_result_map">
+        select <include refid="base_column_list"/> from video_reactions where reaction_id=#{reactionId}
+    </select>
+
+    <update id="updateByReactionId" parameterType="com.interlude.entity.po.video.VideoReaction">
+        update video_reactions
+        <set>
+            <if test="bean.videoId != null">
+                video_id = #{bean.videoId},
+            </if>
+            <if test="bean.userId != null">
+                user_id = #{bean.userId},
+            </if>
+            <if test="bean.authorId != null">
+                author_id = #{bean.authorId},
+            </if>
+            <if test="bean.reactionType != null">
+                reaction_type = #{bean.reactionType},
+            </if>
+            <if test="bean.status != null">
+                status = #{bean.status},
+            </if>
+        </set>
+        where reaction_id = #{reactionId}
+    </update>
+
+    <delete id="deleteByReactionId">
+        delete from video_reactions where reaction_id=#{reactionId}
+    </delete>
+
+    <select id="selectByVideoUserAndType" resultMap="base_result_map">
+        select <include refid="base_column_list"/> from video_reactions
+        where video_id=#{videoId} and user_id=#{userId} and reaction_type=#{reactionType}
+        limit 1
+    </select>
+
+    <delete id="deleteByVideoUserAndType">
+        delete from video_reactions where video_id=#{videoId} and user_id=#{userId} and reaction_type=#{reactionType}
+    </delete>
+
+</mapper>

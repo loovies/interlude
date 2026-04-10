@@ -434,6 +434,7 @@ const exportClick = (): void => {
 const changeUploadvideo = () => {
   isUploadvideo.value = false
   selectDarftInfo()
+  loadVideoInfoList()
 }
 // 排序切换
 const changeSort = (): void => {

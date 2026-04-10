@@ -2,6 +2,7 @@ package com.interlude.admin.controller.video;
 
 import com.interlude.admin.controller.ABaseController;
 import com.interlude.entity.constants.Constants;
+import com.interlude.entity.dto.video.VideoInfoUpdateDto;
 import com.interlude.entity.po.CategoryInfo;
 import com.interlude.entity.po.UserInfo;
 import com.interlude.entity.po.video.VideoFile;
@@ -21,13 +22,14 @@ import com.interlude.service.UserInfoService;
 import com.interlude.service.video.VideoFileService;
 import com.interlude.service.video.VideoInfoService;
 import com.interlude.utils.DateUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -176,6 +178,49 @@ public class VideoInfoController extends ABaseController {
         videoInfo.setUpdateTime(new Date());
         videoInfoService.updateVideoInfoByVideoId(videoInfo,videoId);
 
+        return getSuccessResponseVO(null);
+    }
+
+    @RequestMapping("/updateVideoInfo")
+    @Validated
+    public ResponseVO updateVideoInfo(VideoInfoUpdateDto updateDto){
+        if(updateDto == null || updateDto.getVideoId() == null){
+            throw new BusinessException(ResponseCodeEnum.CODE_600);
+        }
+        VideoInfo dbInfo = videoInfoService.getVideoInfoByVideoId(updateDto.getVideoId());
+        if(dbInfo == null || dbInfo.getStatus() != null && dbInfo.getStatus() == 3){
+            throw new BusinessException(ResponseCodeEnum.CODE_600);
+        }
+        VideoInfo update = new VideoInfo();
+        if(StringUtils.isNotBlank(updateDto.getVideoName())){
+            update.setVideoName(updateDto.getVideoName().trim());
+        }
+        if(StringUtils.isNotBlank(updateDto.getDescription())){
+            update.setDescription(updateDto.getDescription().trim());
+        }
+        if(StringUtils.isNotBlank(updateDto.getTags())){
+            update.setTags(updateDto.getTags());
+        }
+        if(updateDto.getpCategoryId() != null){
+            update.setPCategoryId(updateDto.getpCategoryId());
+        }
+        if(updateDto.getCategoryId() != null){
+            update.setCategoryId(updateDto.getCategoryId());
+        }
+        if(updateDto.getVideoType() != null){
+            update.setVideoType(updateDto.getVideoType());
+        }
+        if(updateDto.getVisibility() != null){
+            update.setVisibility(updateDto.getVisibility());
+        }
+        if(StringUtils.isNotBlank(updateDto.getInteractionSettings())){
+            update.setInteractionSettings(updateDto.getInteractionSettings());
+        }
+        if(StringUtils.isNotBlank(updateDto.getVideoCover())){
+            update.setVideoCover(updateDto.getVideoCover());
+        }
+        update.setUpdateTime(new Date());
+        videoInfoService.updateVideoInfoByVideoId(update, updateDto.getVideoId());
         return getSuccessResponseVO(null);
     }
 }

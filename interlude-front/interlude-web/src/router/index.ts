@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+﻿import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -32,12 +32,12 @@ const router = createRouter({
         {
           path: 'test',
           name: 'test',
-          component: () => import('@/view/Home/test/index.vue'),
+          component: () => import('@/view/Playground/test/index.vue'),
         },
         {
           path: 'simple-test',
           name: 'simple-test',
-          component: () => import('@/view/Home/simple-test/index.vue'),
+          component: () => import('@/view/Playground/simple-test/index.vue'),
         }
       ]
     }
@@ -45,3 +45,4 @@ const router = createRouter({
 })
 
 export default router
+
