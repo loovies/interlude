@@ -101,6 +101,12 @@
   .author-name {
     font-size: 25px;
     font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+
+    &:hover {
+      opacity: 0.85;
+    }
   }
 
   .publish-time {
@@ -619,6 +625,12 @@
   gap: 24px;
   z-index: 100;
 
+  .avatar-follow-wrap {
+    position: relative;
+    width: 64px;
+    height: 64px;
+  }
+
   .user-avatar {
     width: 64px;
     height: 64px;
@@ -637,6 +649,72 @@
     &:hover {
       transform: scale(1.1);
       border-color: rgba(255, 255, 255, 0.6);
+    }
+  }
+
+  .follow-trigger {
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #ff2d55, #ff6b9d);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 5px 14px rgba(255, 45, 85, 0.45);
+    transition: transform 0.18s ease, opacity 0.25s ease, background 0.2s ease;
+    z-index: 2;
+
+    .follow-icon {
+      width: 12px;
+      height: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      .follow-svg {
+        width: 100%;
+        height: 100%;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2.6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .follow-svg.plus {
+        stroke-width: 2.8;
+      }
+    }
+
+    &:hover:not(:disabled) {
+      transform: translate(-50%, -50%) scale(1.06);
+    }
+
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    &.loading {
+      opacity: 0.78;
+    }
+
+    &.checked {
+      background: #ffffff;
+      color: #ff2d55;
+      animation: follow-check-fade 1s ease forwards;
+      box-shadow: 0 5px 14px rgba(0, 0, 0, 0.2);
+
+      .follow-icon {
+        width: 11px;
+        height: 11px;
+      }
     }
   }
 
@@ -714,6 +792,21 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes follow-check-fade {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.86);
   }
 }
 
@@ -839,9 +932,24 @@
     bottom: 95px;
     gap: 16px;
 
+    .avatar-follow-wrap {
+      width: 48px;
+      height: 48px;
+    }
+
     .user-avatar {
       width: 48px;
       height: 48px;
+    }
+
+    .follow-trigger {
+      width: 20px;
+      height: 20px;
+
+      .follow-icon {
+        width: 10px;
+        height: 10px;
+      }
     }
 
     .action-buttons {

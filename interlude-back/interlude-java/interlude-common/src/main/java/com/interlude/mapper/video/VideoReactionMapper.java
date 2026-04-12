@@ -3,6 +3,8 @@ package com.interlude.mapper.video;
 import com.interlude.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * Mapper for video_reactions table.
  */
@@ -36,4 +38,16 @@ public interface VideoReactionMapper<T, P> extends BaseMapper {
     Integer deleteByVideoUserAndType(@Param("videoId") Long videoId,
                                      @Param("userId") String userId,
                                      @Param("reactionType") String reactionType);
+
+    /**
+     * 查询用户点赞视频ID列表（按最近互动时间倒序）
+     */
+    List<Long> selectLikedVideoIdsByUser(@Param("userId") String userId,
+                                         @Param("offset") Integer offset,
+                                         @Param("limit") Integer limit);
+
+    /**
+     * 统计用户点赞视频数量
+     */
+    Integer countLikedVideosByUser(@Param("userId") String userId);
 }

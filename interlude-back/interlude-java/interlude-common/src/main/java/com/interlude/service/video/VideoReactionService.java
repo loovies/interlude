@@ -32,4 +32,8 @@ public interface VideoReactionService {
     VideoReaction getByVideoUserAndType(Long videoId, String userId, String reactionType);
 
     Integer deleteByVideoUserAndType(Long videoId, String userId, String reactionType);
+
+    List<Long> getLikedVideoIdsByUser(String userId, Integer offset, Integer limit);
+
+    Integer countLikedVideosByUser(String userId);
 }

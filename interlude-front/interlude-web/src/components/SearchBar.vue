@@ -19,14 +19,15 @@
       <el-popover v-else placement="bottom-end" trigger="click" :width="260" popper-class="top-user-popover">
         <template #reference>
           <button class="user-entry" type="button">
-            <el-avatar :size="34" :src="avatarUrl">
+            <el-avatar :size="34" :src="avatarUrl" class="profile-jump" @click.stop="handleOpenCurrentProfile">
               {{ userInitial }}
             </el-avatar>
-            <span class="user-name">{{ displayName }}</span>
+            <span class="user-name profile-jump" @click.stop="handleOpenCurrentProfile">{{ displayName }}</span>
+            <span class="entry-more">▾</span>
           </button>
         </template>
         <div class="user-card">
-          <div class="user-main">
+          <div class="user-main profile-jump" @click="handleOpenCurrentProfile">
             <el-avatar :size="44" :src="avatarUrl">
               {{ userInitial }}
             </el-avatar>
@@ -46,10 +47,12 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
+const router = useRouter()
 const logoutLoading = ref(false)
 const uiText = {
   placeholder: '\u641c\u7d22\u4f60\u611f\u5174\u8da3\u7684\u5185\u5bb9',
@@ -92,6 +95,26 @@ const avatarUrl = computed(() => resolveAvatarUrl(authStore.currentUser?.avatar)
 
 const handleLoginClick = () => {
   authStore.openLoginDialog('manual')
+}
+
+const handleOpenCurrentProfile = () => {
+  const user = authStore.currentUser
+  const userId = user?.userId ? String(user.userId).trim() : ''
+  if (!userId) {
+    return
+  }
+  const target = router.resolve({
+    path: '/mine',
+    query: {
+      userId,
+      nickName: user?.nickName || '',
+      avatar: user?.avatar || '',
+      focusCount: user?.focusCount,
+      fansCount: user?.fansCount,
+      likeCount: user?.likeCount,
+    },
+  })
+  window.open(target.href, '_blank', 'noopener,noreferrer')
 }
 
 const handleLogout = async () => {
@@ -233,6 +256,15 @@ const handleLogout = async () => {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 14px;
+}
+
+.user-entry .entry-more {
+  font-size: 12px;
+  opacity: 0.72;
+}
+
+.profile-jump {
+  cursor: pointer;
 }
 
 .user-card {

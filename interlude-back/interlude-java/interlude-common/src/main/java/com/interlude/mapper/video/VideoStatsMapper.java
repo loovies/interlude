@@ -24,5 +24,9 @@ public interface VideoStatsMapper<T, P> extends BaseMapper {
 	 */
 	Integer deleteByVideoId(@Param("videoId") Long videoId);
 
+	/**
+	 * 播放完成后原子递增播放次数
+	 */
+	Integer increasePlayCount(@Param("videoId") Long videoId);
 
 }

@@ -329,6 +329,27 @@ public class WebVideoQueryService {
     }
 
     /**
+     * 按给定视频ID顺序返回可公开展示的视频卡片。
+     */
+    public List<WebVideoCardVO> getCardsByVideoIds(List<Long> videoIds) {
+        List<WebVideoCardVO> cards = new ArrayList<>();
+        if (videoIds == null || videoIds.isEmpty()) {
+            return cards;
+        }
+        for (Long videoId : videoIds) {
+            if (videoId == null) {
+                continue;
+            }
+            VideoInfo videoInfo = videoInfoService.getVideoInfoByVideoId(videoId);
+            if (!isPublicPublishedVideo(videoInfo)) {
+                continue;
+            }
+            cards.add(toCard(videoInfo));
+        }
+        return cards;
+    }
+
+    /**
      * 获取发现页所需分类树。
      */
     public List<WebVideoCategoryVO> getCategoryTree() {

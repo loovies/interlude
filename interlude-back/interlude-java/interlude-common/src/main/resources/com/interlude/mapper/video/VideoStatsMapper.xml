@@ -360,4 +360,13 @@
 		delete from video_stats where video_id=#{videoId}
 	</delete>
 
+	<!-- 鎾斁瀹屾垚锛氬師瀛愰€掑鎾斁娆℃暟 -->
+	<update id="increasePlayCount">
+		update video_stats
+		set play_count = ifnull(play_count, 0) + 1,
+		    last_play_time = now(),
+		    update_time = now()
+		where video_id = #{videoId}
+	</update>
+
 </mapper>

@@ -522,21 +522,30 @@ onUnmounted(() => {
   :deep(.el-dialog) {
     border-radius: 20px;
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--border-color, #ddd) 85%, transparent);
-    box-shadow: 0 24px 48px color-mix(in srgb, var(--shadow-color, rgba(0, 0, 0, 0.18)) 80%, transparent);
+    background: #ffffff;
+    border: 1px solid #e8ecf3;
+    box-shadow: 0 26px 56px rgba(0, 0, 0, 0.24);
   }
 
   :deep(.el-dialog__header) {
     margin: 0;
     padding: 22px 24px 12px;
     background:
-      radial-gradient(circle at right top, rgba(255, 135, 85, 0.2), transparent 46%),
-      linear-gradient(150deg, rgba(255, 93, 76, 0.2), rgba(255, 255, 255, 0.02));
+      radial-gradient(circle at right top, rgba(255, 115, 90, 0.16), transparent 48%),
+      linear-gradient(150deg, #fff7f6, #ffffff 68%);
   }
 
   :deep(.el-dialog__body) {
     padding: 14px 24px 24px;
-    background: color-mix(in srgb, var(--sidebar-bg, #f8f8f8) 92%, white 8%);
+    background: #ffffff;
+  }
+
+  :deep(.el-dialog__headerbtn .el-dialog__close) {
+    color: #7b8798;
+  }
+
+  :deep(.el-dialog__headerbtn:hover .el-dialog__close) {
+    color: #414e63;
   }
 }
 
@@ -566,13 +575,12 @@ onUnmounted(() => {
     font-weight: 800;
     line-height: 1.1;
     letter-spacing: 0.02em;
-    color: var(--text-color, #222);
-    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+    color: #1f2937;
   }
 
   p {
     margin: 0;
-    color: var(--text-secondary, #666);
+    color: #64748b;
     font-size: 13px;
     max-width: 430px;
     line-height: 1.5;
@@ -581,8 +589,8 @@ onUnmounted(() => {
 
 .dialog-body {
   border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--border-color, #ddd) 85%, transparent);
-  background: color-mix(in srgb, var(--sidebar-bg, #fafafa) 96%, white 4%);
+  border: 1px solid #e7ebf1;
+  background: #ffffff;
   padding: 14px;
 }
 
@@ -592,10 +600,10 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 8px;
   font-size: 12px;
-  color: var(--text-secondary, #666);
+  color: #5b6678;
   padding: 8px 10px;
   border-radius: 10px;
-  background: color-mix(in srgb, var(--hover-bg, #f4f4f4) 70%, white 30%);
+  background: #f5f7fb;
   margin-bottom: 10px;
 }
 
@@ -632,7 +640,7 @@ onUnmounted(() => {
     margin: 0 auto;
     padding: 4px;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--hover-bg, #f4f4f4) 70%, white 30%);
+    background: #f3f5f9;
   }
 
   :deep(.el-tabs__item) {
@@ -650,10 +658,10 @@ onUnmounted(() => {
   }
 
   :deep(.el-tabs__item.is-active) {
-    background: color-mix(in srgb, var(--primary-color, #ff2d55) 14%, white 86%);
-    color: var(--primary-color, #ff2d55);
+    background: #fff2f4;
+    color: #ff2d55;
     font-weight: 600;
-    box-shadow: 0 2px 10px color-mix(in srgb, var(--primary-color, #ff2d55) 28%, transparent);
+    box-shadow: 0 2px 10px rgba(255, 45, 85, 0.2);
   }
 
   :deep(.el-tabs__active-bar) {
@@ -671,14 +679,26 @@ onUnmounted(() => {
   :deep(.el-input__wrapper) {
     border-radius: 10px;
     min-height: 42px;
-    background: color-mix(in srgb, var(--sidebar-bg, #fff) 86%, white 14%);
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--border-color, #ddd) 82%, transparent) inset;
+    background: #ffffff;
+    box-shadow: 0 0 0 1px #dbe2ed inset;
   }
 
   :deep(.el-input__wrapper.is-focus) {
     box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--primary-color, #ff2d55) 65%, transparent) inset,
-      0 0 0 4px color-mix(in srgb, var(--primary-color, #ff2d55) 16%, transparent);
+      0 0 0 1px rgba(255, 45, 85, 0.72) inset,
+      0 0 0 4px rgba(255, 45, 85, 0.12);
+  }
+
+  :deep(.el-input__inner) {
+    color: #1f2937;
+  }
+
+  :deep(.el-input__inner::placeholder) {
+    color: #98a3b4;
+  }
+
+  :deep(.el-checkbox__label) {
+    color: #4b5563;
   }
 }
 
@@ -699,15 +719,15 @@ onUnmounted(() => {
     width: 146px;
     flex: 0 0 146px;
     height: 42px;
-    border: 1px solid color-mix(in srgb, var(--border-color, #ddd) 85%, transparent);
+    border: 1px solid #dbe2ed;
     border-radius: 10px;
-    background: color-mix(in srgb, var(--hover-bg, #f4f4f4) 45%, transparent);
+    background: #f7f9fc;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    color: var(--text-secondary, #666);
+    color: #64748b;
     font-size: 12px;
 
     img {
@@ -740,7 +760,7 @@ onUnmounted(() => {
 .ghost-link {
   background: none;
   border: none;
-  color: var(--primary-color, #ff2d55);
+  color: #ff2d55;
   cursor: pointer;
   padding: 0;
   font-size: 13px;

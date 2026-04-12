@@ -96,4 +96,9 @@ public class VideoStatsServiceImpl implements VideoStatsService{
 	public Integer deleteVideoStatsByVideoId(Long videoId) {
 		return this.videoStatsMapper.deleteByVideoId(videoId);
 	}
+
+	@Override
+	public Integer increasePlayCount(Long videoId) {
+		return this.videoStatsMapper.increasePlayCount(videoId);
+	}
 }

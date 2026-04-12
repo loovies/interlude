@@ -3,8 +3,25 @@ import type { CSSProperties } from 'vue'
 import Player from 'xgplayer'
 import 'xgplayer/dist/index.min.css'
 import { ElMessage } from 'element-plus'
-import { fetchVideoReactionStatus, toggleVideoCollect, toggleVideoLike, toggleVideoShare, type VideoReactionStatus } from '@/api/video'
+import {
+  fetchUserFollowStatus,
+  fetchVideoReactionStatus,
+  followUser,
+  reportVideoPlayFinish,
+  reportVideoWatchHistory,
+  toggleVideoCollect,
+  toggleVideoLike,
+  toggleVideoShare,
+  type UserFollowStatus,
+  type VideoReactionStatus,
+} from '@/api/video'
 import { useLoginGuard } from '@/composables/useLoginGuard'
+import {
+  clearFollowRelationCache,
+  followRelationVersion,
+  getFollowRelationCache,
+  setFollowRelationCache,
+} from '@/utils/followCache'
 import { generateMockDanmu } from '@/utils/mockData'
 
 export interface VideoQualityOption {
@@ -58,7 +75,7 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   let replayTimeout: ReturnType<typeof setTimeout> | null = null
   
   const player = ref<Player | null>(null)
-  const { runAfterLogin } = useLoginGuard()
+  const { runAfterLogin, authStore } = useLoginGuard()
   
   // 播放状态
   const isPlaying = ref(false)
@@ -130,12 +147,20 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   const isShared = ref(false)
   const reactionMutating = ref(false)
   const reactionStatusLoading = ref(false)
+  const isFollowed = ref(false)
+  const followActionState = ref<'plus' | 'check' | 'hidden'>('hidden')
+  const followMutating = ref(false)
+  let followHideTimer: ReturnType<typeof setTimeout> | null = null
+  let followAnimatingTargetUserId = ''
   
   // 网络监控
   const bufferingCount = ref(0) // 缓冲次数统计
   const lastBufferingTime = ref(0) // 上次缓冲时间
   const networkQuality = ref<'good' | 'medium' | 'poor'>('good') // 网络质量
   const autoDegradeEnabled = ref(true) // 是否启用自动降级
+  const HISTORY_REPORT_INTERVAL_MS = 8000
+  let lastHistoryReportAt = 0
+  let lastHistoryVideoId: number | null = null
 
   const getVideoId = (): string | number | null => {
     const current = props.videoData?.videoId
@@ -143,6 +168,18 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
       return null
     }
     return current
+  }
+
+  const parseVideoId = (): number | null => {
+    const raw = getVideoId()
+    if (raw === null) {
+      return null
+    }
+    const parsed = Number(raw)
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return null
+    }
+    return Math.floor(parsed)
   }
 
   const parseCount = (value: unknown): number => {
@@ -162,6 +199,72 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
     isShared.value = false
   }
 
+  const normalizeUserId = (value: unknown): string => {
+    if (value === null || value === undefined) {
+      return ''
+    }
+    const text = String(value).trim()
+    return text
+  }
+
+  const getAuthorUserId = (): string => {
+    return normalizeUserId(props.videoData?.authorId)
+  }
+
+  const clearFollowHideTimer = () => {
+    if (!followHideTimer) {
+      return
+    }
+    clearTimeout(followHideTimer)
+    followHideTimer = null
+    followAnimatingTargetUserId = ''
+  }
+
+  const startFollowSuccessAnimation = (targetUserId: string) => {
+    clearFollowHideTimer()
+    followActionState.value = 'check'
+    followAnimatingTargetUserId = targetUserId
+    if (typeof window === 'undefined') {
+      followActionState.value = 'hidden'
+      followAnimatingTargetUserId = ''
+      return
+    }
+    followHideTimer = window.setTimeout(() => {
+      followActionState.value = 'hidden'
+      followHideTimer = null
+      followAnimatingTargetUserId = ''
+    }, 1000)
+  }
+
+  const applyFollowStatus = (status?: UserFollowStatus | null) => {
+    const targetUserId = normalizeUserId(status?.targetUserId || getAuthorUserId())
+    const followed = !!status?.followed
+    isFollowed.value = followed
+    if (followed) {
+      if (targetUserId && authStore.isLoggedIn) {
+        setFollowRelationCache(targetUserId, true)
+      }
+      const isCurrentFollowAnimation =
+        followActionState.value === 'check'
+        && !!followHideTimer
+        && targetUserId
+        && followAnimatingTargetUserId === targetUserId
+      if (isCurrentFollowAnimation) {
+        return
+      }
+      followActionState.value = 'hidden'
+      clearFollowHideTimer()
+      return
+    }
+    const currentUserId = normalizeUserId(authStore.currentUser?.userId)
+    const isSelfVideo = !!targetUserId && !!currentUserId && targetUserId === currentUserId
+    if (targetUserId && authStore.isLoggedIn) {
+      setFollowRelationCache(targetUserId, false)
+    }
+    followActionState.value = isSelfVideo || !targetUserId ? 'hidden' : 'plus'
+    clearFollowHideTimer()
+  }
+
   const applyReactionStatus = (status?: VideoReactionStatus | null) => {
     if (!status) {
       return
@@ -178,6 +281,51 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
     const message = error?.response?.data?.info || error?.message || fallback
     console.warn(fallback, error)
     ElMessage.error(message)
+  }
+
+  const reportPlayFinished = async () => {
+    const videoId = parseVideoId()
+    if (videoId === null) {
+      return
+    }
+    const duration = Math.max(0, Math.floor(totalDuration.value || props.videoData.duration || 0))
+    try {
+      await reportVideoPlayFinish({
+        videoId,
+        watchDuration: duration,
+        lastWatchTimeOffset: duration,
+        completeWatch: 1,
+      })
+    } catch (error) {
+      console.warn('上报播放完成失败:', error)
+    }
+  }
+
+  const reportPlayStarted = async () => {
+    if (!authStore.isLoggedIn) {
+      return
+    }
+    const videoId = parseVideoId()
+    if (videoId === null) {
+      return
+    }
+    const now = Date.now()
+    if (lastHistoryVideoId === videoId && now - lastHistoryReportAt < HISTORY_REPORT_INTERVAL_MS) {
+      return
+    }
+    lastHistoryVideoId = videoId
+    lastHistoryReportAt = now
+    const watchedOffset = Math.max(0, Math.floor(currentTime.value || 0))
+    try {
+      await reportVideoWatchHistory({
+        videoId,
+        watchDuration: watchedOffset,
+        lastWatchTimeOffset: watchedOffset,
+        completeWatch: 0,
+      })
+    } catch (error) {
+      console.warn('????????:', error)
+    }
   }
 
   const buildShareUrl = (videoId: string | number) => {
@@ -217,6 +365,31 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
       console.warn('获取互动状态失败', error);
     } finally {
       reactionStatusLoading.value = false
+    }
+  }
+
+  const loadFollowStatus = async () => {
+    const targetUserId = getAuthorUserId()
+    if (!targetUserId) {
+      applyFollowStatus({ targetUserId: '', followed: true })
+      return
+    }
+    const cachedFollowState = getFollowRelationCache(targetUserId)
+    if (cachedFollowState !== null) {
+      applyFollowStatus({ targetUserId, followed: cachedFollowState })
+      return
+    }
+    const currentUserId = normalizeUserId(authStore.currentUser?.userId)
+    if (currentUserId && currentUserId === targetUserId) {
+      applyFollowStatus({ targetUserId, followed: true })
+      return
+    }
+    try {
+      const status = await fetchUserFollowStatus(targetUserId)
+      applyFollowStatus(status)
+    } catch (error) {
+      console.warn('获取关注状态失败', error)
+      applyFollowStatus({ targetUserId, followed: false })
     }
   }
   
@@ -549,6 +722,7 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
       clearReplayTimeout()
       isPlaying.value = true
       emit('play')
+      void reportPlayStarted()
     })
   
     player.value.on('pause', () => {
@@ -560,6 +734,7 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
     player.value.on('ended', () => {
       isPlaying.value = false
       emit('ended')
+      void reportPlayFinished()
       scheduleAutoReplay()
     })
   
@@ -1074,6 +1249,31 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   )
 
   watch(
+    () => props.videoData?.authorId,
+    () => {
+      loadFollowStatus()
+    },
+    { immediate: true }
+  )
+
+  watch(
+    () => authStore.currentUser?.userId,
+    (newUserId, oldUserId) => {
+      if (normalizeUserId(newUserId) !== normalizeUserId(oldUserId)) {
+        clearFollowRelationCache()
+      }
+      loadFollowStatus()
+    }
+  )
+
+  watch(
+    () => followRelationVersion.value,
+    () => {
+      loadFollowStatus()
+    }
+  )
+
+  watch(
     () => progressBar.value,
     (bar) => {
       if (bar) {
@@ -1187,6 +1387,41 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
       }
     }).catch(() => undefined)
   }
+
+  const handleFollow = () => {
+    runAfterLogin('follow', async () => {
+      if (followMutating.value || followActionState.value === 'hidden') {
+        return
+      }
+      const targetUserId = getAuthorUserId()
+      if (!targetUserId) {
+        ElMessage.warning('暂无可关注的作者')
+        return
+      }
+      const currentUserId = normalizeUserId(authStore.currentUser?.userId)
+      if (currentUserId && currentUserId === targetUserId) {
+        ElMessage.warning('不能关注自己')
+        applyFollowStatus({ targetUserId, followed: true })
+        return
+      }
+      followMutating.value = true
+      try {
+        const status = await followUser(targetUserId)
+        if (status.followed) {
+          setFollowRelationCache(targetUserId, true)
+        }
+        applyFollowStatus(status)
+        if (status.followed) {
+          startFollowSuccessAnimation(targetUserId)
+        }
+      } catch (error: any) {
+        const message = error?.response?.data?.info || error?.message || '关注失败，请稍后再试'
+        ElMessage.error(message)
+      } finally {
+        followMutating.value = false
+      }
+    }).catch(() => undefined)
+  }
   
   // 组件挂载
   onMounted(() => {
@@ -1218,6 +1453,7 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
       clearTimeout(hideTimer.value)
     }
     clearReplayTimeout()
+    clearFollowHideTimer()
     document.removeEventListener('keydown', handleKeydown)
     document.removeEventListener('click', handleClickOutside)
     if (typeof window !== 'undefined') {
@@ -1270,6 +1506,9 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
     isCollected,
     isShared,
     reactionMutating,
+    isFollowed,
+    followActionState,
+    followMutating,
     showDanmuSettings,
     danmuFontSize,
     danmuOpacity,
@@ -1300,6 +1539,7 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
     handleSendDanmu,
     handleLike,
     handleComment,
+    handleFollow,
     handleShare,
     handleCollect,
     formatTime,

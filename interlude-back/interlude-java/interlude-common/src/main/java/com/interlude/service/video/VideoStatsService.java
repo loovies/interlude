@@ -57,4 +57,9 @@ public interface VideoStatsService{
 	 */
 	Integer deleteVideoStatsByVideoId(Long videoId);
 
+	/**
+	 * 播放完成后递增播放次数
+	 */
+	Integer increasePlayCount(Long videoId);
+
 }

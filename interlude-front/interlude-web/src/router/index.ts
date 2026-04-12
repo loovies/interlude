@@ -30,6 +30,11 @@ const router = createRouter({
           component: () => import('@/view/Home/aiSearch/index.vue'),
         },
         {
+          path: 'mine',
+          name: 'mine',
+          component: () => import('@/view/Home/mine/index.vue'),
+        },
+        {
           path: 'test',
           name: 'test',
           component: () => import('@/view/Playground/test/index.vue'),

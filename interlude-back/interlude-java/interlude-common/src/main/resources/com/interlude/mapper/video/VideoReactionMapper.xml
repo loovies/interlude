@@ -230,4 +230,22 @@
         delete from video_reactions where video_id=#{videoId} and user_id=#{userId} and reaction_type=#{reactionType}
     </delete>
 
+    <select id="selectLikedVideoIdsByUser" resultType="java.lang.Long">
+        select cast(video_id as unsigned)
+        from video_reactions
+        where user_id = #{userId}
+          and reaction_type = 'like'
+          and status = 'active'
+        order by updated_at desc, reaction_id desc
+        limit #{offset}, #{limit}
+    </select>
+
+    <select id="countLikedVideosByUser" resultType="java.lang.Integer">
+        select count(1)
+        from video_reactions
+        where user_id = #{userId}
+          and reaction_type = 'like'
+          and status = 'active'
+    </select>
+
 </mapper>

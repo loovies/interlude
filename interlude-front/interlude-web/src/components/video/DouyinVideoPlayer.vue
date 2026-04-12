@@ -41,13 +41,35 @@
 
     <!-- 右侧操作区域 -->
     <div class="sidebar-actions" v-if="controlsVisible">
-      <!-- 用户头像 -->
-      <div class="user-avatar">
-        <img
-          :src="authorAvatarUrl"
-          :alt="`${videoData.author || '用户'}头像`"
-          @error="handleAvatarLoadError"
-        />
+      <div class="avatar-follow-wrap">
+        <!-- 用户头像 -->
+        <div class="user-avatar" @click.stop="openAuthorProfile">
+          <img
+            :src="authorAvatarUrl"
+            :alt="`${videoData.author || '用户'}头像`"
+            @error="handleAvatarLoadError"
+          />
+        </div>
+
+        <button
+          v-if="followActionState !== 'hidden'"
+          class="follow-trigger"
+          :class="{
+            checked: followActionState === 'check',
+            loading: followMutating,
+          }"
+          :disabled="followMutating"
+          @click.stop="handleFollow"
+        >
+          <span class="follow-icon" aria-hidden="true">
+            <svg v-if="followActionState === 'check'" class="follow-svg check" viewBox="0 0 24 24">
+              <path d="M5 12.5l4.2 4.2L19 7" />
+            </svg>
+            <svg v-else class="follow-svg plus" viewBox="0 0 24 24">
+              <path d="M12 5.5v13M5.5 12h13" />
+            </svg>
+          </span>
+        </button>
       </div>
       
       <!-- 互动按钮 -->
@@ -100,7 +122,7 @@
     <!-- 左侧视频信息区域 -->
     <div class="video-info" v-if="controlsVisible && videoData.author">
       <div class="author-info">
-        <span class="author-name">@{{ videoData.author }}</span>
+        <span class="author-name" @click.stop="openAuthorProfile">@{{ videoData.author }}</span>
         <span class="publish-time">{{ formatPublishTime(videoData.createTime) }}</span>
       </div>
       <div class="video-description" v-if="videoData.description">
@@ -362,6 +384,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElSwitch } from 'element-plus'
 import 'element-plus/dist/index.css'
 import DanmuLayer from './DanmuLayer.vue'
@@ -375,6 +398,14 @@ const props = withDefaults(defineProps<{
 }>(), {
   autoplay: true,
 })
+const router = useRouter()
+
+const normalizeUserId = (value: unknown): string => {
+  if (value === null || value === undefined) {
+    return ''
+  }
+  return String(value).trim()
+}
 
 const resolveAvatarUrl = (avatar?: string): string => {
   if (!avatar) {
@@ -413,6 +444,22 @@ const handleAvatarLoadError = (event: Event) => {
   target.src = buildAvatarFallback()
 }
 
+const openAuthorProfile = () => {
+  const userId = normalizeUserId(props.videoData.authorId) || normalizeUserId(props.videoData.author)
+  if (!userId) {
+    return
+  }
+  const target = router.resolve({
+    path: '/mine',
+    query: {
+      userId,
+      nickName: props.videoData.author || '',
+      avatar: props.videoData.authorAvatar || '',
+    },
+  })
+  window.open(target.href, '_blank', 'noopener,noreferrer')
+}
+
 const emit = defineEmits(['ready', 'play', 'pause', 'ended', 'error', 'fullscreen-change'])
 
 const {
@@ -442,6 +489,8 @@ const {
   isCollected,
   isShared,
   reactionMutating,
+  followActionState,
+  followMutating,
   showDanmuSettings,
   danmuFontSize,
   danmuOpacity,
@@ -472,6 +521,7 @@ const {
   handleSendDanmu,
   handleLike,
   handleComment,
+  handleFollow,
   handleShare,
   handleCollect,
   formatTime,

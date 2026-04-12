@@ -48,6 +48,8 @@ export interface ChoicenessVideoItem {
   likes: number
   duration: string
   author: string
+  authorId?: string | number
+  authorAvatar?: string
   views: number
   uploadTime: string
   description?: string
@@ -357,6 +359,8 @@ function mapVideoDataToChoicenessItem(item: VideoData): ChoicenessVideoItem {
     likes: toNumber(item.likes, 0),
     duration: formatDuration(item.duration),
     author: item.author || '匿名作者',
+    authorId: item.authorId,
+    authorAvatar: item.authorAvatar,
     views: toNumber(item.views, 0),
     uploadTime: item.createTime || '',
     description: item.description,
@@ -502,6 +506,49 @@ export async function fetchVideoList(
     console.error('加载推荐视频流失败，使用本地兜底数据：', error)
     return getFallbackVideoPage(page, pageSize)
   }
+}
+
+async function fetchUserCenterVideoList(
+  endpoint: string,
+  page: number = 1,
+  pageSize: number = 30,
+): Promise<{ data: VideoData[]; total: number }> {
+  const safePage = Math.max(1, page)
+  const safePageSize = Math.max(1, pageSize)
+  try {
+    const response = await axios.get<WebApiResponse<WebPage<WebVideoItem>>>(endpoint, {
+      params: {
+        pageNo: safePage,
+        pageSize: safePageSize,
+      },
+    })
+    const pageData = response.data?.data
+    const list = (pageData?.list || []).map(mapWebVideoItemToVideoData)
+    return {
+      data: list,
+      total: toNumber(pageData?.totalCount, list.length),
+    }
+  } catch (error) {
+    console.error(`加载${endpoint}失败`, error)
+    return {
+      data: [],
+      total: 0,
+    }
+  }
+}
+
+export async function fetchLikedVideoList(
+  page: number = 1,
+  pageSize: number = 30,
+): Promise<{ data: VideoData[]; total: number }> {
+  return fetchUserCenterVideoList('/api/video/user/liked', page, pageSize)
+}
+
+export async function fetchWatchHistoryVideoList(
+  page: number = 1,
+  pageSize: number = 30,
+): Promise<{ data: VideoData[]; total: number }> {
+  return fetchUserCenterVideoList('/api/video/user/history', page, pageSize)
 }
 
 export async function fetchRandomVideoList(options?: {
@@ -685,6 +732,8 @@ export default {
   generateMockDanmu,
   fetchVideoData,
   fetchVideoList,
+  fetchLikedVideoList,
+  fetchWatchHistoryVideoList,
   fetchRandomVideoList,
   fetchChoicenessCategories,
   fetchChoicenessVideos,

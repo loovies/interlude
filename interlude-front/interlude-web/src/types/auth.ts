@@ -22,6 +22,7 @@ export type LoginIntent =
   | 'manual'
   | 'like'
   | 'comment'
+  | 'follow'
   | 'collect'
   | 'share'
   | 'danmu'

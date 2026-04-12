@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="choiceness-page">
     <nav class="category-nav">
       <div class="nav-container">
@@ -54,6 +54,7 @@
               :is-featured="true"
               :data-video-id="featuredVideo.id"
               @click="handleVideoClick(featuredVideo)"
+              @author-click="handleAuthorClick"
             />
           </div>
 
@@ -96,7 +97,10 @@
                     {{ truncateSmallTitle(video.title) }}
                   </h4>
                   <div class="small-video-meta">
-                    <span class="small-video-author">{{ video.author }}</span>
+                    <button type="button" class="small-author-entry" @click.stop="handleAuthorClick(video)">
+                      <img class="small-author-avatar" :src="resolveAuthorAvatar(video)" :alt="`${video.author || '用户'}头像`" />
+                      <span class="small-video-author">{{ video.author }}</span>
+                    </button>
                     <span class="small-video-views">{{ formatViews(video.views) }}观看</span>
                   </div>
                 </div>
@@ -135,6 +139,7 @@
               :data-video-id="video.id"
               :class="viewMode === 'list' ? 'list-mode' : ''"
               @click="handleVideoClick(video)"
+              @author-click="handleAuthorClick"
             />
           </div>
 
@@ -175,8 +180,17 @@ const pageNo = ref(1)
 const pageSize = 12
 const total = ref(0)
 const observer = ref<IntersectionObserver | null>(null)
+const scrollContainer = ref<HTMLElement | null>(null)
 const loadedVideos = ref<Set<number>>(new Set())
 const observedElements = new WeakSet<Element>()
+
+const toggleChoicenessScrollbar = (hide: boolean) => {
+  const container = document.querySelector('.content-container') as HTMLElement | null
+  if (!container) {
+    return
+  }
+  container.classList.toggle('choiceness-scrollbar-hidden', hide)
+}
 
 const featuredVideo = computed(() => videoItems.value[0] ?? null)
 const smallVideos = computed(() => videoItems.value.slice(1, 5))
@@ -201,6 +215,71 @@ const formatViews = (views: number): string => {
   return views.toString()
 }
 
+const normalizeUserId = (value: unknown): string => {
+  if (value === null || value === undefined) {
+    return ''
+  }
+  return String(value).trim()
+}
+
+const resolveAvatarUrl = (avatar?: string): string => {
+  if (!avatar) {
+    return ''
+  }
+  if (/^(https?:)?\/\//.test(avatar) || avatar.startsWith('data:image/')) {
+    return avatar
+  }
+  if (avatar.startsWith('/file/')) {
+    return avatar
+  }
+  const cleaned = avatar.replace(/^\/+/, '')
+  if (cleaned.startsWith('file/')) {
+    return `/${cleaned}`
+  }
+  return `/file/${cleaned}`
+}
+
+const resolveAuthorUserId = (video: ChoicenessVideoItem): string => {
+  const authorId = normalizeUserId(video.authorId)
+  if (authorId) {
+    return authorId
+  }
+  const authorName = normalizeUserId(video.author)
+  if (authorName) {
+    return authorName
+  }
+  return `author-${video.id}`
+}
+
+const buildAuthorAvatarFallback = (video: ChoicenessVideoItem): string => {
+  const seed = encodeURIComponent(resolveAuthorUserId(video) || video.author || 'author')
+  return `https://picsum.photos/seed/choiceness-author-${seed}/64/64`
+}
+
+const resolveAuthorAvatar = (video: ChoicenessVideoItem): string => {
+  const resolved = resolveAvatarUrl(video.authorAvatar)
+  return resolved || buildAuthorAvatarFallback(video)
+}
+
+const openProfileInNewTab = (video: ChoicenessVideoItem) => {
+  const userId = resolveAuthorUserId(video)
+  if (!userId) {
+    return
+  }
+  const target = router.resolve({
+    path: '/mine',
+    query: {
+      userId,
+      nickName: video.author || '',
+      avatar: video.authorAvatar || '',
+    },
+  })
+  window.open(target.href, '_blank', 'noopener,noreferrer')
+}
+
+const handleAuthorClick = (video: ChoicenessVideoItem) => {
+  openProfileInNewTab(video)
+}
 const truncateSmallTitle = (title: string): string => {
   const maxLength = 30
   return title.length > maxLength ? `${title.substring(0, maxLength)}...` : title
@@ -373,6 +452,16 @@ const handleScroll = () => {
     return
   }
 
+  if (scrollContainer.value) {
+    const scrollTop = scrollContainer.value.scrollTop
+    const viewportHeight = scrollContainer.value.clientHeight
+    const contentHeight = scrollContainer.value.scrollHeight
+    if (scrollTop + viewportHeight >= contentHeight - 200) {
+      loadVideos()
+    }
+    return
+  }
+
   const scrollTop = window.scrollY || document.documentElement.scrollTop
   const windowHeight = window.innerHeight
   const documentHeight = document.documentElement.scrollHeight
@@ -396,12 +485,23 @@ onMounted(async () => {
   }
 
   await loadVideos(true)
-  window.addEventListener('scroll', handleScroll)
+  scrollContainer.value = document.querySelector('.content-container') as HTMLElement | null
+  if (scrollContainer.value) {
+    scrollContainer.value.addEventListener('scroll', handleScroll, { passive: true })
+  } else {
+    window.addEventListener('scroll', handleScroll, { passive: true })
+  }
+  toggleChoicenessScrollbar(true)
 })
 
 onUnmounted(() => {
   observer.value?.disconnect()
-  window.removeEventListener('scroll', handleScroll)
+  if (scrollContainer.value) {
+    scrollContainer.value.removeEventListener('scroll', handleScroll)
+  } else {
+    window.removeEventListener('scroll', handleScroll)
+  }
+  toggleChoicenessScrollbar(false)
 })
 
 watch(activeCategory, () => {
@@ -415,7 +515,7 @@ watch(activeCategory, () => {
   max-width: 100%;
   margin: 0 auto;
   background-color: var(--bg-color);
-  min-height: 100vh;
+  min-height: 100%;
 }
 
 .category-nav {
@@ -689,9 +789,42 @@ watch(activeCategory, () => {
   .small-video-meta {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
     font-size: 11px;
     color: var(--text-secondary);
+  }
+
+  .small-author-entry {
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: calc(100% - 70px);
+    cursor: pointer;
+    color: inherit;
+  }
+
+  .small-author-avatar {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex: 0 0 18px;
+  }
+
+  .small-video-author {
+    color: var(--text-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .small-author-entry:hover .small-video-author {
+    color: var(--primary-color);
   }
 }
 
@@ -789,4 +922,16 @@ watch(activeCategory, () => {
   text-align: center;
   color: var(--text-secondary);
 }
+
+:global(.content-container.choiceness-scrollbar-hidden) {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+:global(.content-container.choiceness-scrollbar-hidden::-webkit-scrollbar) {
+  width: 0;
+  height: 0;
+  display: none;
+}
 </style>
+

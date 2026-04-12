@@ -35,7 +35,7 @@
       </h3>
 
       <div class="video-meta">
-        <span class="video-author">{{ video.author }}</span>
+        <span class="video-author" @click.stop="emit('author-click', video)">{{ video.author }}</span>
         <span class="video-views">{{ formatViews(video.views) }}观看</span>
         <span class="video-time">{{ video.uploadTime }}</span>
       </div>
@@ -64,6 +64,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   click: [video: ChoicenessVideoItem]
+  'author-click': [video: ChoicenessVideoItem]
 }>()
 
 const placeholder = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjYwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjJmMmYyIi8+PC9zdmc+'
@@ -252,6 +253,11 @@ const handleImageError = (event: Event) => {
 .video-author {
   font-weight: 500;
   color: var(--text-color);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--primary-color);
+  }
 }
 
 .video-views,

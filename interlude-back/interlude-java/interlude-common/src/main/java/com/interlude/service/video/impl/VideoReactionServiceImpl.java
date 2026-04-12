@@ -86,4 +86,14 @@ public class VideoReactionServiceImpl implements VideoReactionService {
     public Integer deleteByVideoUserAndType(Long videoId, String userId, String reactionType) {
         return this.videoReactionMapper.deleteByVideoUserAndType(videoId, userId, reactionType);
     }
+
+    @Override
+    public List<Long> getLikedVideoIdsByUser(String userId, Integer offset, Integer limit) {
+        return this.videoReactionMapper.selectLikedVideoIdsByUser(userId, offset, limit);
+    }
+
+    @Override
+    public Integer countLikedVideosByUser(String userId) {
+        return this.videoReactionMapper.countLikedVideosByUser(userId);
+    }
 }
