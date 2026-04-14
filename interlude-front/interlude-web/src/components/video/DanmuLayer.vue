@@ -1,331 +1,297 @@
 <template>
-  <div class="danmu-layer" ref="danmuLayer">
-    <!-- 弹幕显示区域 -->
+  <div class="danmu-layer">
     <div class="danmu-container">
-      <!-- 顶部弹幕轨道 -->
       <div class="danmu-track top-track">
         <div
-          v-for="danmu in topDanmus"
-          :key="danmu.id"
-          class="danmu-item"
-          :style="getDanmuStyle(danmu)"
-          @click="handleDanmuClick(danmu)"
+          v-for="(danmu, index) in topDanmus"
+          :key="`top-${danmu.id}-${index}`"
+          class="danmu-item fixed-item"
+          :style="getFixedDanmuStyle(danmu, 'top', index)"
         >
           <span class="danmu-content">{{ danmu.content }}</span>
         </div>
       </div>
 
-      <!-- 底部弹幕轨道 -->
       <div class="danmu-track bottom-track">
         <div
-          v-for="danmu in bottomDanmus"
-          :key="danmu.id"
-          class="danmu-item"
-          :style="getDanmuStyle(danmu)"
-          @click="handleDanmuClick(danmu)"
+          v-for="(danmu, index) in bottomDanmus"
+          :key="`bottom-${danmu.id}-${index}`"
+          class="danmu-item fixed-item"
+          :style="getFixedDanmuStyle(danmu, 'bottom', index)"
         >
           <span class="danmu-content">{{ danmu.content }}</span>
         </div>
       </div>
 
-      <!-- 滚动弹幕轨道（多个） -->
-<div
-          v-for="(track, index) in scrollTracks"
-          :key="index"
-          class="danmu-track scroll-track"
-          :class="`track-${index}`"
-          :style="{ '--play-state': isPlaying ? 'running' : 'paused' }"
-        >
+      <div
+        v-for="(track, index) in scrollTracks"
+        :key="`scroll-track-${index}-${safeArea}`"
+        class="danmu-track scroll-track"
+        :style="{ '--play-state': isPlaying ? 'running' : 'paused' }"
+      >
         <div
           v-for="danmu in track.danmus"
-          :key="danmu.id"
+          :key="`scroll-${danmu.id}`"
           class="danmu-item"
           :style="getScrollDanmuStyle(danmu, index)"
-          @click="handleDanmuClick(danmu)"
           @animationend="handleDanmuAnimationEnd(danmu, index)"
         >
           <span class="danmu-content">{{ danmu.content }}</span>
         </div>
       </div>
     </div>
-
-    <!-- 弹幕输入框 -->
-    <div class="danmu-input-container" v-if="showInput">
-      <div class="input-wrapper">
-        <input
-          ref="danmuInput"
-          v-model="inputText"
-          type="text"
-          placeholder="发个弹幕，开心一下~"
-          maxlength="50"
-          @keyup.enter="sendDanmu"
-          @keyup.esc="hideInput"
-        />
-        <button class="send-btn" @click="sendDanmu" :disabled="!inputText.trim()">
-          <svg class="send-icon" viewBox="0 0 24 24">
-            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-
-
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+
+type DanmuType = 'normal' | 'top' | 'bottom' | 'scroll'
+type DanmuArea = 'full' | 'top' | 'bottom'
 
 interface Danmu {
   id: number | string
   content: string
   time: number
   color?: string
-  type?: 'normal' | 'top' | 'bottom' | 'scroll'
+  type?: DanmuType
   speed?: number
-  userId?: string
-  userName?: string
+  fontSize?: number
+  opacity?: number
 }
 
 interface Props {
   danmuList: Danmu[]
   currentTime: number
   isPlaying?: boolean
+  fontSize?: number
+  opacity?: number
+  speedMultiplier?: number
+  area?: DanmuArea
 }
 
-const props = defineProps<Props>()
-const emit = defineEmits(['send-danmu'])
-
-// 是否播放中，默认true
-const isPlaying = computed(() => props.isPlaying !== false)
-
-const danmuLayer = ref<HTMLElement | null>(null)
-const danmuInput = ref<HTMLInputElement | null>(null)
-const showInput = ref(false)
-const inputText = ref('')
-
-// 弹幕轨道配置
-const trackCount = 5 // 滚动弹幕轨道数量
-const scrollTracks = ref(Array.from({ length: trackCount }, () => ({ danmus: [] as Danmu[] })))
-const activeDanmuIds = ref<Set<number | string>>(new Set()) // 活跃弹幕ID集合
-
-// 计算当前时间范围内的弹幕，同时包含活跃弹幕
-const currentDanmus = computed(() => {
-  const timeWindow = 3 // 显示前后3秒的弹幕
-  return props.danmuList.filter(
-    (danmu) => activeDanmuIds.value.has(danmu.id) || Math.abs(danmu.time - props.currentTime) <= timeWindow
-  )
+const props = withDefaults(defineProps<Props>(), {
+  isPlaying: true,
+  fontSize: 16,
+  opacity: 0.8,
+  speedMultiplier: 1,
+  area: 'full',
 })
 
-// 顶部固定弹幕
+defineEmits<{
+  (e: 'send-danmu', content: string): void
+}>()
+
+const TRACK_HEIGHT = 30
+const TIME_WINDOW_SECONDS = 3
+
+const clampNumber = (value: unknown, min: number, max: number, fallback: number): number => {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) {
+    return fallback
+  }
+  return Math.max(min, Math.min(max, numeric))
+}
+
+const safeArea = computed<DanmuArea>(() => {
+  return props.area === 'top' || props.area === 'bottom' ? props.area : 'full'
+})
+
+const safeFontSize = computed(() => Math.round(clampNumber(props.fontSize, 12, 42, 16)))
+const safeOpacity = computed(() => clampNumber(props.opacity, 0.2, 1, 0.8))
+const safeSpeedMultiplier = computed(() => clampNumber(props.speedMultiplier, 0.5, 2, 1))
+const trackCount = computed(() => (safeArea.value === 'full' ? 8 : 5))
+
+const isPlaying = computed(() => props.isPlaying !== false)
+const activeDanmuIds = ref<Set<number | string>>(new Set())
+const scrollTracks = ref<Array<{ danmus: Danmu[] }>>([])
+
+const resetTracks = () => {
+  scrollTracks.value = Array.from({ length: trackCount.value }, () => ({ danmus: [] as Danmu[] }))
+  activeDanmuIds.value = new Set()
+}
+
+const isScrollType = (danmuType?: DanmuType) => {
+  return !danmuType || danmuType === 'normal' || danmuType === 'scroll'
+}
+
+const currentDanmus = computed(() => {
+  return props.danmuList.filter((danmu) => {
+    const danmuTime = Number(danmu.time ?? 0)
+    if (!Number.isFinite(danmuTime)) {
+      return false
+    }
+    return activeDanmuIds.value.has(danmu.id) || Math.abs(danmuTime - props.currentTime) <= TIME_WINDOW_SECONDS
+  })
+})
+
 const topDanmus = computed(() => {
+  if (safeArea.value === 'bottom') {
+    return []
+  }
   return currentDanmus.value.filter((danmu) => danmu.type === 'top')
 })
 
-// 底部固定弹幕
 const bottomDanmus = computed(() => {
+  if (safeArea.value === 'top') {
+    return []
+  }
   return currentDanmus.value.filter((danmu) => danmu.type === 'bottom')
 })
 
-// 滚动弹幕
 const scrollDanmus = computed(() => {
-  return currentDanmus.value.filter(
-    (danmu) => !danmu.type || danmu.type === 'normal' || danmu.type === 'scroll'
-  )
+  return currentDanmus.value.filter((danmu) => isScrollType(danmu.type))
 })
 
-// 分配弹幕到不同轨道
 const assignDanmusToTracks = () => {
-  // 收集所有需要显示的滚动弹幕ID
-  const newDanmuIds = new Set(scrollDanmus.value.map(d => d.id))
-  
-  // 遍历每个轨道，移除不再需要显示的弹幕（不在newDanmuIds中且不在活跃集合中）
-  scrollTracks.value.forEach((track, trackIndex) => {
-    // 保留仍然需要显示的弹幕（在新的弹幕列表中或仍在活跃集合中）
-    track.danmus = track.danmus.filter(danmu => 
-      newDanmuIds.has(danmu.id) || activeDanmuIds.value.has(danmu.id)
+  if (!scrollTracks.value.length) {
+    resetTracks()
+  }
+  const currentIds = new Set(scrollDanmus.value.map((item) => item.id))
+  scrollTracks.value.forEach((track) => {
+    track.danmus = track.danmus.filter(
+      (danmu) => currentIds.has(danmu.id) || activeDanmuIds.value.has(danmu.id),
     )
   })
-  
-  // 分配新的弹幕到轨道（负载均衡）
-  const trackLoads: number[] = scrollTracks.value.map(track => track.danmus.length)
+
+  const trackLoads = scrollTracks.value.map((track) => track.danmus.length)
   scrollDanmus.value.forEach((danmu) => {
-    // 如果弹幕已经在任何轨道中，跳过
-    const alreadyExists = scrollTracks.value.some(track => 
-      track.danmus.some(d => d.id === danmu.id)
-    )
-    if (alreadyExists) return
-    
-    // 选择当前负载最小的轨道
-    let minLoad = Infinity
+    const exists = scrollTracks.value.some((track) => track.danmus.some((item) => item.id === danmu.id))
+    if (exists) {
+      return
+    }
     let selectedTrackIndex = 0
-    for (let i = 0; i < trackCount; i++) {
-      const load = trackLoads[i]!
+    let minLoad = Number.POSITIVE_INFINITY
+    trackLoads.forEach((load, index) => {
       if (load < minLoad) {
         minLoad = load
-        selectedTrackIndex = i
+        selectedTrackIndex = index
       }
+    })
+    const selectedTrack = scrollTracks.value[selectedTrackIndex]
+    if (!selectedTrack) {
+      return
     }
-    
-    const track = scrollTracks.value[selectedTrackIndex]
-    if (track) {
-      track.danmus.push(danmu)
-      trackLoads[selectedTrackIndex]!++
-      // 添加到活跃集合
-      activeDanmuIds.value.add(danmu.id)
-    }
+    selectedTrack.danmus.push(danmu)
+    trackLoads[selectedTrackIndex] = (trackLoads[selectedTrackIndex] ?? 0) + 1
+    activeDanmuIds.value.add(danmu.id)
   })
 }
 
-// 获取弹幕样式
-const getDanmuStyle = (danmu: Danmu) => {
-  const style: any = {
-    color: danmu.color || '#ffffff',
+const resolveTrackTop = (trackIndex: number) => {
+  if (safeArea.value === 'top') {
+    return `${16 + trackIndex * TRACK_HEIGHT}px`
   }
-
-  // 根据弹幕类型设置不同样式
-  switch (danmu.type) {
-    case 'top':
-      style.position = 'absolute'
-      style.top = '20%'
-      style.left = '50%'
-      style.transform = 'translateX(-50%)'
-      style.fontSize = '18px'
-      style.fontWeight = 'bold'
-      style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.8)'
-      style.backgroundColor = 'rgba(0, 0, 0, 0.5)'
-      style.padding = '4px 12px'
-      style.borderRadius = '20px'
-      style.zIndex = '100'
-      break
-
-    case 'bottom':
-      style.position = 'absolute'
-      style.bottom = '20%'
-      style.left = '50%'
-      style.transform = 'translateX(-50%)'
-      style.fontSize = '16px'
-      style.fontWeight = 'bold'
-      style.textShadow = '2px 2px 4px rgba(0, 0, 0, 0.8)'
-      style.backgroundColor = 'rgba(0, 0, 0, 0.5)'
-      style.padding = '4px 12px'
-      style.borderRadius = '20px'
-      style.zIndex = '100'
-      break
-
-    default:
-      // 普通弹幕样式
-      style.fontSize = '16px'
-      style.textShadow = '1px 1px 2px rgba(0, 0, 0, 0.8)'
-      style.fontWeight = 'normal'
+  if (safeArea.value === 'bottom') {
+    return `calc(55% + ${trackIndex * TRACK_HEIGHT}px)`
   }
+  return `${16 + trackIndex * TRACK_HEIGHT}px`
+}
 
+const getDanmuColor = (danmu: Danmu): string => {
+  const color = String(danmu.color || '#FFFFFF')
+  return /^#[0-9a-fA-F]{6}$/.test(color) ? color.toUpperCase() : '#FFFFFF'
+}
+
+const getDanmuFontSize = (danmu: Danmu): string => {
+  const size = Math.round(clampNumber(danmu.fontSize, 12, 42, safeFontSize.value))
+  return `${size}px`
+}
+
+const getDanmuOpacity = (danmu: Danmu): number => {
+  return clampNumber(danmu.opacity, 0.2, 1, safeOpacity.value)
+}
+
+const getFixedDanmuStyle = (danmu: Danmu, position: 'top' | 'bottom', index: number) => {
+  const style: Record<string, string | number> = {
+    color: getDanmuColor(danmu),
+    fontSize: getDanmuFontSize(danmu),
+    opacity: getDanmuOpacity(danmu),
+    textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    maxWidth: '78%',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  }
+  const offset = 14 + (index % 3) * 8
+  if (position === 'top') {
+    style.top = `${offset}%`
+  } else {
+    style.bottom = `${offset}%`
+  }
   return style
 }
 
-// 获取滚动弹幕样式
 const getScrollDanmuStyle = (danmu: Danmu, trackIndex: number) => {
-  const baseSpeed = danmu.speed || 1
-  const speedFactor = 0.8 + (trackIndex % 3) * 0.2 // 不同轨道速度略有差异
-  
+  const danmuSpeed = clampNumber(danmu.speed, 0.5, 2, 1) * safeSpeedMultiplier.value
+  const speedFactor = 0.85 + (trackIndex % 3) * 0.15
+  const duration = Math.max(6, 20 / (danmuSpeed * speedFactor))
   return {
-    color: danmu.color || '#ffffff',
-    fontSize: '16px',
+    color: getDanmuColor(danmu),
+    fontSize: getDanmuFontSize(danmu),
+    opacity: getDanmuOpacity(danmu),
     textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)',
-    animationDuration: `${20 / (baseSpeed * speedFactor)}s`, // 速度控制
-    top: `${20 + trackIndex * 24}px`, // 轨道位置
+    animationDuration: `${duration}s`,
+    top: resolveTrackTop(trackIndex),
   }
 }
 
-// 发送弹幕
-const sendDanmu = () => {
-  const content = inputText.value.trim()
-  if (!content) return
-
-  emit('send-danmu', content)
-  inputText.value = ''
-  showInput.value = false
-}
-
-// 隐藏输入框
-const hideInput = () => {
-  showInput.value = false
-  inputText.value = ''
-}
-
-// 处理弹幕点击
-const handleDanmuClick = (danmu: Danmu) => {
-  console.log('弹幕点击:', danmu)
-  // 可以在这里实现弹幕点赞、回复等功能
-}
-
-// 处理弹幕动画结束
 const handleDanmuAnimationEnd = (danmu: Danmu, trackIndex: number) => {
-  // 从活跃集合中移除
   activeDanmuIds.value.delete(danmu.id)
-  // 从对应轨道中移除弹幕
   const track = scrollTracks.value[trackIndex]
-  if (track) {
-    const index = track.danmus.findIndex(d => d.id === danmu.id)
-    if (index !== -1) {
-      track.danmus.splice(index, 1)
-    }
+  if (!track) {
+    return
+  }
+  const index = track.danmus.findIndex((item) => item.id === danmu.id)
+  if (index >= 0) {
+    track.danmus.splice(index, 1)
   }
 }
 
-// 监听弹幕列表变化
+watch(trackCount, () => {
+  resetTracks()
+  assignDanmusToTracks()
+}, { immediate: true })
+
 watch(
   () => props.danmuList,
   () => {
     assignDanmusToTracks()
   },
-  { deep: true }
+  { deep: true },
 )
 
-// 监听当前时间变化
 watch(
   () => props.currentTime,
   () => {
     assignDanmusToTracks()
-  }
+  },
 )
 
-// 监听输入框显示状态
-watch(showInput, (val) => {
-  if (val) {
-    nextTick(() => {
-      danmuInput.value?.focus()
-    })
-  }
-})
-
-  // 点击外部隐藏输入框
-  const handleClickOutside = (event: MouseEvent) => {
-    if (showInput.value && danmuLayer.value) {
-      const target = event.target as Node | null
-      if (target && !danmuLayer.value.contains(target)) {
-        hideInput()
-      }
-    }
-  }
+watch(
+  () => props.area,
+  () => {
+    resetTracks()
+    assignDanmusToTracks()
+  },
+)
 
 onMounted(() => {
   assignDanmusToTracks()
-  document.addEventListener('click', handleClickOutside)
 })
 
 onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
+  activeDanmuIds.value.clear()
+  scrollTracks.value = []
 })
 </script>
 
 <style scoped>
 .danmu-layer {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   pointer-events: none;
   z-index: 10;
   overflow: hidden;
@@ -339,21 +305,19 @@ onUnmounted(() => {
 
 .danmu-track {
   position: absolute;
-  width: 100%;
-  pointer-events: auto;
-}
-
-.scroll-track {
-  height: 24px;
+  inset: 0;
 }
 
 .danmu-item {
   position: absolute;
+  left: 100%;
   white-space: nowrap;
-  pointer-events: auto;
-  cursor: pointer;
-  transition: all 0.2s;
   user-select: none;
+}
+
+.fixed-item {
+  left: auto;
+  animation: fixedFadeIn 0.25s ease-out;
 }
 
 .scroll-track .danmu-item {
@@ -362,152 +326,39 @@ onUnmounted(() => {
   animation-iteration-count: 1;
   animation-fill-mode: forwards;
   animation-play-state: var(--play-state, running);
-  left: 100%;
 }
 
 .danmu-content {
-  padding: 2px 8px;
-  border-radius: 12px;
-  /*background: rgba(0, 0, 0, 0.3);*/
-  backdrop-filter: blur(4px);
-  line-height: 1.4;
+  display: inline-block;
+  line-height: 1.35;
+  padding: 1px 6px;
+  border-radius: 10px;
+  backdrop-filter: blur(2px);
 }
-
-.danmu-item:hover .danmu-content {
-  background: rgba(0, 0, 0, 0.5);
-  transform: scale(1.05);
-}
-
-.danmu-input-container {
-  position: absolute;
-  bottom: 80px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  pointer-events: auto;
-  z-index: 100;
-}
-
-.input-wrapper {
-  display: flex;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: 24px;
-  padding: 8px 16px;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  min-width: 300px;
-  max-width: 500px;
-}
-
-.input-wrapper input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-size: 14px;
-  padding: 4px 8px;
-  outline: none;
-}
-
-.input-wrapper input::placeholder {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.send-btn {
-  background: #ff2d55;
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  margin-left: 8px;
-  transition: all 0.2s;
-}
-
-.send-btn:disabled {
-  background: rgba(255, 255, 255, 0.2);
-  cursor: not-allowed;
-}
-
-.send-btn:not(:disabled):hover {
-  background: #ff1a45;
-  transform: scale(1.1);
-}
-
-.send-icon {
-  width: 18px;
-  height: 18px;
-  fill: #fff;
-}
-
-
 
 @keyframes scrollRightToLeft {
   from {
     left: 100%;
   }
   to {
-    left: -100%;
+    left: -115%;
   }
 }
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .input-wrapper {
-    min-width: 250px;
-    max-width: 350px;
-  }
-
-
-
-  .danmu-content {
-    font-size: 14px;
-    padding: 1px 6px;
-  }
-
-  .scroll-track {
-    height: 20px;
-  }
-
-  .scroll-track .danmu-item {
-    top: 16px !important;
-  }
-}
-
-/* 弹幕类型样式增强 */
-.danmu-item[data-type="top"] .danmu-content {
-  background: linear-gradient(135deg, rgba(255, 45, 85, 0.8), rgba(255, 107, 157, 0.8));
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  padding: 6px 20px;
-  font-size: 18px;
-}
-
-.danmu-item[data-type="bottom"] .danmu-content {
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.8), rgba(0, 199, 190, 0.8));
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  padding: 6px 20px;
-  font-size: 16px;
-}
-
-/* 弹幕动画优化 */
-@keyframes floatIn {
+@keyframes fixedFadeIn {
   from {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateX(-50%) translateY(-8px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
   }
 }
 
-.top-track .danmu-item,
-.bottom-track .danmu-item {
-  animation: floatIn 0.3s ease-out;
+@media (max-width: 768px) {
+  .danmu-content {
+    padding: 1px 5px;
+  }
 }
 </style>

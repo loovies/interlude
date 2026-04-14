@@ -4,14 +4,21 @@ import Player from 'xgplayer'
 import 'xgplayer/dist/index.min.css'
 import { ElMessage } from 'element-plus'
 import {
+  createVideoDanmu,
+  createVideoComment,
+  fetchVideoDanmus,
   fetchUserFollowStatus,
+  fetchVideoComments,
   fetchVideoReactionStatus,
   followUser,
+  likeVideoComment,
   reportVideoPlayFinish,
   reportVideoWatchHistory,
   toggleVideoCollect,
   toggleVideoLike,
   toggleVideoShare,
+  type VideoDanmuItem,
+  type VideoCommentItem,
   type UserFollowStatus,
   type VideoReactionStatus,
 } from '@/api/video'
@@ -22,7 +29,30 @@ import {
   getFollowRelationCache,
   setFollowRelationCache,
 } from '@/utils/followCache'
-import { generateMockDanmu } from '@/utils/mockData'
+
+type DanmuKind = 'normal' | 'top' | 'bottom' | 'scroll'
+
+interface PlayerDanmuItem {
+  id: number | string
+  content: string
+  time: number
+  color?: string
+  type?: DanmuKind
+  speed?: number
+  fontSize?: number
+  opacity?: number
+  userId?: string
+  userName?: string
+}
+
+type DanmuArea = 'full' | 'top' | 'bottom'
+
+interface DanmuSettingsStorage {
+  fontSize?: number
+  opacity?: number
+  speed?: number
+  area?: DanmuArea
+}
 
 export interface VideoQualityOption {
   quality: string
@@ -65,6 +95,8 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   
   const VIDEO_BOTTOM_GAP = 2
   const CONTROL_BAR_VISUAL_OFFSET = 60
+  const COMMENT_PANEL_RESERVE_WIDTH = 360
+  const COMMENT_PANEL_BREAKPOINT = 900
   const videoStageStyle = ref<CSSProperties>({
     width: '100%',
     height: '100%',
@@ -89,7 +121,7 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   
   // 弹幕相关
   const showDanmu = ref(true)
-  const danmuList = ref<any[]>([])
+  const danmuList = ref<PlayerDanmuItem[]>([])
   const danmuInput = ref<HTMLInputElement | null>(null)
   const danmuInputText = ref('')
   const danmuSettingsRef = ref<HTMLElement | null>(null)
@@ -99,7 +131,7 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   const danmuFontSize = ref(16)
   const danmuOpacity = ref(0.8)
   const danmuSpeed = ref(1.0)
-  const danmuArea = ref('full')
+  const danmuArea = ref<DanmuArea>('full')
   
   // 播放速率相关
   const playbackRates = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0]
@@ -140,8 +172,26 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   const error = ref('')
 
   const likeCount = ref<number>(Number(props.videoData.likes ?? 0) || 0)
+  const commentCount = ref<number>(Number(props.videoData.comments ?? 0) || 0)
   const collectCount = ref<number>(Number(props.videoData.collects ?? 0) || 0)
   const shareCount = ref<number>(Number(props.videoData.shares ?? 0) || 0)
+  const showCommentPanel = ref(false)
+  const commentList = ref<VideoCommentItem[]>([])
+  const commentInputText = ref('')
+  const commentLoading = ref(false)
+  const commentSubmitting = ref(false)
+  const commentPageNo = ref(1)
+  const commentPageSize = 20
+  const commentHasMore = ref(true)
+  const commentTotal = ref(0)
+  const commentLikePendingIds = ref<Set<number>>(new Set())
+  const commentDislikedIds = ref<Set<number>>(new Set())
+  const commentDislikeCounts = ref<Record<number, number>>({})
+  const commentReplyTarget = ref<{
+    commentId: number
+    rootCommentId: number
+    authorName: string
+  } | null>(null)
   const isLiked = ref(false)
   const isCollected = ref(false)
   const isShared = ref(false)
@@ -190,13 +240,129 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
     return Math.max(0, Math.round(numeric))
   }
 
+  const parseCommentId = (value: unknown): number | null => {
+    const numeric = Number(value ?? 0)
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+      return null
+    }
+    return Math.floor(numeric)
+  }
+
+  const DANMU_SETTINGS_STORAGE_KEY = 'interlude.video.danmu.settings'
+
+  const clampNumber = (value: unknown, min: number, max: number, fallback: number): number => {
+    const numeric = Number(value)
+    if (!Number.isFinite(numeric)) {
+      return fallback
+    }
+    return Math.max(min, Math.min(max, numeric))
+  }
+
+  const sanitizeDanmuArea = (value: unknown): DanmuArea => {
+    return value === 'top' || value === 'bottom' ? value : 'full'
+  }
+
+  const mapDanmuPositionToType = (position: unknown): DanmuKind => {
+    const parsed = Number(position ?? 1)
+    if (parsed === 2) {
+      return 'top'
+    }
+    if (parsed === 3) {
+      return 'bottom'
+    }
+    return 'normal'
+  }
+
+  const mapDanmuTypeToPosition = (type: DanmuKind): 1 | 2 | 3 => {
+    if (type === 'top') {
+      return 2
+    }
+    if (type === 'bottom') {
+      return 3
+    }
+    return 1
+  }
+
+  const mapVideoDanmuToPlayer = (item: VideoDanmuItem): PlayerDanmuItem => {
+    const offsetMs = clampNumber(item?.timeOffset ?? 0, 0, 24 * 60 * 60 * 1000, 0)
+    const safeFontSize = Math.round(clampNumber(item?.fontSize ?? 16, 12, 42, 16))
+    const color = typeof item?.color === 'string' && /^#[0-9a-fA-F]{6}$/.test(item.color)
+      ? item.color.toUpperCase()
+      : '#FFFFFF'
+    return {
+      id: item?.danmuId ?? `${item?.videoId || 'video'}-${offsetMs}-${Math.random()}`,
+      content: String(item?.content ?? ''),
+      time: offsetMs / 1000,
+      color,
+      type: mapDanmuPositionToType(item?.position),
+      speed: 1,
+      fontSize: safeFontSize,
+      userId: item?.userId,
+      userName: item?.userName,
+    }
+  }
+
+  const loadPersistedDanmuSettings = () => {
+    if (typeof window === 'undefined') {
+      return
+    }
+    try {
+      const raw = window.localStorage.getItem(DANMU_SETTINGS_STORAGE_KEY)
+      if (!raw) {
+        return
+      }
+      const parsed = JSON.parse(raw) as DanmuSettingsStorage | null
+      if (!parsed || typeof parsed !== 'object') {
+        return
+      }
+      danmuFontSize.value = Math.round(clampNumber(parsed.fontSize, 12, 42, 16))
+      danmuOpacity.value = clampNumber(parsed.opacity, 0.2, 1, 0.8)
+      danmuSpeed.value = Number(clampNumber(parsed.speed, 0.5, 2, 1).toFixed(1))
+      danmuArea.value = sanitizeDanmuArea(parsed.area)
+    } catch (error) {
+      console.warn('读取弹幕设置失败', error)
+    }
+  }
+
+  const persistDanmuSettings = () => {
+    if (typeof window === 'undefined') {
+      return
+    }
+    const payload: DanmuSettingsStorage = {
+      fontSize: danmuFontSize.value,
+      opacity: danmuOpacity.value,
+      speed: danmuSpeed.value,
+      area: danmuArea.value,
+    }
+    try {
+      window.localStorage.setItem(DANMU_SETTINGS_STORAGE_KEY, JSON.stringify(payload))
+    } catch (error) {
+      console.warn('保存弹幕设置失败', error)
+    }
+  }
+
   const resetReactionSnapshot = () => {
     likeCount.value = parseCount(props.videoData.likes)
+    commentCount.value = parseCount(props.videoData.comments)
     collectCount.value = parseCount(props.videoData.collects)
     shareCount.value = parseCount(props.videoData.shares)
     isLiked.value = false
     isCollected.value = false
     isShared.value = false
+  }
+
+  const resetCommentState = () => {
+    commentList.value = []
+    commentInputText.value = ''
+    commentLoading.value = false
+    commentSubmitting.value = false
+    commentPageNo.value = 1
+    commentHasMore.value = true
+    commentTotal.value = 0
+    commentLikePendingIds.value = new Set<number>()
+    commentDislikedIds.value = new Set<number>()
+    commentDislikeCounts.value = {}
+    commentReplyTarget.value = null
   }
 
   const normalizeUserId = (value: unknown): string => {
@@ -455,8 +621,18 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
       lastStageScale = 1
     }
   
+    let reservedWidth = 0
+    if (showCommentPanel.value) {
+      const isDesktop = typeof window === 'undefined' || window.innerWidth > COMMENT_PANEL_BREAKPOINT
+      if (isDesktop) {
+        const maxAllowedReserve = Math.max(containerRect.width - 320, 0)
+        reservedWidth = Math.min(COMMENT_PANEL_RESERVE_WIDTH, maxAllowedReserve)
+      }
+    }
+
+    const availableWidth = Math.max(containerRect.width - reservedWidth, 0)
     const stageHeight = containerRect.height * scale
-    const stageWidth = containerRect.width * scale
+    const stageWidth = availableWidth * scale
   
     videoStageStyle.value = {
       width: `${stageWidth}px`,
@@ -511,6 +687,7 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
         volume: volume.value,
         fitVideoSize: 'contain' as any,
         controls: false, // 使用自定义控制栏
+        keyShortcut: false, // 关闭 xgplayer 内置空格快捷键，避免与自定义监听重复触发
         playbackRate: [0.5, 0.75, 1.0, 1.25, 1.5, 2.0],
         lang: 'zh-cn',
         cssFullscreen: true,
@@ -631,7 +808,7 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
       startHideTimer()
   
       // 生成模拟弹幕数据
-      generateDanmuData()
+      loadDanmuData().catch(() => undefined)
       
       console.log('抖音风格播放器初始化完成')
       nextTick(() => updateVideoStageSize())
@@ -705,13 +882,19 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   }
   
   // 生成弹幕数据
-  const generateDanmuData = () => {
-    const videoId = getVideoId()
+  const loadDanmuData = async () => {
+    const videoId = parseVideoId()
     if (videoId === null) {
       danmuList.value = []
       return
     }
-    danmuList.value = generateMockDanmu(videoId, totalDuration.value)
+    try {
+      const list = await fetchVideoDanmus(videoId, 1800)
+      danmuList.value = Array.isArray(list) ? list.map(mapVideoDanmuToPlayer) : []
+    } catch (error) {
+      console.warn('鍔犺浇寮瑰箷澶辫触:', error)
+      danmuList.value = []
+    }
   }
   
   // 设置播放器事件
@@ -802,7 +985,8 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
       }
     })
   
-    // 监听键盘事件
+    // 监听键盘事件（防止重复绑定）
+    document.removeEventListener('keydown', handleKeydown)
     document.addEventListener('keydown', handleKeydown)
   }
   
@@ -891,14 +1075,18 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   
   // 切换播放/暂停
   const togglePlay = () => {
-    console.log('togglePlay called, player exists:', !!player.value)
     if (!player.value) return
-  
-    console.log('player paused:', player.value.paused)
-    if (player.value.paused) {
-      player.value.play()
+
+    const shouldPlay = !isPlaying.value
+    if (shouldPlay) {
+      isPlaying.value = true
+      player.value.play().catch((error: any) => {
+        console.warn('播放失败:', error)
+        isPlaying.value = false
+      })
     } else {
       player.value.pause()
+      isPlaying.value = false
     }
   
     // 显示控制条
@@ -936,17 +1124,13 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   
   // 更新弹幕设置
   const updateDanmuSettings = () => {
-    // 这里可以发送弹幕设置到弹幕组件
-    console.log('弹幕设置更新:', {
-      fontSize: danmuFontSize.value,
-      opacity: danmuOpacity.value,
-      speed: danmuSpeed.value,
-      area: danmuArea.value
-    })
-    // 实际应用中可以通过事件或状态管理传递给弹幕组件
+    danmuFontSize.value = Math.round(clampNumber(danmuFontSize.value, 12, 42, 16))
+    danmuOpacity.value = Number(clampNumber(danmuOpacity.value, 0.2, 1, 0.8).toFixed(2))
+    danmuSpeed.value = Number(clampNumber(danmuSpeed.value, 0.5, 2, 1).toFixed(1))
+    danmuArea.value = sanitizeDanmuArea(danmuArea.value)
+    persistDanmuSettings()
   }
-  
-  // 切换播放速率菜单
+
   const togglePlaybackRateMenu = () => {
     showPlaybackRateMenu.value = !showPlaybackRateMenu.value
     showDanmuSettings.value = false
@@ -974,17 +1158,20 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   const sendDanmuFromInput = () => {
     const content = danmuInputText.value.trim()
     if (!content) return
-  
+
     handleSendDanmu(content)
-    danmuInputText.value = ''
-    
-    // 聚焦到输入框以便继续输入
-    nextTick(() => {
-      danmuInput.value?.focus()
-    })
+      .then((sent) => {
+        if (!sent) {
+          return
+        }
+        danmuInputText.value = ''
+        nextTick(() => {
+          danmuInput.value?.focus()
+        })
+      })
+      .catch(() => undefined)
   }
-  
-  // 改变清晰度
+
   const changeQuality = (quality: string) => {
     if (currentQuality.value === quality) {
       return
@@ -1088,22 +1275,54 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   }
   
   // 处理发送弹幕
-  const handleSendDanmu = (content: string) => {
-    const newDanmu = {
-      id: Date.now(),
-      content,
-      time: currentTime.value,
-      color: '#ffffff',
-      type: 'normal',
-      userId: 'user_' + Math.floor(Math.random() * 1000),
-      userName: '用户' + Math.floor(Math.random() * 1000),
+  const handleSendDanmu = async (content: string): Promise<boolean> => {
+    const normalizedContent = content.trim()
+    if (!normalizedContent) {
+      return false
     }
-    
-    danmuList.value.push(newDanmu)
-    showControls()
+
+    return runAfterLogin('danmu', async () => {
+      const videoId = parseVideoId()
+      if (videoId === null) {
+        ElMessage.warning('暂无可发送弹幕的视频')
+        return false
+      }
+
+      const sendTimeSeconds = player.value?.currentTime ?? currentTime.value ?? 0
+      const timeOffset = Math.max(0, Math.floor(sendTimeSeconds * 1000))
+      const danmuType: DanmuKind = danmuArea.value === 'top'
+        ? 'top'
+        : (danmuArea.value === 'bottom' ? 'bottom' : 'normal')
+      const payload = {
+        videoId,
+        content: normalizedContent.slice(0, 255),
+        timeOffset,
+        color: '#FFFFFF',
+        fontSize: Math.round(clampNumber(danmuFontSize.value, 12, 42, 16)),
+        position: mapDanmuTypeToPosition(danmuType),
+      }
+
+      try {
+        const created = await createVideoDanmu(payload)
+        const mapped = mapVideoDanmuToPlayer(created)
+        if (!mapped.userId) {
+          const loginUserId = normalizeUserId(authStore.currentUser?.userId)
+          mapped.userId = loginUserId || undefined
+        }
+        if (!mapped.userName) {
+          mapped.userName = authStore.currentUser?.nickName || '我'
+        }
+        danmuList.value.push(mapped)
+        showControls()
+        return true
+      } catch (error: any) {
+        const message = error?.response?.data?.info || error?.message || '发送弹幕失败，请稍后重试'
+        ElMessage.error(message)
+        return false
+      }
+    }).catch(() => false)
   }
-  
-  // 格式化时间
+
   const formatTime = (seconds: number) => {
     if (!seconds && seconds !== 0) return '00:00'
   
@@ -1150,9 +1369,45 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
       return timeString
     }
   }
+
+  const shouldIgnoreKeyboardShortcut = (event: KeyboardEvent): boolean => {
+    const target = event.target as HTMLElement | null
+    if (!target) {
+      return false
+    }
+    const tagName = (target.tagName || '').toLowerCase()
+    if (tagName === 'input' || tagName === 'textarea' || tagName === 'select' || tagName === 'button') {
+      return true
+    }
+    if ((target as HTMLElement).isContentEditable) {
+      return true
+    }
+    if (typeof target.closest === 'function') {
+      const editableContainer = target.closest(
+        '.danmu-input-wrapper, .comment-panel-input, .el-input, .el-textarea, .el-select',
+      )
+      if (editableContainer) {
+        return true
+      }
+    }
+    return false
+  }
   
   // 键盘快捷键
   const handleKeydown = (e: KeyboardEvent) => {
+    if (shouldIgnoreKeyboardShortcut(e)) {
+      return
+    }
+    if (e.code === 'Space') {
+      if (e.repeat) {
+        return
+      }
+      e.preventDefault()
+      e.stopPropagation()
+      e.stopImmediatePropagation()
+      togglePlay()
+      return
+    }
     switch (e.key) {
       case 'Escape':
         e.preventDefault()
@@ -1162,7 +1417,12 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
         break
       case ' ':
       case 'Spacebar':
+        if (e.repeat) {
+          return
+        }
         e.preventDefault()
+        e.stopPropagation()
+        e.stopImmediatePropagation()
         togglePlay()
         break
       case 'f':
@@ -1240,9 +1500,18 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   watch(
     () => props.videoData?.videoId,
     (videoId) => {
+      const keepCommentPanelOpen = showCommentPanel.value
       resetReactionSnapshot()
+      resetCommentState()
+      showCommentPanel.value = keepCommentPanelOpen
       if (videoId !== null && videoId !== undefined) {
+        loadDanmuData().catch(() => undefined)
         loadReactionStatus(videoId as string | number)
+        if (keepCommentPanelOpen) {
+          loadComments(true).catch(() => undefined)
+        }
+      } else {
+        danmuList.value = []
       }
     },
     { immediate: true }
@@ -1297,6 +1566,13 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
       nextTick(() => updateVideoStageSize())
     }
   )
+
+  watch(
+    () => showCommentPanel.value,
+    () => {
+      nextTick(() => updateVideoStageSize())
+    }
+  )
   
   // 点击外部关闭菜单
   const handleClickOutside = (event: MouseEvent) => {
@@ -1336,11 +1612,251 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   
   // 处理评论
   const handleComment = () => {
-    runAfterLogin('comment', () => {
-      ElMessage.info('评论功能开发中，欢迎先点赞收藏~')
+    runAfterLogin('comment', async () => {
+      if (showCommentPanel.value) {
+        showCommentPanel.value = false
+        return
+      }
+      showCommentPanel.value = true
+      if (commentList.value.length > 0) {
+        return
+      }
+      await loadComments(true)
     }).catch(() => undefined)
   }  
   // 处理分享
+  const loadComments = async (reset: boolean = false) => {
+    const videoId = getVideoId()
+    if (videoId === null || videoId === undefined) {
+      return
+    }
+    if (commentLoading.value) {
+      return
+    }
+    if (!reset && !commentHasMore.value) {
+      return
+    }
+
+    commentLoading.value = true
+    const targetPage = reset ? 1 : commentPageNo.value
+    try {
+      const page = await fetchVideoComments(videoId, targetPage, commentPageSize)
+      const incoming = Array.isArray(page?.list) ? page.list : []
+      if (reset) {
+        commentList.value = incoming
+      } else {
+        commentList.value.push(...incoming)
+      }
+
+      commentTotal.value = parseCount(page?.totalCount)
+      commentCount.value = commentTotal.value
+      commentPageNo.value = targetPage + 1
+      commentHasMore.value = commentList.value.length < commentTotal.value
+    } catch (error: any) {
+      const message = error?.response?.data?.info || error?.message || '加载评论失败'
+      ElMessage.error(message)
+    } finally {
+      commentLoading.value = false
+    }
+  }
+
+  const loadMoreComments = () => {
+    loadComments(false).catch(() => undefined)
+  }
+
+  const closeCommentPanel = () => {
+    showCommentPanel.value = false
+    commentReplyTarget.value = null
+  }
+
+  const getReplyRootCommentId = (item?: VideoCommentItem | null): number | null => {
+    if (!item) {
+      return null
+    }
+    const selfId = parseCommentId(item.commentId)
+    const parentId = parseCommentId(item.parentCommentId)
+    if (parentId !== null) {
+      return parentId
+    }
+    return selfId
+  }
+
+  const beginReplyComment = (item?: VideoCommentItem | null) => {
+    const commentId = parseCommentId(item?.commentId)
+    const rootCommentId = getReplyRootCommentId(item)
+    if (commentId === null || rootCommentId === null) {
+      return
+    }
+    commentReplyTarget.value = {
+      commentId,
+      rootCommentId,
+      authorName: (item?.authorName || '用户').trim(),
+    }
+  }
+
+  const cancelReplyComment = () => {
+    commentReplyTarget.value = null
+  }
+
+  const submitComment = () => {
+    runAfterLogin('comment', async () => {
+      if (commentSubmitting.value) {
+        return
+      }
+      const videoId = getVideoId()
+      if (videoId === null || videoId === undefined) {
+        ElMessage.warning('暂无可评论的视频')
+        return
+      }
+      const content = commentInputText.value.trim()
+      if (!content) {
+        ElMessage.warning('请输入评论内容')
+        return
+      }
+
+      commentSubmitting.value = true
+      try {
+        const replyTarget = commentReplyTarget.value
+        const payload: {
+          videoId: string | number
+          content: string
+          parentCommentId?: number
+          replyCommentId?: number
+        } = {
+          videoId,
+          content,
+        }
+        if (replyTarget?.rootCommentId) {
+          payload.parentCommentId = replyTarget.rootCommentId
+        }
+        if (replyTarget?.commentId) {
+          payload.replyCommentId = replyTarget.commentId
+        }
+        const created = await createVideoComment(payload)
+        commentInputText.value = ''
+        created.liked = false
+        if (payload.parentCommentId) {
+          commentList.value.push(created)
+        } else {
+          commentList.value.unshift(created)
+        }
+        commentReplyTarget.value = null
+        commentCount.value += 1
+        commentTotal.value += 1
+        ElMessage.success('评论成功')
+      } catch (error: any) {
+        const message = error?.response?.data?.info || error?.message || '评论失败，请稍后重试'
+        ElMessage.error(message)
+      } finally {
+        commentSubmitting.value = false
+      }
+    }).catch(() => undefined)
+  }
+
+  const handleCommentInputKeydown = (event: KeyboardEvent) => {
+    const nativeEvent = event as KeyboardEvent & { keyCode?: number; isComposing?: boolean }
+    if (nativeEvent.key !== 'Enter') {
+      return
+    }
+    if (nativeEvent.shiftKey) {
+      return
+    }
+    if (nativeEvent.isComposing || nativeEvent.keyCode === 229) {
+      return
+    }
+    event.preventDefault()
+    submitComment()
+  }
+
+  const markCommentLikePending = (commentId: number, pending: boolean) => {
+    const next = new Set(commentLikePendingIds.value)
+    if (pending) {
+      next.add(commentId)
+    } else {
+      next.delete(commentId)
+    }
+    commentLikePendingIds.value = next
+  }
+
+  const isCommentLikeMutating = (commentId: number) => {
+    return commentLikePendingIds.value.has(commentId)
+  }
+
+  const isCommentLiked = (commentId: number) => {
+    const target = commentList.value.find((comment) => Number(comment.commentId) === commentId)
+    return !!target?.liked
+  }
+
+  const handleCommentLike = (item: VideoCommentItem) => {
+    runAfterLogin('comment', async () => {
+      const commentId = Number(item?.commentId ?? 0)
+      if (!Number.isFinite(commentId) || commentId <= 0) {
+        return
+      }
+      if (isCommentLikeMutating(commentId)) {
+        return
+      }
+
+      markCommentLikePending(commentId, true)
+      try {
+        const latestStatus = await likeVideoComment({ commentId })
+
+        const target = commentList.value.find((comment) => Number(comment.commentId) === commentId)
+        if (target) {
+          target.likeCount = parseCount(latestStatus?.likeCount)
+          target.liked = !!latestStatus?.liked
+        }
+      } catch (error: any) {
+        const message = error?.response?.data?.info || error?.message || '评论点赞失败，请稍后重试'
+        ElMessage.error(message)
+      } finally {
+        markCommentLikePending(commentId, false)
+      }
+    }).catch(() => undefined)
+  }
+
+  const isCommentDisliked = (commentId: number) => {
+    return commentDislikedIds.value.has(commentId)
+  }
+
+  const getCommentDislikeCount = (item: VideoCommentItem): number => {
+    const commentId = Number(item?.commentId ?? 0)
+    if (!Number.isFinite(commentId) || commentId <= 0) {
+      return 0
+    }
+    const cached = commentDislikeCounts.value[commentId]
+    if (typeof cached === 'number' && Number.isFinite(cached)) {
+      return Math.max(0, Math.floor(cached))
+    }
+    const dislikeCount = parseCount((item as VideoCommentItem & { dislikeCount?: unknown })?.dislikeCount)
+    if (dislikeCount > 0) {
+      commentDislikeCounts.value = {
+        ...commentDislikeCounts.value,
+        [commentId]: dislikeCount,
+      }
+    }
+    return dislikeCount
+  }
+
+  const handleCommentDislike = (item: VideoCommentItem) => {
+    const commentId = Number(item?.commentId ?? 0)
+    if (!Number.isFinite(commentId) || commentId <= 0) {
+      return
+    }
+    const next = new Set(commentDislikedIds.value)
+    const currentCount = getCommentDislikeCount(item)
+    const nextCounts = { ...commentDislikeCounts.value }
+    if (next.has(commentId)) {
+      next.delete(commentId)
+      nextCounts[commentId] = Math.max(0, currentCount - 1)
+    } else {
+      next.add(commentId)
+      nextCounts[commentId] = currentCount + 1
+    }
+    commentDislikedIds.value = next
+    commentDislikeCounts.value = nextCounts
+  }
+
   const handleShare = () => {
     runAfterLogin('share', async () => {
       if (reactionMutating.value) {
@@ -1425,6 +1941,8 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   
   // 组件挂载
   onMounted(() => {
+    loadPersistedDanmuSettings()
+    updateDanmuSettings()
     nextTick(() => {
       initPlayer()
       updateVideoStageSize()
@@ -1500,8 +2018,16 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
     danmuList,
     danmuInputText,
     likeCount,
+    commentCount,
     collectCount,
     shareCount,
+    showCommentPanel,
+    commentList,
+    commentInputText,
+    commentReplyTarget,
+    commentLoading,
+    commentSubmitting,
+    commentHasMore,
     isLiked,
     isCollected,
     isShared,
@@ -1539,6 +2065,18 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
     handleSendDanmu,
     handleLike,
     handleComment,
+    handleCommentLike,
+    handleCommentDislike,
+    isCommentLiked,
+    isCommentDisliked,
+    getCommentDislikeCount,
+    isCommentLikeMutating,
+    closeCommentPanel,
+    beginReplyComment,
+    cancelReplyComment,
+    submitComment,
+    handleCommentInputKeydown,
+    loadMoreComments,
     handleFollow,
     handleShare,
     handleCollect,

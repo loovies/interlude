@@ -23,7 +23,14 @@
         </div>
         <ElTabs v-model="activeTab" class="login-tabs" @tab-change="handleTabSwitch">
           <ElTabPane label="账号登录" name="account">
-            <ElForm ref="accountFormRef" :model="accountForm" :rules="accountRules" label-position="top" class="login-form">
+            <ElForm
+              ref="accountFormRef"
+              :model="accountForm"
+              :rules="accountRules"
+              label-position="top"
+              class="login-form"
+              @keydown.enter.prevent="handleEnterSubmit"
+            >
               <ElFormItem prop="account">
                 <ElInput v-model.trim="accountForm.account" placeholder="手机号 / 用户名 / 邮箱" autocomplete="username" />
               </ElFormItem>
@@ -59,7 +66,14 @@
             </ElForm>
           </ElTabPane>
           <ElTabPane label="邮箱登录" name="email">
-            <ElForm ref="emailFormRef" :model="emailForm" :rules="emailRules" label-position="top" class="login-form">
+            <ElForm
+              ref="emailFormRef"
+              :model="emailForm"
+              :rules="emailRules"
+              label-position="top"
+              class="login-form"
+              @keydown.enter.prevent="handleEnterSubmit"
+            >
               <ElFormItem prop="email">
                 <ElInput v-model.trim="emailForm.email" placeholder="请输入邮箱" autocomplete="email" />
               </ElFormItem>
@@ -95,7 +109,14 @@
             </ElForm>
           </ElTabPane>
           <ElTabPane label="快速注册" name="register">
-            <ElForm ref="registerFormRef" :model="registerForm" :rules="registerRules" label-position="top" class="login-form">
+            <ElForm
+              ref="registerFormRef"
+              :model="registerForm"
+              :rules="registerRules"
+              label-position="top"
+              class="login-form"
+              @keydown.enter.prevent="handleEnterSubmit"
+            >
               <ElFormItem prop="nickName">
                 <ElInput v-model.trim="registerForm.nickName" placeholder="昵称" />
               </ElFormItem>
@@ -488,6 +509,28 @@ const handleRegister = async () => {
     ElMessage.error(getErrorMessage(error, '注册失败，请稍后再试'))
   } finally {
     registerLoading.value = false
+  }
+}
+
+const handleEnterSubmit = (event: KeyboardEvent) => {
+  const nativeEvent = event as KeyboardEvent & { isComposing?: boolean; keyCode?: number }
+  if (nativeEvent.isComposing || nativeEvent.keyCode === 229) {
+    return
+  }
+  if (activeTab.value === 'account') {
+    if (!accountLoginLoading.value) {
+      handleAccountLogin().catch(() => undefined)
+    }
+    return
+  }
+  if (activeTab.value === 'email') {
+    if (!emailLoginLoading.value) {
+      handleEmailLogin().catch(() => undefined)
+    }
+    return
+  }
+  if (!registerLoading.value) {
+    handleRegister().catch(() => undefined)
   }
 }
 

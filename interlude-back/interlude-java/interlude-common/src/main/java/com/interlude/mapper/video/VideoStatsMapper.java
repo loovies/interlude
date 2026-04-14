@@ -29,4 +29,8 @@ public interface VideoStatsMapper<T, P> extends BaseMapper {
 	 */
 	Integer increasePlayCount(@Param("videoId") Long videoId);
 
+	Integer increaseCommentCount(@Param("videoId") Long videoId);
+
+	Integer increaseDanmuCount(@Param("videoId") Long videoId);
+
 }

@@ -1,6 +1,7 @@
 ﻿﻿<template>
   <div 
-    class="douyin-video-player" 
+    class="douyin-video-player"
+    :class="{ 'with-comment-panel': showCommentPanel }"
     ref="playerContainer"
     @mousemove="showControls"
     @mouseleave="startHideTimer"
@@ -16,6 +17,10 @@
         :danmu-list="danmuList"
         :current-time="currentTime"
         :is-playing="isPlaying"
+        :font-size="danmuFontSize"
+        :opacity="danmuOpacity"
+        :speed-multiplier="danmuSpeed"
+        :area="danmuArea"
         @send-danmu="handleSendDanmu"
       />
 
@@ -90,7 +95,7 @@
           <svg class="action-icon" viewBox="0 0 24 24">
             <path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
           </svg>
-          <span class="action-count">{{ videoData.comments || 0 }}</span>
+          <span class="action-count">{{ commentCount }}</span>
         </button>
         
         <button
@@ -115,6 +120,183 @@
             <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
           </svg>
           <span class="action-count">{{ collectCount }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div v-if="showCommentPanel" class="comment-panel" @click.stop>
+      <div class="comment-panel-header">
+        <span>评论 {{ commentCount }}</span>
+        <button class="comment-close-btn" @click.stop="closeCommentPanel">×</button>
+      </div>
+
+      <div class="comment-panel-body">
+        <div v-if="commentLoading && commentList.length === 0" class="comment-loading">加载中...</div>
+        <template v-else>
+          <div v-if="commentList.length === 0" class="comment-empty">暂无评论，来抢沙发吧</div>
+          <div v-else class="comment-list">
+            <div v-for="group in commentGroups" :key="group.root.commentId" class="comment-thread">
+              <div class="comment-item">
+                <img
+                  class="comment-avatar"
+                  :src="resolveCommentAvatar(group.root.authorAvatar, group.root.authorId)"
+                  :alt="`${group.root.authorName || '用户'}头像`"
+                />
+                <div class="comment-main">
+                  <div class="comment-author-row">
+                    <div class="comment-author">{{ group.root.authorName || '匿名用户' }}</div>
+                    <span v-if="isAuthorComment(group.root.authorId)" class="comment-author-tag">作者</span>
+                  </div>
+                  <div class="comment-content">{{ group.root.content }}</div>
+                  <div class="comment-meta">
+                    <span>{{ formatCommentTime(group.root.createdAt) }}</span>
+                    <button
+                      class="comment-like-action"
+                      :class="{ active: isCommentLiked(group.root.commentId) }"
+                      :disabled="isCommentLikeMutating(group.root.commentId)"
+                      @click.stop="handleCommentLike(group.root)"
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z"/>
+                      </svg>
+                      <span>{{ group.root.likeCount || 0 }}</span>
+                    </button>
+                    <button
+                      class="comment-dislike-action"
+                      :class="{ active: isCommentDisliked(group.root.commentId) }"
+                      @click.stop="handleCommentDislike(group.root)"
+                      aria-label="不喜欢"
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        <path d="M11.9 7.2 10.4 10l2.1 1.2-1.7 2.9"/>
+                      </svg>
+                      <span>{{ getCommentDislikeCount(group.root) }}</span>
+                    </button>
+                    <button class="comment-reply-action" @click.stop="beginReplyComment(group.root)">回复</button>
+                  </div>
+                </div>
+              </div>
+              <div v-if="group.replies.length > 0" class="comment-replies-wrap">
+                <button
+                  v-if="!isReplyExpanded(group.root.commentId)"
+                  class="comment-replies-toggle"
+                  @click.stop="toggleReplyExpanded(group.root.commentId, group.replies.length)"
+                >
+                  <span>展开{{ group.replies.length }}条回复</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M7 10l5 5 5-5" />
+                  </svg>
+                </button>
+                <template v-else>
+                  <div class="comment-reply-list">
+                    <div v-for="reply in getVisibleReplies(group)" :key="reply.commentId" class="comment-item is-reply">
+                      <img
+                        class="comment-avatar is-reply"
+                        :src="resolveCommentAvatar(reply.authorAvatar, reply.authorId)"
+                        :alt="`${reply.authorName || '用户'}头像`"
+                      />
+                      <div class="comment-main">
+                        <div class="comment-author-row">
+                          <div class="comment-author">
+                            <template v-if="reply.replyToUserName">
+                              <span>{{ reply.authorName || '匿名用户' }}</span>
+                              <svg class="comment-reply-arrow-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M8 5l10 7-10 7z" />
+                              </svg>
+                              <span class="comment-reply-to">{{ reply.replyToUserName }}</span>
+                            </template>
+                            <template v-else>
+                              {{ reply.authorName || '匿名用户' }}
+                            </template>
+                          </div>
+                          <span v-if="isAuthorComment(reply.authorId)" class="comment-author-tag">作者</span>
+                        </div>
+                        <div class="comment-content">{{ reply.content }}</div>
+                        <div class="comment-meta">
+                          <span>{{ formatCommentTime(reply.createdAt) }}</span>
+                          <button
+                            class="comment-like-action"
+                            :class="{ active: isCommentLiked(reply.commentId) }"
+                            :disabled="isCommentLikeMutating(reply.commentId)"
+                            @click.stop="handleCommentLike(reply)"
+                          >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54z"/>
+                            </svg>
+                            <span>{{ reply.likeCount || 0 }}</span>
+                          </button>
+                          <button
+                            class="comment-dislike-action"
+                            :class="{ active: isCommentDisliked(reply.commentId) }"
+                            @click.stop="handleCommentDislike(reply)"
+                            aria-label="不喜欢"
+                          >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                              <path d="M11.9 7.2 10.4 10l2.1 1.2-1.7 2.9"/>
+                            </svg>
+                            <span>{{ getCommentDislikeCount(reply) }}</span>
+                          </button>
+                          <button class="comment-reply-action" @click.stop="beginReplyComment(reply)">回复</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="comment-replies-actions">
+                    <button
+                      v-if="canReplyExpandMore(group)"
+                      class="comment-replies-action-btn"
+                      @click.stop="expandMoreReplies(group.root.commentId, group.replies.length)"
+                    >
+                      <span>展开更多</span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M7 10l5 5 5-5" />
+                      </svg>
+                    </button>
+                    <button
+                      class="comment-replies-action-btn"
+                      @click.stop="collapseReplies(group.root.commentId)"
+                    >
+                      <span>收起</span>
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M7 14l5-5 5 5" />
+                      </svg>
+                    </button>
+                  </div>
+                </template>
+              </div>
+            </div>
+            <button
+              v-if="commentHasMore"
+              class="comment-load-more"
+              :disabled="commentLoading"
+              @click.stop="loadMoreComments"
+            >
+              {{ commentLoading ? '加载中...' : '加载更多' }}
+            </button>
+          </div>
+        </template>
+      </div>
+
+      <div class="comment-panel-input">
+        <div v-if="commentReplyTarget" class="comment-reply-target">
+          <span class="comment-reply-target-text">回复 {{ commentReplyTarget.authorName || '用户' }}</span>
+          <button class="comment-reply-cancel" @click.stop="cancelReplyComment">取消</button>
+        </div>
+        <textarea
+          v-model="commentInputText"
+          maxlength="500"
+          :placeholder="commentReplyTarget ? `回复 ${commentReplyTarget.authorName || '用户'}...` : '说点什么...'"
+          @keydown="handleCommentInputKeydown"
+          @click.stop
+        />
+        <button
+          class="comment-send-btn"
+          :disabled="commentSubmitting || !commentInputText.trim()"
+          @click.stop="submitComment"
+        >
+          {{ commentSubmitting ? '发布中...' : '发布' }}
         </button>
       </div>
     </div>
@@ -205,7 +387,7 @@
                     <input 
                       type="range" 
                       min="12" 
-                      max="24" 
+                      max="42" 
                       step="2" 
                       v-model="danmuFontSize"
                       @input="updateDanmuSettings"
@@ -218,7 +400,7 @@
                   <div class="slider-container">
                     <input 
                       type="range" 
-                      min="0.3" 
+                      min="0.2" 
                       max="1" 
                       step="0.1" 
                       v-model="danmuOpacity"
@@ -383,7 +565,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElSwitch } from 'element-plus'
 import 'element-plus/dist/index.css'
@@ -391,6 +573,7 @@ import DanmuLayer from './DanmuLayer.vue'
 import QualitySelector from './QualitySelector.vue'
 import { useDouyinVideoPlayer } from './composables/useDouyinVideoPlayer'
 import type { DouyinVideoData } from './composables/useDouyinVideoPlayer'
+import type { VideoCommentItem } from '@/api/video'
 
 const props = withDefaults(defineProps<{
   videoData: DouyinVideoData
@@ -405,6 +588,78 @@ const normalizeUserId = (value: unknown): string => {
     return ''
   }
   return String(value).trim()
+}
+
+const isAuthorComment = (commentAuthorId?: string | number): boolean => {
+  const videoAuthorId = normalizeUserId(props.videoData.authorId)
+  const commentUserId = normalizeUserId(commentAuthorId)
+  return !!videoAuthorId && !!commentUserId && videoAuthorId === commentUserId
+}
+
+interface CommentGroup {
+  root: VideoCommentItem
+  replies: VideoCommentItem[]
+}
+
+const parseCommentId = (value?: string | number | null): number => {
+  const numeric = Number(value ?? 0)
+  if (!Number.isFinite(numeric) || numeric <= 0) {
+    return 0
+  }
+  return Math.floor(numeric)
+}
+
+const parseCommentTime = (value?: string): number => {
+  const timestamp = Date.parse(value || '')
+  if (!Number.isFinite(timestamp)) {
+    return 0
+  }
+  return timestamp
+}
+
+const formatCommentTime = (value?: string): string => {
+  const timestamp = parseCommentTime(value)
+  if (!timestamp) {
+    return value || ''
+  }
+  const now = Date.now()
+  const diff = now - timestamp
+  if (!Number.isFinite(diff) || diff < 0) {
+    return value || ''
+  }
+
+  const minuteMs = 60 * 1000
+  const hourMs = 60 * minuteMs
+  const dayMs = 24 * hourMs
+
+  if (diff < minuteMs) {
+    return '刚刚'
+  }
+  if (diff < hourMs) {
+    return `${Math.floor(diff / minuteMs)}分钟前`
+  }
+  if (diff < dayMs) {
+    return `${Math.floor(diff / hourMs)}小时前`
+  }
+
+  const dayCount = Math.floor(diff / dayMs)
+  if (dayCount < 7) {
+    return `${dayCount}天前`
+  }
+  if (dayCount < 30) {
+    const weekCount = Math.floor(dayCount / 7)
+    return `${Math.max(1, weekCount)}周前`
+  }
+  if (dayCount < 365) {
+    const monthCount = Math.floor(dayCount / 30)
+    return `${Math.max(1, monthCount)}个月前`
+  }
+
+  const date = new Date(timestamp)
+  const year = date.getFullYear()
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+  return `${year}年${month}月${day}日`
 }
 
 const resolveAvatarUrl = (avatar?: string): string => {
@@ -428,6 +683,16 @@ const buildAvatarFallback = (): string => {
   const seedSource = props.videoData.authorId ?? props.videoData.videoId ?? 'author'
   const seed = encodeURIComponent(String(seedSource))
   return `https://picsum.photos/seed/avatar-${seed}/80/80`
+}
+
+const buildCommentAvatarFallback = (seedSource?: string | number): string => {
+  const seed = encodeURIComponent(String(seedSource || 'comment-author'))
+  return `https://picsum.photos/seed/comment-avatar-${seed}/64/64`
+}
+
+const resolveCommentAvatar = (avatar?: string, seedSource?: string | number): string => {
+  const resolved = resolveAvatarUrl(avatar?.trim())
+  return resolved || buildCommentAvatarFallback(seedSource)
 }
 
 const authorAvatarUrl = computed(() => {
@@ -483,8 +748,16 @@ const {
   danmuList,
   danmuInputText,
   likeCount,
+  commentCount,
   collectCount,
   shareCount,
+  showCommentPanel,
+  commentList,
+  commentInputText,
+  commentReplyTarget,
+  commentLoading,
+  commentSubmitting,
+  commentHasMore,
   isLiked,
   isCollected,
   isShared,
@@ -521,6 +794,18 @@ const {
   handleSendDanmu,
   handleLike,
   handleComment,
+  handleCommentLike,
+  handleCommentDislike,
+  isCommentLiked,
+  isCommentDisliked,
+  getCommentDislikeCount,
+  isCommentLikeMutating,
+  closeCommentPanel,
+  beginReplyComment,
+  cancelReplyComment,
+  submitComment,
+  handleCommentInputKeydown,
+  loadMoreComments,
   handleFollow,
   handleShare,
   handleCollect,
@@ -528,6 +813,146 @@ const {
   formatPublishTime,
   exposed,
 } = useDouyinVideoPlayer(props, emit)
+
+const REPLY_PAGE_SIZE = 3
+const expandedReplies = ref<Record<number, number>>({})
+
+const getExpandedReplyCount = (rootCommentId?: number | string): number => {
+  const rootId = parseCommentId(rootCommentId as number | string | null | undefined)
+  if (!rootId) {
+    return 0
+  }
+  return expandedReplies.value[rootId] || 0
+}
+
+const isReplyExpanded = (rootCommentId?: number | string): boolean => {
+  return getExpandedReplyCount(rootCommentId) > 0
+}
+
+const toggleReplyExpanded = (rootCommentId: number | string, totalReplies: number) => {
+  const rootId = parseCommentId(rootCommentId as number | string | null | undefined)
+  if (!rootId || totalReplies <= 0) {
+    return
+  }
+  const current = getExpandedReplyCount(rootId)
+  const next = { ...expandedReplies.value }
+  if (current > 0) {
+    next[rootId] = 0
+  } else {
+    next[rootId] = Math.min(REPLY_PAGE_SIZE, totalReplies)
+  }
+  expandedReplies.value = next
+}
+
+const expandMoreReplies = (rootCommentId: number | string, totalReplies: number) => {
+  const rootId = parseCommentId(rootCommentId as number | string | null | undefined)
+  if (!rootId || totalReplies <= 0) {
+    return
+  }
+  const current = getExpandedReplyCount(rootId)
+  const next = { ...expandedReplies.value }
+  next[rootId] = Math.min(totalReplies, Math.max(REPLY_PAGE_SIZE, current + REPLY_PAGE_SIZE))
+  expandedReplies.value = next
+}
+
+const collapseReplies = (rootCommentId: number | string) => {
+  const rootId = parseCommentId(rootCommentId as number | string | null | undefined)
+  if (!rootId) {
+    return
+  }
+  const next = { ...expandedReplies.value }
+  next[rootId] = 0
+  expandedReplies.value = next
+}
+
+const getVisibleReplies = (group: CommentGroup): VideoCommentItem[] => {
+  const rootId = parseCommentId(group.root.commentId)
+  if (!rootId) {
+    return []
+  }
+  const visibleCount = getExpandedReplyCount(rootId)
+  if (visibleCount <= 0) {
+    return []
+  }
+  return group.replies.slice(0, visibleCount)
+}
+
+const canReplyExpandMore = (group: CommentGroup): boolean => {
+  const rootId = parseCommentId(group.root.commentId)
+  if (!rootId) {
+    return false
+  }
+  const visibleCount = getExpandedReplyCount(rootId)
+  return visibleCount > 0 && visibleCount < group.replies.length
+}
+
+const commentGroups = computed<CommentGroup[]>(() => {
+  const source = Array.isArray(commentList.value) ? commentList.value : []
+  const byId = new Map<number, VideoCommentItem>()
+  source.forEach((item) => {
+    const id = parseCommentId(item.commentId)
+    if (id > 0) {
+      byId.set(id, item)
+    }
+  })
+
+  const roots: VideoCommentItem[] = []
+  const replyMap = new Map<number, VideoCommentItem[]>()
+
+  source.forEach((item) => {
+    const parentId = parseCommentId(item.parentCommentId as number | null | undefined)
+    if (parentId <= 0 || !byId.has(parentId)) {
+      roots.push(item)
+      return
+    }
+    const list = replyMap.get(parentId) || []
+    list.push(item)
+    replyMap.set(parentId, list)
+  })
+
+  roots.sort((a, b) => {
+    const timeGap = parseCommentTime(b.createdAt) - parseCommentTime(a.createdAt)
+    if (timeGap !== 0) {
+      return timeGap
+    }
+    return parseCommentId(b.commentId) - parseCommentId(a.commentId)
+  })
+
+  return roots.map((root) => {
+    const rootId = parseCommentId(root.commentId)
+    const replies = [...(replyMap.get(rootId) || [])]
+    replies.sort((a, b) => {
+      const timeGap = parseCommentTime(a.createdAt) - parseCommentTime(b.createdAt)
+      if (timeGap !== 0) {
+        return timeGap
+      }
+      return parseCommentId(a.commentId) - parseCommentId(b.commentId)
+    })
+    return {
+      root,
+      replies,
+    }
+  })
+})
+
+watch(
+  () => commentGroups.value,
+  (groups) => {
+    const next: Record<number, number> = {}
+    groups.forEach((group) => {
+      const rootId = parseCommentId(group.root.commentId)
+      if (!rootId) {
+        return
+      }
+      const existing = expandedReplies.value[rootId] || 0
+      if (existing > 0) {
+        next[rootId] = Math.min(existing, group.replies.length)
+      }
+    })
+    expandedReplies.value = next
+  },
+  { deep: true }
+)
 
 defineExpose(exposed)
 </script>

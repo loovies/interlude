@@ -291,14 +291,19 @@ const getCurrentCategoryParams = () => {
     return {}
   }
 
-  if (currentCategory.pCategoryId === 0 && currentCategory.categoryId) {
+  const resolvedCategoryId = Number(currentCategory.categoryId ?? currentCategory.id)
+  if (!Number.isFinite(resolvedCategoryId) || resolvedCategoryId <= 0) {
+    return {}
+  }
+
+  if (currentCategory.pCategoryId === 0 || currentCategory.pCategoryId === undefined) {
     return {
-      pCategoryId: currentCategory.categoryId,
+      categoryId: resolvedCategoryId,
     }
   }
 
   return {
-    categoryId: currentCategory.categoryId,
+    categoryId: resolvedCategoryId,
     pCategoryId: currentCategory.pCategoryId,
   }
 }

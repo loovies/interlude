@@ -101,4 +101,14 @@ public class VideoStatsServiceImpl implements VideoStatsService{
 	public Integer increasePlayCount(Long videoId) {
 		return this.videoStatsMapper.increasePlayCount(videoId);
 	}
+
+	@Override
+	public Integer increaseCommentCount(Long videoId) {
+		return this.videoStatsMapper.increaseCommentCount(videoId);
+	}
+
+	@Override
+	public Integer increaseDanmuCount(Long videoId) {
+		return this.videoStatsMapper.increaseDanmuCount(videoId);
+	}
 }

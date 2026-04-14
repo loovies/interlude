@@ -62,4 +62,8 @@ public interface VideoStatsService{
 	 */
 	Integer increasePlayCount(Long videoId);
 
+	Integer increaseCommentCount(Long videoId);
+
+	Integer increaseDanmuCount(Long videoId);
+
 }

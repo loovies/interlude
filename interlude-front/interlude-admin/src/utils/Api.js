@@ -46,6 +46,16 @@ const Api = {
   updateVideoInfo: '/videoInfo/updateVideoInfo',
   getVideoAuditInfo: '/audit/loadVideoAuditInfo',
   updateVideoAudit: '/audit/updateVideoAudit',
+
+  // interact comment
+  getLoadCommentList: '/interact/comment/loadCommentList',
+  updateCommentStatus: '/interact/comment/updateCommentStatus',
+  delCommentInfo: '/interact/comment/delCommentInfo',
+
+  // interact danmu
+  getLoadDanmuList: '/interact/danmu/loadDanmuList',
+  updateDanmuStatus: '/interact/danmu/updateDanmuStatus',
+  delDanmuInfo: '/interact/danmu/delDanmuInfo',
 }
 
 //上传图片
