@@ -20,6 +20,7 @@ public class WebVideoCardVO {
 
     private String tags;
     private String interactionSettings;
+    private Integer visibility;
 
     private Integer duration;
     private List<WebVideoQualityVO> qualities;
@@ -119,6 +120,14 @@ public class WebVideoCardVO {
 
     public void setInteractionSettings(String interactionSettings) {
         this.interactionSettings = interactionSettings;
+    }
+
+    public Integer getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(Integer visibility) {
+        this.visibility = visibility;
     }
 
     public Integer getDuration() {

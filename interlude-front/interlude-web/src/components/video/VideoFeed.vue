@@ -9,6 +9,7 @@
       @play="handleVideoPlay(index)"
       @pause="handleVideoPause(index)"
       @fullscreen-change="handleFullscreenChange"
+      @comment-panel-change="handleCommentPanelChange(index, $event)"
     />
   </div>
 </template>
@@ -53,14 +54,17 @@ type FeedMode = 'recommend' | 'random'
 const props = withDefaults(defineProps<{
   feedMode?: FeedMode
   initialVideoId?: string | number | null
+  externalVideoList?: any[] | null
 }>(), {
   feedMode: 'recommend',
   initialVideoId: null,
+  externalVideoList: null,
 })
 
 const emit = defineEmits<{
   activeVideoChange: [index: number, video: any]
   fullscreenChange: [val: boolean]
+  commentPanelChange: [visible: boolean]
 }>()
 
 const feedRef = ref<HTMLElement | null>(null)
@@ -71,6 +75,7 @@ const videoList = ref<any[]>([])
 const loading = ref(false)
 const FEED_PAGE_SIZE = 10
 const isRandomMode = computed(() => props.feedMode === 'random')
+const hasExternalVideoList = computed(() => Array.isArray(props.externalVideoList))
 const seedHandled = ref(false)
 const lastAppliedSeedId = ref<string | null>(null)
 const pendingSeedId = computed(() => {
@@ -137,6 +142,15 @@ const reloadVideos = (forceSeed: boolean = false) => {
   loadVideoList({ forceSeed })
 }
 
+const applyExternalVideoList = (list: any[]) => {
+  resetFeedState()
+  videoList.value = Array.isArray(list) ? [...list] : []
+  nextTick(() => {
+    emit('commentPanelChange', false)
+    emitActiveVideoChange()
+  })
+}
+
 // 更新内部激活索引（只有非全屏时才同步）
 const updateActiveIndexInternal = (index: number) => {
   if (!isFullScreen.value) {
@@ -166,6 +180,10 @@ const emitActiveVideoChange = () => {
 
 // 加载视频列表
 const loadVideoList = async (options?: { forceSeed?: boolean }) => {
+  if (hasExternalVideoList.value) {
+    applyExternalVideoList(props.externalVideoList || [])
+    return
+  }
   if (loading.value) return
 
   loading.value = true
@@ -238,16 +256,23 @@ watch(activeIndexInternal, (newVal, oldVal) => {
   // 通知父组件当前激活的视频变化
   if (newVal !== undefined) {
     emitActiveVideoChange()
+    emit('commentPanelChange', false)
   }
 })
 
 watch(() => props.feedMode, () => {
+  if (hasExternalVideoList.value) {
+    return
+  }
   seedHandled.value = false
   lastAppliedSeedId.value = null
   reloadVideos(true)
 })
 
 watch(() => props.initialVideoId, (newVal, oldVal) => {
+  if (hasExternalVideoList.value) {
+    return
+  }
   if (!isRandomMode.value) {
     return
   }
@@ -267,6 +292,16 @@ watch(() => props.initialVideoId, (newVal, oldVal) => {
   reloadVideos(true)
 })
 
+watch(
+  () => props.externalVideoList,
+  (list) => {
+    if (!hasExternalVideoList.value) {
+      return
+    }
+    applyExternalVideoList(list || [])
+  },
+)
+
 // 处理视频播放
 const handleVideoPlay = (index: number) => {
   // 确保只有当前视频在播放
@@ -280,6 +315,13 @@ const handleVideoPlay = (index: number) => {
 // 处理视频暂停
 const handleVideoPause = (index: number) => {
   // 可以在这里处理暂停逻辑
+}
+
+const handleCommentPanelChange = (index: number, visible: boolean) => {
+  if (index !== activeIndexInternal.value) {
+    return
+  }
+  emit('commentPanelChange', visible)
 }
 
 // 键盘事件
@@ -357,7 +399,11 @@ let observer: IntersectionObserver | null = null
 
 onMounted(() => {
   // 加载视频列表
-  reloadVideos(true)
+  if (hasExternalVideoList.value) {
+    applyExternalVideoList(props.externalVideoList || [])
+  } else {
+    reloadVideos(true)
+  }
 
   // 初始计算
   updateActiveIndexFromScroll()

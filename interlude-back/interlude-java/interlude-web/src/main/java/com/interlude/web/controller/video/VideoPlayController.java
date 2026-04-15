@@ -38,7 +38,7 @@ public class VideoPlayController extends WebBaseController {
      */
     @GetMapping("/{videoId}")
     public ResponseVO<WebVideoDetailVO> detail(@PathVariable("videoId") Long videoId) {
-        return getSuccessResponseVO(webVideoQueryService.getVideoDetail(videoId));
+        return getSuccessResponseVO(webVideoQueryService.getVideoDetail(videoId, getLoginUserId()));
     }
 
     /**
@@ -46,7 +46,7 @@ public class VideoPlayController extends WebBaseController {
      */
     @GetMapping("/{videoId}/playlist")
     public ResponseVO<PlayListInfoVo> playList(@PathVariable("videoId") Long videoId) {
-        return getSuccessResponseVO(webVideoQueryService.getPlayList(videoId));
+        return getSuccessResponseVO(webVideoQueryService.getPlayList(videoId, getLoginUserId()));
     }
 
     /**
@@ -55,7 +55,7 @@ public class VideoPlayController extends WebBaseController {
     @GetMapping("/{videoId}/related")
     public ResponseVO<List<WebVideoCardVO>> related(@PathVariable("videoId") Long videoId,
                                                     @RequestParam(value = "limit", required = false) Integer limit) {
-        return getSuccessResponseVO(webVideoQueryService.getRelatedVideos(videoId, limit));
+        return getSuccessResponseVO(webVideoQueryService.getRelatedVideos(videoId, limit, getLoginUserId()));
     }
 
     /**
@@ -89,5 +89,10 @@ public class VideoPlayController extends WebBaseController {
                 request == null ? null : request.getLastWatchTimeOffset()
         );
         return getSuccessResponseVO(Boolean.TRUE);
+    }
+
+    private String getLoginUserId() {
+        TokenUserInfoDto tokenUserInfoDto = getTokenUserInfo();
+        return tokenUserInfoDto == null ? null : tokenUserInfoDto.getUserId();
     }
 }

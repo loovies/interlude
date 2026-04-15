@@ -1,5 +1,6 @@
 package com.interlude.web.controller.video;
 
+import com.interlude.entity.dto.TokenUserInfoDto;
 import com.interlude.entity.vo.PaginationResultVO;
 import com.interlude.entity.vo.ResponseVO;
 import com.interlude.utils.StringTools;
@@ -35,7 +36,7 @@ public class VideoDiscoverController extends WebBaseController {
             @RequestParam(value = "keyword", required = false) String keyword,
             @RequestParam(value = "pageNo", required = false) Integer pageNo,
             @RequestParam(value = "pageSize", required = false) Integer pageSize) {
-        return getSuccessResponseVO(webVideoQueryService.search(keyword, pageNo, pageSize));
+        return getSuccessResponseVO(webVideoQueryService.search(keyword, pageNo, pageSize, getLoginUserId()));
     }
 
     /**
@@ -51,7 +52,7 @@ public class VideoDiscoverController extends WebBaseController {
      */
     @GetMapping("/{videoId}/cover")
     public void cover(@PathVariable("videoId") Long videoId, HttpServletResponse response) throws Exception {
-        String coverPath = webVideoQueryService.getVideoCover(videoId);
+        String coverPath = webVideoQueryService.getVideoCover(videoId, getLoginUserId());
         if (StringTools.isEmpty(coverPath)) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return;
@@ -90,5 +91,10 @@ public class VideoDiscoverController extends WebBaseController {
             return "image/gif";
         }
         return "application/octet-stream";
+    }
+
+    private String getLoginUserId() {
+        TokenUserInfoDto tokenUserInfoDto = getTokenUserInfo();
+        return tokenUserInfoDto == null ? null : tokenUserInfoDto.getUserId();
     }
 }

@@ -6,9 +6,7 @@ import com.interlude.entity.po.video.VideoStats;
 import com.interlude.entity.vo.video.VideoReactionStatusVO;
 import com.interlude.enums.ResponseCodeEnum;
 import com.interlude.enums.VideoReactionTypeEnum;
-import com.interlude.enums.VideoStatusEnum;
 import com.interlude.exception.BusinessException;
-import com.interlude.service.video.VideoInfoService;
 import com.interlude.service.video.VideoReactionService;
 import com.interlude.service.video.VideoStatsService;
 import com.interlude.utils.StringTools;
@@ -24,12 +22,11 @@ import java.util.Date;
 @Service
 public class WebVideoReactionService {
 
-    private static final int PUBLIC_VISIBILITY = 1;
     private static final String REACTION_STATUS_ACTIVE = "active";
     private static final String REACTION_STATUS_CANCELLED = "cancelled";
 
     @Resource
-    private VideoInfoService videoInfoService;
+    private WebVideoQueryService webVideoQueryService;
 
     @Resource
     private VideoStatsService videoStatsService;
@@ -38,7 +35,7 @@ public class WebVideoReactionService {
     private VideoReactionService videoReactionService;
 
     public VideoReactionStatusVO getReactionStatus(Long videoId, String userId) {
-        ensureVideoAvailable(videoId);
+        ensureVideoAvailable(videoId, userId);
         VideoStats stats = videoStatsService.getVideoStatsByVideoId(videoId);
         VideoReactionStatusVO statusVO = buildStatus(videoId, stats);
         if (!StringTools.isEmpty(userId)) {
@@ -58,7 +55,7 @@ public class WebVideoReactionService {
         if (StringTools.isEmpty(userId)) {
             throw new BusinessException(ResponseCodeEnum.CODE_901);
         }
-        VideoInfo videoInfo = ensureVideoAvailable(videoId);
+        VideoInfo videoInfo = ensureVideoAvailable(videoId, userId);
 
         VideoReaction existing = videoReactionService.getByVideoUserAndType(videoId, userId, type.getDbValue());
         if (type == VideoReactionTypeEnum.SHARE) {
@@ -158,18 +155,7 @@ public class WebVideoReactionService {
         return reaction != null && REACTION_STATUS_ACTIVE.equalsIgnoreCase(reaction.getStatus());
     }
 
-    private VideoInfo ensureVideoAvailable(Long videoId) {
-        if (videoId == null || videoId <= 0) {
-            throw new BusinessException(ResponseCodeEnum.CODE_600);
-        }
-        VideoInfo videoInfo = videoInfoService.getVideoInfoByVideoId(videoId);
-        if (videoInfo == null
-                || videoInfo.getStatus() == null
-                || videoInfo.getStatus().intValue() != VideoStatusEnum.PUBLISHED.getStatus()
-                || videoInfo.getVisibility() == null
-                || videoInfo.getVisibility().intValue() != PUBLIC_VISIBILITY) {
-            throw new BusinessException(ResponseCodeEnum.CODE_600);
-        }
-        return videoInfo;
+    private VideoInfo ensureVideoAvailable(Long videoId, String loginUserId) {
+        return webVideoQueryService.getAccessibleVideoOrThrow(videoId, loginUserId, true);
     }
 }

@@ -1,5 +1,6 @@
 package com.interlude.web.controller.video;
 
+import com.interlude.entity.dto.TokenUserInfoDto;
 import com.interlude.entity.vo.PaginationResultVO;
 import com.interlude.entity.vo.ResponseVO;
 import com.interlude.web.controller.WebBaseController;
@@ -29,7 +30,7 @@ public class VideoFeedController extends WebBaseController {
     public ResponseVO<PaginationResultVO<WebVideoCardVO>> recommend(
             @RequestParam(value = "pageNo", required = false) Integer pageNo,
             @RequestParam(value = "pageSize", required = false) Integer pageSize) {
-        return getSuccessResponseVO(webVideoQueryService.getRecommendFeed(pageNo, pageSize));
+        return getSuccessResponseVO(webVideoQueryService.getRecommendFeed(pageNo, pageSize, getLoginUserId()));
     }
 
     /**
@@ -40,7 +41,7 @@ public class VideoFeedController extends WebBaseController {
             @RequestParam(value = "seedVideoId", required = false) Long seedVideoId,
             @RequestParam(value = "pageNo", required = false) Integer pageNo,
             @RequestParam(value = "pageSize", required = false) Integer pageSize) {
-        return getSuccessResponseVO(webVideoQueryService.getRandomFeed(seedVideoId, pageNo, pageSize));
+        return getSuccessResponseVO(webVideoQueryService.getRandomFeed(seedVideoId, pageNo, pageSize, getLoginUserId()));
     }
 
     /**
@@ -50,7 +51,7 @@ public class VideoFeedController extends WebBaseController {
     public ResponseVO<PaginationResultVO<WebVideoCardVO>> latest(
             @RequestParam(value = "pageNo", required = false) Integer pageNo,
             @RequestParam(value = "pageSize", required = false) Integer pageSize) {
-        return getSuccessResponseVO(webVideoQueryService.getLatestFeed(pageNo, pageSize));
+        return getSuccessResponseVO(webVideoQueryService.getLatestFeed(pageNo, pageSize, getLoginUserId()));
     }
 
     /**
@@ -60,7 +61,7 @@ public class VideoFeedController extends WebBaseController {
     public ResponseVO<PaginationResultVO<WebVideoCardVO>> hot(
             @RequestParam(value = "pageNo", required = false) Integer pageNo,
             @RequestParam(value = "pageSize", required = false) Integer pageSize) {
-        return getSuccessResponseVO(webVideoQueryService.getHotFeed(pageNo, pageSize));
+        return getSuccessResponseVO(webVideoQueryService.getHotFeed(pageNo, pageSize, getLoginUserId()));
     }
 
     /**
@@ -72,6 +73,11 @@ public class VideoFeedController extends WebBaseController {
             @RequestParam(value = "categoryId", required = false) Integer categoryId,
             @RequestParam(value = "pageNo", required = false) Integer pageNo,
             @RequestParam(value = "pageSize", required = false) Integer pageSize) {
-        return getSuccessResponseVO(webVideoQueryService.getCategoryFeed(pCategoryId, categoryId, pageNo, pageSize));
+        return getSuccessResponseVO(webVideoQueryService.getCategoryFeed(pCategoryId, categoryId, pageNo, pageSize, getLoginUserId()));
+    }
+
+    private String getLoginUserId() {
+        TokenUserInfoDto tokenUserInfoDto = getTokenUserInfo();
+        return tokenUserInfoDto == null ? null : tokenUserInfoDto.getUserId();
     }
 }

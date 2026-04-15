@@ -296,12 +296,14 @@ const getCurrentCategoryParams = () => {
     return {}
   }
 
+  // 一级分类：按父分类筛选，覆盖该父分类下所有子分类视频（例如“编程”）
   if (currentCategory.pCategoryId === 0 || currentCategory.pCategoryId === undefined) {
     return {
-      categoryId: resolvedCategoryId,
+      pCategoryId: resolvedCategoryId,
     }
   }
 
+  // 二级分类：同时带上父分类和子分类，精确筛选
   return {
     categoryId: resolvedCategoryId,
     pCategoryId: currentCategory.pCategoryId,

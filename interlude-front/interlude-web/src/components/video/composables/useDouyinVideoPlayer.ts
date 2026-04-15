@@ -74,6 +74,8 @@ export interface DouyinVideoData {
   comments?: number
   shares?: number
   collects?: number
+  interactionSettings?: string
+  visibility?: number
 }
 
 export interface DouyinVideoPlayerProps {
@@ -82,7 +84,7 @@ export interface DouyinVideoPlayerProps {
 }
 
 export type DouyinPlayerEmit = (
-  event: 'ready' | 'play' | 'pause' | 'ended' | 'error' | 'fullscreen-change',
+  event: 'ready' | 'play' | 'pause' | 'ended' | 'error' | 'fullscreen-change' | 'comment-panel-change',
   payload?: unknown
 ) => void
 
@@ -247,6 +249,50 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
     }
     return Math.floor(numeric)
   }
+
+  const parseInteractionSettings = (value: unknown): Set<number> => {
+    const result = new Set<number>()
+    if (value === null || value === undefined) {
+      return result
+    }
+    const raw = String(value).trim()
+    if (!raw) {
+      return result
+    }
+
+    const appendValue = (token: unknown) => {
+      const numeric = Number(String(token ?? '').replace(/"/g, '').trim())
+      if (!Number.isFinite(numeric)) {
+        return
+      }
+      result.add(Math.floor(numeric))
+    }
+
+    try {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        parsed.forEach((item) => appendValue(item))
+      } else {
+        appendValue(parsed)
+      }
+      return result
+    } catch {
+      const cleaned = raw.replace(/\s+/g, '')
+      if (cleaned.startsWith('[') && cleaned.endsWith(']')) {
+        cleaned
+          .slice(1, -1)
+          .split(',')
+          .forEach((item) => appendValue(item))
+        return result
+      }
+      appendValue(cleaned)
+      return result
+    }
+  }
+
+  const disabledInteractionSet = computed(() => parseInteractionSettings(props.videoData?.interactionSettings))
+  const isDanmuDisabledByInteraction = computed(() => disabledInteractionSet.value.has(0))
+  const isCommentDisabledByInteraction = computed(() => disabledInteractionSet.value.has(1))
 
   const DANMU_SETTINGS_STORAGE_KEY = 'interlude.video.danmu.settings'
 
@@ -883,6 +929,10 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   
   // 生成弹幕数据
   const loadDanmuData = async () => {
+    if (isDanmuDisabledByInteraction.value) {
+      danmuList.value = []
+      return
+    }
     const videoId = parseVideoId()
     if (videoId === null) {
       danmuList.value = []
@@ -1106,6 +1156,11 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   
   // 切换弹幕
   const toggleDanmu = () => {
+    if (isDanmuDisabledByInteraction.value) {
+      showDanmu.value = false
+      ElMessage.warning('作者已关闭弹幕')
+      return
+    }
     showDanmu.value = !showDanmu.value
     showControls()
   }
@@ -1156,6 +1211,10 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   
   // 从输入框发送弹幕
   const sendDanmuFromInput = () => {
+    if (isDanmuDisabledByInteraction.value) {
+      ElMessage.warning('作者已关闭弹幕')
+      return
+    }
     const content = danmuInputText.value.trim()
     if (!content) return
 
@@ -1276,6 +1335,10 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   
   // 处理发送弹幕
   const handleSendDanmu = async (content: string): Promise<boolean> => {
+    if (isDanmuDisabledByInteraction.value) {
+      ElMessage.warning('作者已关闭弹幕')
+      return false
+    }
     const normalizedContent = content.trim()
     if (!normalizedContent) {
       return false
@@ -1500,7 +1563,7 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   watch(
     () => props.videoData?.videoId,
     (videoId) => {
-      const keepCommentPanelOpen = showCommentPanel.value
+      const keepCommentPanelOpen = showCommentPanel.value && !isCommentDisabledByInteraction.value
       resetReactionSnapshot()
       resetCommentState()
       showCommentPanel.value = keepCommentPanelOpen
@@ -1513,6 +1576,31 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
       } else {
         danmuList.value = []
       }
+    },
+    { immediate: true }
+  )
+
+  watch(
+    () => isDanmuDisabledByInteraction.value,
+    (disabled) => {
+      if (disabled) {
+        showDanmu.value = false
+        danmuList.value = []
+      }
+    },
+    { immediate: true }
+  )
+
+  watch(
+    () => isCommentDisabledByInteraction.value,
+    (disabled) => {
+      if (!disabled) {
+        return
+      }
+      if (showCommentPanel.value) {
+        showCommentPanel.value = false
+      }
+      commentReplyTarget.value = null
     },
     { immediate: true }
   )
@@ -1569,8 +1657,9 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
 
   watch(
     () => showCommentPanel.value,
-    () => {
+    (visible) => {
       nextTick(() => updateVideoStageSize())
+      emit('comment-panel-change', visible)
     }
   )
   
@@ -1612,6 +1701,10 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   
   // 处理评论
   const handleComment = () => {
+    if (isCommentDisabledByInteraction.value) {
+      ElMessage.warning('作者已关闭评论')
+      return
+    }
     runAfterLogin('comment', async () => {
       if (showCommentPanel.value) {
         showCommentPanel.value = false
@@ -1626,6 +1719,13 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   }  
   // 处理分享
   const loadComments = async (reset: boolean = false) => {
+    if (isCommentDisabledByInteraction.value) {
+      commentList.value = []
+      commentHasMore.value = false
+      commentTotal.value = 0
+      commentCount.value = 0
+      return
+    }
     const videoId = getVideoId()
     if (videoId === null || videoId === undefined) {
       return
@@ -1699,6 +1799,10 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   }
 
   const submitComment = () => {
+    if (isCommentDisabledByInteraction.value) {
+      ElMessage.warning('作者已关闭评论')
+      return
+    }
     runAfterLogin('comment', async () => {
       if (commentSubmitting.value) {
         return
@@ -2015,6 +2119,7 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
     startHideTimer,
     togglePlay,
     showDanmu,
+    isDanmuDisabledByInteraction,
     danmuList,
     danmuInputText,
     likeCount,
@@ -2022,6 +2127,7 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
     collectCount,
     shareCount,
     showCommentPanel,
+    isCommentDisabledByInteraction,
     commentList,
     commentInputText,
     commentReplyTarget,

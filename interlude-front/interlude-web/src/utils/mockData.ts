@@ -29,6 +29,8 @@ export interface VideoData {
   pCategoryId?: number
   categoryName?: string
   pCategoryName?: string
+  interactionSettings?: string
+  visibility?: number
 }
 
 export interface ChoicenessCategory {
@@ -115,6 +117,8 @@ interface WebVideoItem {
   pCategoryName?: string
   categoryId?: number
   categoryName?: string
+  interactionSettings?: string
+  visibility?: number
 }
 
 function buildInlinePlaceholder(label: string): string {
@@ -342,6 +346,8 @@ function mapWebVideoItemToVideoData(item: WebVideoItem): VideoData {
     pCategoryId: item.pCategoryId,
     categoryName: item.categoryName,
     pCategoryName: item.pCategoryName,
+    interactionSettings: item.interactionSettings,
+    visibility: toNumber(item.visibility, 1),
   }
 }
 
@@ -551,6 +557,38 @@ export async function fetchWatchHistoryVideoList(
   return fetchUserCenterVideoList('/api/video/user/history', page, pageSize)
 }
 
+export async function fetchUserWorksVideoList(
+  userId: string,
+  page: number = 1,
+  pageSize: number = 80,
+  visibility?: number,
+): Promise<{ data: VideoData[]; total: number }> {
+  const safePage = Math.max(1, page)
+  const safePageSize = Math.max(1, pageSize)
+  try {
+    const response = await axios.get<WebApiResponse<WebPage<WebVideoItem>>>('/api/video/user/works', {
+      params: {
+        userId,
+        visibility,
+        pageNo: safePage,
+        pageSize: safePageSize,
+      },
+    })
+    const pageData = response.data?.data
+    const list = (pageData?.list || []).map(mapWebVideoItemToVideoData)
+    return {
+      data: list,
+      total: toNumber(pageData?.totalCount, list.length),
+    }
+  } catch (error) {
+    console.error('加载用户作品失败', error)
+    return {
+      data: [],
+      total: 0,
+    }
+  }
+}
+
 export async function fetchRandomVideoList(options?: {
   page?: number
   pageSize?: number
@@ -645,19 +683,41 @@ export async function fetchChoicenessVideos(options?: {
   const pCategoryId = options?.pCategoryId
 
   try {
-    const response = await axios.get<WebApiResponse<WebPage<WebVideoItem>>>('/api/video/feed/category', {
-      params: {
-        pageNo: page,
-        pageSize,
-        categoryId,
-        pCategoryId,
-      },
+    const requestCategoryFeed = async (params: { categoryId?: number; pCategoryId?: number }) => {
+      const response = await axios.get<WebApiResponse<WebPage<WebVideoItem>>>('/api/video/feed/category', {
+        params: {
+          pageNo: page,
+          pageSize,
+          categoryId: params.categoryId,
+          pCategoryId: params.pCategoryId,
+        },
+      })
+      return response.data?.data
+    }
+
+    let pageData = await requestCategoryFeed({
+      categoryId,
+      pCategoryId,
     })
 
-    const pageData = response.data?.data
-    const list = (pageData?.list || [])
+    let list = (pageData?.list || [])
       .map(mapWebVideoItemToVideoData)
       .map(mapVideoDataToChoicenessItem)
+
+    // 一级分类兼容：优先按 pCategoryId 查；若为空，再降级按 categoryId 查
+    if (
+      list.length === 0
+      && categoryId === undefined
+      && typeof pCategoryId === 'number'
+      && pCategoryId > 0
+    ) {
+      pageData = await requestCategoryFeed({
+        categoryId: pCategoryId,
+      })
+      list = (pageData?.list || [])
+        .map(mapWebVideoItemToVideoData)
+        .map(mapVideoDataToChoicenessItem)
+    }
 
     if (list.length === 0) {
       return getFallbackChoicenessPage(categoryId ?? pCategoryId, page, pageSize)
@@ -734,6 +794,7 @@ export default {
   fetchVideoList,
   fetchLikedVideoList,
   fetchWatchHistoryVideoList,
+  fetchUserWorksVideoList,
   fetchRandomVideoList,
   fetchChoicenessCategories,
   fetchChoicenessVideos,

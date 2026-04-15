@@ -36,9 +36,11 @@
             <span class="label">关注</span>
           </router-link>
         </li>
-        <li class="nav-item">
-          <span class="icon">👥</span>
-          <span class="label">朋友</span>
+        <li class="nav-item" :class="{ active: route.path === '/friend' }">
+          <router-link class="nav-link" to="/friend">
+            <span class="icon">👥</span>
+            <span class="label">朋友</span>
+          </router-link>
         </li>
         <li class="nav-item" :class="{ active: route.path === '/mine' }">
           <router-link class="nav-link" to="/mine">

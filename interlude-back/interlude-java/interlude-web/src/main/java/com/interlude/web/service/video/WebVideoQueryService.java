@@ -17,6 +17,7 @@ import com.interlude.enums.ResponseCodeEnum;
 import com.interlude.enums.VideoQualityEnum;
 import com.interlude.enums.VideoStatusEnum;
 import com.interlude.exception.BusinessException;
+import com.interlude.mapper.UserFollowMapper;
 import com.interlude.service.CategoryInfoService;
 import com.interlude.service.UserInfoService;
 import com.interlude.service.video.VideoFileService;
@@ -52,6 +53,8 @@ public class WebVideoQueryService {
     private static final int MAX_PAGE_SIZE = 30;
 
     private static final int VISIBILITY_PUBLIC = 1;
+    private static final int VISIBILITY_PRIVATE = 2;
+    private static final int VISIBILITY_FRIEND_ONLY = 3;
     private static final int RECOMMEND_TYPE_HOME = 1;
 
     @Resource
@@ -72,17 +75,24 @@ public class WebVideoQueryService {
     @Resource
     private CategoryInfoService categoryInfoService;
 
+    @Resource
+    private UserFollowMapper<Object, Object> userFollowMapper;
+
     /**
      * 推荐流：优先读取推荐表，无数据时回退到最新发布。
      */
     public PaginationResultVO<WebVideoCardVO> getRecommendFeed(Integer pageNo, Integer pageSize) {
+        return getRecommendFeed(pageNo, pageSize, null);
+    }
+
+    public PaginationResultVO<WebVideoCardVO> getRecommendFeed(Integer pageNo, Integer pageSize, String loginUserId) {
         int safePageNo = normalizePageNo(pageNo);
         int safePageSize = normalizePageSize(pageSize);
 
         PaginationResultVO<VideoRecommend> recommendPage = loadRecommendPage(safePageNo, safePageSize);
-        List<VideoInfo> videos = loadPublishedVideosFromRecommend(recommendPage.getList());
+        List<VideoInfo> videos = loadPublishedVideosFromRecommend(recommendPage.getList(), loginUserId, false);
         if (videos.isEmpty()) {
-            return getLatestFeed(safePageNo, safePageSize);
+            return getLatestFeed(safePageNo, safePageSize, loginUserId);
         }
 
         List<WebVideoCardVO> cards = toCards(limitVideos(videos, safePageSize));
@@ -94,15 +104,20 @@ public class WebVideoQueryService {
      * 最新发布流：按发布时间倒序。
      */
     public PaginationResultVO<WebVideoCardVO> getLatestFeed(Integer pageNo, Integer pageSize) {
+        return getLatestFeed(pageNo, pageSize, null);
+    }
+
+    public PaginationResultVO<WebVideoCardVO> getLatestFeed(Integer pageNo, Integer pageSize, String loginUserId) {
         int safePageNo = normalizePageNo(pageNo);
         int safePageSize = normalizePageSize(pageSize);
 
-        VideoInfoQuery query = buildPublicVideoQuery(safePageNo, safePageSize);
+        VideoInfoQuery query = buildPublicVideoQuery(safePageNo, safePageSize * 3, loginUserId);
         query.setOrderBy("publish_time desc, create_time desc");
 
         PaginationResultVO<VideoInfo> page = videoInfoService.findListByPage(query);
-        List<WebVideoCardVO> cards = toCards(page == null ? null : page.getList());
-        Integer total = page == null || page.getTotalCount() == null ? cards.size() : page.getTotalCount();
+        List<VideoInfo> visibleVideos = filterVideosByVisibilityPermission(page == null ? null : page.getList(), loginUserId, false);
+        List<WebVideoCardVO> cards = toCards(limitVideos(visibleVideos, safePageSize));
+        Integer total = cards.size();
         return buildPage(cards, safePageNo, safePageSize, total);
     }
 
@@ -110,13 +125,21 @@ public class WebVideoQueryService {
      * 热门流：按热度分排序。
      */
     public PaginationResultVO<WebVideoCardVO> getHotFeed(Integer pageNo, Integer pageSize) {
-        return getRankFeed("hot", pageNo, pageSize);
+        return getHotFeed(pageNo, pageSize, null);
+    }
+
+    public PaginationResultVO<WebVideoCardVO> getHotFeed(Integer pageNo, Integer pageSize, String loginUserId) {
+        return getRankFeed("hot", pageNo, pageSize, loginUserId);
     }
 
     /**
      * 排行榜流：支持 hot/play/like 三种指标。
      */
     public PaginationResultVO<WebVideoCardVO> getRankFeed(String type, Integer pageNo, Integer pageSize) {
+        return getRankFeed(type, pageNo, pageSize, null);
+    }
+
+    public PaginationResultVO<WebVideoCardVO> getRankFeed(String type, Integer pageNo, Integer pageSize, String loginUserId) {
         int safePageNo = normalizePageNo(pageNo);
         int safePageSize = normalizePageSize(pageSize);
 
@@ -126,9 +149,9 @@ public class WebVideoQueryService {
         statsQuery.setOrderBy(resolveRankOrder(type));
 
         PaginationResultVO<VideoStats> statsPage = videoStatsService.findListByPage(statsQuery);
-        List<VideoInfo> videos = loadPublishedVideosByStats(statsPage == null ? null : statsPage.getList());
+        List<VideoInfo> videos = loadPublishedVideosByStats(statsPage == null ? null : statsPage.getList(), loginUserId, false);
         if (videos.isEmpty()) {
-            return getLatestFeed(safePageNo, safePageSize);
+            return getLatestFeed(safePageNo, safePageSize, loginUserId);
         }
 
         List<WebVideoCardVO> cards = toCards(limitVideos(videos, safePageSize));
@@ -140,20 +163,25 @@ public class WebVideoQueryService {
      * 搜索视频流：按标题模糊匹配。
      */
     public PaginationResultVO<WebVideoCardVO> search(String keyword, Integer pageNo, Integer pageSize) {
+        return search(keyword, pageNo, pageSize, null);
+    }
+
+    public PaginationResultVO<WebVideoCardVO> search(String keyword, Integer pageNo, Integer pageSize, String loginUserId) {
         int safePageNo = normalizePageNo(pageNo);
         int safePageSize = normalizePageSize(pageSize);
 
         if (StringTools.isEmpty(keyword)) {
-            return getLatestFeed(safePageNo, safePageSize);
+            return getLatestFeed(safePageNo, safePageSize, loginUserId);
         }
 
-        VideoInfoQuery query = buildPublicVideoQuery(safePageNo, safePageSize);
+        VideoInfoQuery query = buildPublicVideoQuery(safePageNo, safePageSize * 3, loginUserId);
         query.setVideoNameFuzzy(keyword.trim());
         query.setOrderBy("publish_time desc, create_time desc");
 
         PaginationResultVO<VideoInfo> page = videoInfoService.findListByPage(query);
-        List<WebVideoCardVO> cards = toCards(page == null ? null : page.getList());
-        Integer total = page == null || page.getTotalCount() == null ? cards.size() : page.getTotalCount();
+        List<VideoInfo> visibleVideos = filterVideosByVisibilityPermission(page == null ? null : page.getList(), loginUserId, false);
+        List<WebVideoCardVO> cards = toCards(limitVideos(visibleVideos, safePageSize));
+        Integer total = cards.size();
         return buildPage(cards, safePageNo, safePageSize, total);
     }
 
@@ -164,10 +192,18 @@ public class WebVideoQueryService {
                                                                Integer categoryId,
                                                                Integer pageNo,
                                                                Integer pageSize) {
+        return getCategoryFeed(pCategoryId, categoryId, pageNo, pageSize, null);
+    }
+
+    public PaginationResultVO<WebVideoCardVO> getCategoryFeed(Integer pCategoryId,
+                                                               Integer categoryId,
+                                                               Integer pageNo,
+                                                               Integer pageSize,
+                                                               String loginUserId) {
         int safePageNo = normalizePageNo(pageNo);
         int safePageSize = normalizePageSize(pageSize);
 
-        VideoInfoQuery query = buildPublicVideoQuery(safePageNo, safePageSize);
+        VideoInfoQuery query = buildPublicVideoQuery(safePageNo, safePageSize * 3, loginUserId);
         query.setOrderBy("publish_time desc, create_time desc");
         if (pCategoryId != null) {
             query.setPCategoryId(pCategoryId);
@@ -177,8 +213,9 @@ public class WebVideoQueryService {
         }
 
         PaginationResultVO<VideoInfo> page = videoInfoService.findListByPage(query);
-        List<WebVideoCardVO> cards = toCards(page == null ? null : page.getList());
-        Integer total = page == null || page.getTotalCount() == null ? cards.size() : page.getTotalCount();
+        List<VideoInfo> visibleVideos = filterVideosByVisibilityPermission(page == null ? null : page.getList(), loginUserId, false);
+        List<WebVideoCardVO> cards = toCards(limitVideos(visibleVideos, safePageSize));
+        Integer total = cards.size();
         return buildPage(cards, safePageNo, safePageSize, total);
     }
 
@@ -188,22 +225,29 @@ public class WebVideoQueryService {
     public PaginationResultVO<WebVideoCardVO> getRandomFeed(Long seedVideoId,
                                                             Integer pageNo,
                                                             Integer pageSize) {
+        return getRandomFeed(seedVideoId, pageNo, pageSize, null);
+    }
+
+    public PaginationResultVO<WebVideoCardVO> getRandomFeed(Long seedVideoId,
+                                                             Integer pageNo,
+                                                             Integer pageSize,
+                                                             String loginUserId) {
         int safePageNo = normalizePageNo(pageNo);
         int safePageSize = normalizePageSize(pageSize);
 
-        VideoInfoQuery query = buildPublicVideoQuery(DEFAULT_PAGE_NO, safePageSize * 5);
+        VideoInfoQuery query = buildPublicVideoQuery(DEFAULT_PAGE_NO, safePageSize * 5, loginUserId);
         query.setOrderBy("publish_time desc, create_time desc");
         PaginationResultVO<VideoInfo> page = videoInfoService.findListByPage(query);
 
         List<VideoInfo> candidates = page == null || page.getList() == null
                 ? new ArrayList<>()
-                : new ArrayList<>(page.getList());
+                : new ArrayList<>(filterVideosByVisibilityPermission(page.getList(), loginUserId, false));
         Collections.shuffle(candidates);
 
         List<VideoInfo> randomized = new ArrayList<>();
         if (seedVideoId != null) {
             VideoInfo seedVideo = videoInfoService.getVideoInfoByVideoId(seedVideoId);
-            if (isPublicPublishedVideo(seedVideo)) {
+            if (canViewVideo(seedVideo, loginUserId, false)) {
                 randomized.add(seedVideo);
             }
         }
@@ -233,7 +277,11 @@ public class WebVideoQueryService {
      * 获取单个已发布视频的完整详情。
      */
     public WebVideoDetailVO getVideoDetail(Long videoId) {
-        VideoInfo videoInfo = getPublishedVideoOrThrow(videoId);
+        return getVideoDetail(videoId, null);
+    }
+
+    public WebVideoDetailVO getVideoDetail(Long videoId, String loginUserId) {
+        VideoInfo videoInfo = getPublishedVideoOrThrow(videoId, loginUserId, true);
         return toDetail(videoInfo);
     }
 
@@ -241,7 +289,11 @@ public class WebVideoQueryService {
      * Get the cover path of a published video by video ID.
      */
     public String getVideoCover(Long videoId) {
-        VideoInfo videoInfo = getPublishedVideoOrThrow(videoId);
+        return getVideoCover(videoId, null);
+    }
+
+    public String getVideoCover(Long videoId, String loginUserId) {
+        VideoInfo videoInfo = getPublishedVideoOrThrow(videoId, loginUserId, true);
         return videoInfo.getVideoCover();
     }
 
@@ -249,7 +301,11 @@ public class WebVideoQueryService {
      * 按视频 ID 组装播放器清晰度与播放地址。
      */
     public PlayListInfoVo getPlayList(Long videoId) {
-        VideoInfo videoInfo = getPublishedVideoOrThrow(videoId);
+        return getPlayList(videoId, null);
+    }
+
+    public PlayListInfoVo getPlayList(Long videoId, String loginUserId) {
+        VideoInfo videoInfo = getPublishedVideoOrThrow(videoId, loginUserId, true);
         List<VideoFile> files = getVideoFiles(videoInfo.getVideoId());
         if (files.isEmpty()) {
             throw new BusinessException(ResponseCodeEnum.CODE_600);
@@ -284,14 +340,18 @@ public class WebVideoQueryService {
      * 相关推荐：优先同分类，不足时补充最新视频。
      */
     public List<WebVideoCardVO> getRelatedVideos(Long videoId, Integer limit) {
-        VideoInfo currentVideo = getPublishedVideoOrThrow(videoId);
+        return getRelatedVideos(videoId, limit, null);
+    }
+
+    public List<WebVideoCardVO> getRelatedVideos(Long videoId, Integer limit, String loginUserId) {
+        VideoInfo currentVideo = getPublishedVideoOrThrow(videoId, loginUserId, false);
         int safeLimit = normalizeRelatedLimit(limit);
 
-        VideoInfoQuery query = buildPublicVideoQuery(1, safeLimit * 3);
+        VideoInfoQuery query = buildPublicVideoQuery(1, safeLimit * 3, loginUserId);
         query.setCategoryId(currentVideo.getCategoryId());
         query.setOrderBy("publish_time desc, create_time desc");
 
-        List<VideoInfo> relatedCandidatesPage = videoInfoService.findListByPage(query).getList();
+        List<VideoInfo> relatedCandidatesPage = filterVideosByVisibilityPermission(videoInfoService.findListByPage(query).getList(), loginUserId, false);
         List<VideoInfo> relatedVideos = new ArrayList<>();
         if (relatedCandidatesPage != null) {
             for (VideoInfo video : relatedCandidatesPage) {
@@ -306,9 +366,9 @@ public class WebVideoQueryService {
         }
 
         if (relatedVideos.size() < safeLimit) {
-            VideoInfoQuery latestQuery = buildPublicVideoQuery(1, safeLimit * 5);
+            VideoInfoQuery latestQuery = buildPublicVideoQuery(1, safeLimit * 5, loginUserId);
             latestQuery.setOrderBy("publish_time desc, create_time desc");
-            List<VideoInfo> latestList = videoInfoService.findListByPage(latestQuery).getList();
+            List<VideoInfo> latestList = filterVideosByVisibilityPermission(videoInfoService.findListByPage(latestQuery).getList(), loginUserId, false);
             if (latestList != null) {
                 for (VideoInfo item : latestList) {
                     if (item == null || item.getVideoId() == null || item.getVideoId().equals(videoId)) {
@@ -332,6 +392,10 @@ public class WebVideoQueryService {
      * 按给定视频ID顺序返回可公开展示的视频卡片。
      */
     public List<WebVideoCardVO> getCardsByVideoIds(List<Long> videoIds) {
+        return getCardsByVideoIds(videoIds, null, false);
+    }
+
+    public List<WebVideoCardVO> getCardsByVideoIds(List<Long> videoIds, String loginUserId, boolean allowPrivateForOwner) {
         List<WebVideoCardVO> cards = new ArrayList<>();
         if (videoIds == null || videoIds.isEmpty()) {
             return cards;
@@ -341,7 +405,7 @@ public class WebVideoQueryService {
                 continue;
             }
             VideoInfo videoInfo = videoInfoService.getVideoInfoByVideoId(videoId);
-            if (!isPublicPublishedVideo(videoInfo)) {
+            if (!canViewVideo(videoInfo, loginUserId, allowPrivateForOwner)) {
                 continue;
             }
             cards.add(toCard(videoInfo));
@@ -373,7 +437,9 @@ public class WebVideoQueryService {
         return videoRecommendService.findListByPage(query);
     }
 
-    private List<VideoInfo> loadPublishedVideosFromRecommend(List<VideoRecommend> recommends) {
+    private List<VideoInfo> loadPublishedVideosFromRecommend(List<VideoRecommend> recommends,
+                                                             String loginUserId,
+                                                             boolean allowPrivateForOwner) {
         List<VideoInfo> videos = new ArrayList<>();
         if (recommends == null || recommends.isEmpty()) {
             return videos;
@@ -396,14 +462,16 @@ public class WebVideoQueryService {
 
         for (Long id : orderedIds) {
             VideoInfo videoInfo = videoInfoService.getVideoInfoByVideoId(id);
-            if (isPublicPublishedVideo(videoInfo)) {
+            if (canViewVideo(videoInfo, loginUserId, allowPrivateForOwner)) {
                 videos.add(videoInfo);
             }
         }
         return videos;
     }
 
-    private List<VideoInfo> loadPublishedVideosByStats(List<VideoStats> statsList) {
+    private List<VideoInfo> loadPublishedVideosByStats(List<VideoStats> statsList,
+                                                       String loginUserId,
+                                                       boolean allowPrivateForOwner) {
         List<VideoInfo> videos = new ArrayList<>();
         if (statsList == null || statsList.isEmpty()) {
             return videos;
@@ -419,7 +487,7 @@ public class WebVideoQueryService {
 
         for (Long id : orderedIds) {
             VideoInfo videoInfo = videoInfoService.getVideoInfoByVideoId(id);
-            if (isPublicPublishedVideo(videoInfo)) {
+            if (canViewVideo(videoInfo, loginUserId, allowPrivateForOwner)) {
                 videos.add(videoInfo);
             }
         }
@@ -449,6 +517,7 @@ public class WebVideoQueryService {
         card.setPublishTime(formatDate(videoInfo.getPublishTime() == null ? videoInfo.getCreateTime() : videoInfo.getPublishTime()));
         card.setTags(videoInfo.getTags());
         card.setInteractionSettings(videoInfo.getInteractionSettings());
+        card.setVisibility(videoInfo.getVisibility());
         card.setpCategoryId(videoInfo.getPCategoryId());
         card.setCategoryId(videoInfo.getCategoryId());
 
@@ -582,12 +651,17 @@ public class WebVideoQueryService {
         return files == null ? new ArrayList<>() : files;
     }
 
-    private VideoInfoQuery buildPublicVideoQuery(int pageNo, int pageSize) {
+    private VideoInfoQuery buildPublicVideoQuery(int pageNo, int pageSize, String loginUserId) {
         VideoInfoQuery query = new VideoInfoQuery();
         query.setPageNo(pageNo);
         query.setPageSize(pageSize);
         query.setStatus(VideoStatusEnum.PUBLISHED.getStatus());
-        query.setVisibility(VISIBILITY_PUBLIC);
+        ArrayList<Integer> visibilityList = new ArrayList<>();
+        visibilityList.add(VISIBILITY_PUBLIC);
+        if (!StringTools.isEmpty(normalizeLoginUserId(loginUserId))) {
+            visibilityList.add(VISIBILITY_FRIEND_ONLY);
+        }
+        query.setVisibilityArrayList(visibilityList);
         return query;
     }
 
@@ -610,23 +684,96 @@ public class WebVideoQueryService {
         return page;
     }
 
-    private VideoInfo getPublishedVideoOrThrow(Long videoId) {
+    public VideoInfo getAccessibleVideoOrThrow(Long videoId, String loginUserId, boolean allowPrivateForOwner) {
+        return getPublishedVideoOrThrow(videoId, loginUserId, allowPrivateForOwner);
+    }
+
+    public boolean canAccessVideo(VideoInfo videoInfo, String loginUserId, boolean allowPrivateForOwner) {
+        return canViewVideo(videoInfo, loginUserId, allowPrivateForOwner);
+    }
+
+    private VideoInfo getPublishedVideoOrThrow(Long videoId, String loginUserId, boolean allowPrivateForOwner) {
         if (videoId == null) {
             throw new BusinessException(ResponseCodeEnum.CODE_600);
         }
         VideoInfo videoInfo = videoInfoService.getVideoInfoByVideoId(videoId);
-        if (!isPublicPublishedVideo(videoInfo)) {
+        if (!canViewVideo(videoInfo, loginUserId, allowPrivateForOwner)) {
             throw new BusinessException(ResponseCodeEnum.CODE_600);
         }
         return videoInfo;
     }
 
-    private boolean isPublicPublishedVideo(VideoInfo videoInfo) {
-        return videoInfo != null
-                && videoInfo.getStatus() != null
-                && videoInfo.getStatus().intValue() == VideoStatusEnum.PUBLISHED.getStatus().intValue()
-                && videoInfo.getVisibility() != null
-                && videoInfo.getVisibility().intValue() == VISIBILITY_PUBLIC;
+    private List<VideoInfo> filterVideosByVisibilityPermission(List<VideoInfo> videos,
+                                                               String loginUserId,
+                                                               boolean allowPrivateForOwner) {
+        List<VideoInfo> visible = new ArrayList<>();
+        if (videos == null || videos.isEmpty()) {
+            return visible;
+        }
+        for (VideoInfo item : videos) {
+            if (canViewVideo(item, loginUserId, allowPrivateForOwner)) {
+                visible.add(item);
+            }
+        }
+        return visible;
+    }
+
+    private boolean canViewVideo(VideoInfo videoInfo, String loginUserId, boolean allowPrivateForOwner) {
+        if (videoInfo == null
+                || videoInfo.getStatus() == null
+                || videoInfo.getStatus().intValue() != VideoStatusEnum.PUBLISHED.getStatus()) {
+            return false;
+        }
+
+        Integer visibility = videoInfo.getVisibility();
+        if (visibility == null) {
+            return false;
+        }
+
+        String normalizedLoginUserId = normalizeLoginUserId(loginUserId);
+        String authorUserId = normalizeLoginUserId(videoInfo.getUserId());
+        boolean isOwner = !StringTools.isEmpty(normalizedLoginUserId)
+                && !StringTools.isEmpty(authorUserId)
+                && normalizedLoginUserId.equals(authorUserId);
+
+        if (visibility.intValue() == VISIBILITY_PUBLIC) {
+            return true;
+        }
+        if (visibility.intValue() == VISIBILITY_PRIVATE) {
+            return allowPrivateForOwner && isOwner;
+        }
+        if (visibility.intValue() == VISIBILITY_FRIEND_ONLY) {
+            if (isOwner) {
+                return true;
+            }
+            if (StringTools.isEmpty(normalizedLoginUserId) || StringTools.isEmpty(authorUserId)) {
+                return false;
+            }
+            return isMutualFollow(normalizedLoginUserId, authorUserId);
+        }
+        return false;
+    }
+
+    private boolean isMutualFollow(String viewerUserId, String authorUserId) {
+        String viewer = normalizeLoginUserId(viewerUserId);
+        String author = normalizeLoginUserId(authorUserId);
+        if (StringTools.isEmpty(viewer) || StringTools.isEmpty(author) || viewer.equals(author)) {
+            return false;
+        }
+        Integer viewerFollowAuthor = userFollowMapper.countActiveFollow(viewer, author);
+        if (viewerFollowAuthor == null || viewerFollowAuthor <= 0) {
+            return false;
+        }
+        Integer authorFollowViewer = userFollowMapper.countActiveFollow(author, viewer);
+        return authorFollowViewer != null && authorFollowViewer > 0;
+    }
+
+    private String normalizeLoginUserId(String userId) {
+        if (StringTools.isEmpty(userId)) {
+            return null;
+        }
+        String normalized = userId.trim();
+        return normalized.isEmpty() ? null : normalized;
     }
 
     private int normalizePageNo(Integer pageNo) {
