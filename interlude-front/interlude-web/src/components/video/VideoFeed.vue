@@ -1,55 +1,33 @@
 <template>
-  <div class="video-feed" ref="feedRef" @scroll="onScroll">
-    <DouyinVideoPlayer
-      v-for="(video, index) in videoList"
-      :key="video.videoId"
-      :video-data="video"
-      :autoplay="activeIndexInternal === index"
-      ref="videoPlayers"
-      @play="handleVideoPlay(index)"
-      @pause="handleVideoPause(index)"
-      @fullscreen-change="handleFullscreenChange"
-      @comment-panel-change="handleCommentPanelChange(index, $event)"
-    />
+  <div class="video-feed" ref="feedRef">
+    <div class="video-feed-track" :class="{ dragging: isDragging }" :style="trackStyle">
+      <div v-for="(video, index) in videoList" :key="video.videoId" class="video-feed-item">
+        <DouyinVideoPlayer
+          :video-data="video"
+          :autoplay="activeIndexInternal === index"
+          ref="videoPlayers"
+          @play="handleVideoPlay(index)"
+          @pause="handleVideoPause(index)"
+          @fullscreen-change="handleFullscreenChange"
+          @comment-panel-change="handleCommentPanelChange(index, $event)"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import DouyinVideoPlayer from './DouyinVideoPlayer.vue'
-import { fetchVideoData, fetchVideoList, fetchRandomVideoList } from '@/utils/mockData'
-
-// 防抖函数
-function debounce<T extends (...args: any[]) => any>(fn: T, delay: number): T {
-  let timer: ReturnType<typeof setTimeout> | null = null
-  return function(this: any, ...args: any[]) {
-    if (timer) clearTimeout(timer)
-    timer = setTimeout(() => {
-      fn.apply(this, args)
-    }, delay)
-  } as T
-}
-
-// 节流函数
-function throttle<T extends (...args: any[]) => any>(fn: T, interval: number): T {
-  let lastTime = 0
-  let timer: ReturnType<typeof setTimeout> | null = null
-  return function(this: any, ...args: any[]) {
-    const now = Date.now()
-    if (now - lastTime >= interval) {
-      lastTime = now
-      fn.apply(this, args)
-    } else if (timer === null) {
-      timer = setTimeout(() => {
-        lastTime = Date.now()
-        timer = null
-        fn.apply(this, args)
-      }, interval - (now - lastTime))
-    }
-  } as T
-}
+import { fetchVideoData, fetchRandomVideoList, fetchVideoList } from '@/utils/mockData'
 
 type FeedMode = 'recommend' | 'random'
+
+const SWITCH_ANIMATION_MS = 380
+const TOUCH_SWIPE_RATIO_THRESHOLD = 0.14
+const TOUCH_VELOCITY_THRESHOLD = 0.42
+const WHEEL_SWITCH_THRESHOLD = 95
+const WHEEL_RESET_MS = 180
 
 const props = withDefaults(defineProps<{
   feedMode?: FeedMode
@@ -69,13 +47,13 @@ const emit = defineEmits<{
 
 const feedRef = ref<HTMLElement | null>(null)
 const videoPlayers = ref<InstanceType<typeof DouyinVideoPlayer>[]>([])
-
-// 视频列表数据
 const videoList = ref<any[]>([])
 const loading = ref(false)
+
 const FEED_PAGE_SIZE = 10
 const isRandomMode = computed(() => props.feedMode === 'random')
 const hasExternalVideoList = computed(() => Array.isArray(props.externalVideoList))
+
 const seedHandled = ref(false)
 const lastAppliedSeedId = ref<string | null>(null)
 const pendingSeedId = computed(() => {
@@ -86,31 +64,275 @@ const pendingSeedId = computed(() => {
   return value.length === 0 ? null : value
 })
 
-// activeIndex 用于滚动计算，activeIndexInternal 用于实际控制播放
 const activeIndex = ref(0)
 const activeIndexInternal = ref(0)
 const isFullScreen = ref(false)
-const lastActiveIndexBeforeFullscreen = ref(0) // 记录进入全屏前的索引
+const isCommentPanelVisible = ref(false)
+const lastActiveIndexBeforeFullscreen = ref(0)
 
-// 缓存项目高度，避免重复计算
-const itemHeight = ref(window.innerHeight)
+const itemHeight = ref(Math.max(window.innerHeight - 80, 1))
+const isAnimating = ref(false)
+const transitionEnabled = ref(true)
+const isDragging = ref(false)
+const dragOffsetY = ref(0)
 
-// 标志位，用于区分是用户滚动还是程序化滚动
-let isProgrammaticScroll = false
+let animationTimer: ReturnType<typeof setTimeout> | null = null
+let wheelDeltaAccumulator = 0
+let wheelResetTimer: ReturnType<typeof setTimeout> | null = null
 
-const resetFeedState = () => {
-  activeIndex.value = 0
-  activeIndexInternal.value = 0
-  lastActiveIndexBeforeFullscreen.value = 0
-  if (!feedRef.value) {
+let touchStartY = 0
+let touchStartTime = 0
+let lastTouchY = 0
+let lastTouchTime = 0
+
+const trackStyle = computed(() => {
+  const translateY = -activeIndex.value * itemHeight.value + dragOffsetY.value
+  return {
+    transform: `translate3d(0, ${translateY}px, 0)`,
+    transition: transitionEnabled.value
+      ? `transform ${SWITCH_ANIMATION_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`
+      : 'none',
+  }
+})
+
+const clampIndex = (index: number): number => {
+  if (videoList.value.length === 0) {
+    return 0
+  }
+  return Math.min(Math.max(index, 0), videoList.value.length - 1)
+}
+
+const clearAnimationTimer = () => {
+  if (animationTimer) {
+    clearTimeout(animationTimer)
+    animationTimer = null
+  }
+}
+
+const clearWheelResetTimer = () => {
+  if (wheelResetTimer) {
+    clearTimeout(wheelResetTimer)
+    wheelResetTimer = null
+  }
+}
+
+const finishAnimationAfterDelay = (duration = SWITCH_ANIMATION_MS) => {
+  clearAnimationTimer()
+  isAnimating.value = true
+  animationTimer = setTimeout(() => {
+    isAnimating.value = false
+    animationTimer = null
+  }, duration)
+}
+
+const emitActiveVideoChange = () => {
+  const index = activeIndexInternal.value
+  if (index >= 0 && videoList.value[index]) {
+    emit('activeVideoChange', index, videoList.value[index])
+  }
+}
+
+const updateActiveIndexInternal = (index: number) => {
+  activeIndexInternal.value = index
+}
+
+const snapBackToCurrent = () => {
+  transitionEnabled.value = true
+  dragOffsetY.value = 0
+  finishAnimationAfterDelay(260)
+}
+
+const goToIndex = (targetIndex: number): boolean => {
+  if (videoList.value.length === 0 || isFullScreen.value || isAnimating.value) {
+    return false
+  }
+  const nextIndex = clampIndex(targetIndex)
+  if (nextIndex === activeIndex.value) {
+    return false
+  }
+
+  transitionEnabled.value = true
+  dragOffsetY.value = 0
+  activeIndex.value = nextIndex
+  updateActiveIndexInternal(nextIndex)
+  finishAnimationAfterDelay()
+  return true
+}
+
+const shouldIgnoreGesture = (target: EventTarget | null): boolean => {
+  if (!(target instanceof HTMLElement)) {
+    return false
+  }
+  const blockSelector = [
+    'input',
+    'textarea',
+    'select',
+    '[contenteditable="true"]',
+    '.comment-panel',
+    '.comment-panel-body',
+    '.comment-list',
+    '.comment-panel-input',
+    '.el-overlay',
+    '.el-dialog',
+    '.el-drawer',
+    '.el-select-dropdown',
+    '.el-popover',
+    '.el-picker-panel',
+    '.el-scrollbar',
+  ].join(',')
+  return !!target.closest(blockSelector)
+}
+
+const updateItemHeight = () => {
+  if (feedRef.value) {
+    itemHeight.value = Math.max(feedRef.value.clientHeight, 1)
+  } else {
+    itemHeight.value = Math.max(window.innerHeight - 80, 1)
+  }
+}
+
+const applyEdgeResistance = (deltaY: number): number => {
+  const atTop = activeIndex.value <= 0 && deltaY > 0
+  const atBottom = activeIndex.value >= videoList.value.length - 1 && deltaY < 0
+  if (atTop || atBottom) {
+    return deltaY * 0.22
+  }
+  return deltaY * 0.9
+}
+
+const triggerSwitchByDirection = (direction: 1 | -1): boolean => {
+  const target = activeIndex.value + direction
+  return goToIndex(target)
+}
+
+const onWheel = (event: WheelEvent) => {
+  if (isFullScreen.value || isCommentPanelVisible.value || videoList.value.length === 0) {
     return
   }
-  isProgrammaticScroll = true
-  feedRef.value.scrollTo({
-    top: 0,
-    behavior: 'auto',
-  })
-  isProgrammaticScroll = false
+  if (shouldIgnoreGesture(event.target)) {
+    return
+  }
+  if (Math.abs(event.deltaY) < 2) {
+    return
+  }
+
+  event.preventDefault()
+
+  if (isAnimating.value) {
+    return
+  }
+
+  wheelDeltaAccumulator += event.deltaY
+  clearWheelResetTimer()
+  wheelResetTimer = setTimeout(() => {
+    wheelDeltaAccumulator = 0
+    wheelResetTimer = null
+  }, WHEEL_RESET_MS)
+
+  if (Math.abs(wheelDeltaAccumulator) < WHEEL_SWITCH_THRESHOLD) {
+    return
+  }
+
+  const direction: 1 | -1 = wheelDeltaAccumulator > 0 ? 1 : -1
+  wheelDeltaAccumulator = 0
+  triggerSwitchByDirection(direction)
+}
+
+const onTouchStart = (event: TouchEvent) => {
+  if (isFullScreen.value || isCommentPanelVisible.value || videoList.value.length === 0 || isAnimating.value) {
+    return
+  }
+  if (event.touches.length !== 1 || shouldIgnoreGesture(event.target)) {
+    return
+  }
+
+  const touch = event.touches[0]
+  if (!touch) {
+    return
+  }
+  touchStartY = touch.clientY
+  touchStartTime = Date.now()
+  lastTouchY = touch.clientY
+  lastTouchTime = touchStartTime
+
+  isDragging.value = true
+  transitionEnabled.value = false
+  dragOffsetY.value = 0
+}
+
+const onTouchMove = (event: TouchEvent) => {
+  if (!isDragging.value || event.touches.length !== 1) {
+    return
+  }
+  const touch = event.touches[0]
+  if (!touch) {
+    return
+  }
+  const deltaY = touch.clientY - touchStartY
+  lastTouchY = touch.clientY
+  lastTouchTime = Date.now()
+  dragOffsetY.value = applyEdgeResistance(deltaY)
+
+  if (Math.abs(deltaY) > 4) {
+    event.preventDefault()
+  }
+}
+
+const finalizeTouch = () => {
+  if (!isDragging.value) {
+    return
+  }
+
+  const deltaY = lastTouchY - touchStartY
+  const duration = Math.max(lastTouchTime - touchStartTime, 1)
+  const velocity = deltaY / duration
+  const distanceThreshold = itemHeight.value * TOUCH_SWIPE_RATIO_THRESHOLD
+
+  isDragging.value = false
+  transitionEnabled.value = true
+
+  const shouldPrev = deltaY > distanceThreshold || velocity > TOUCH_VELOCITY_THRESHOLD
+  const shouldNext = deltaY < -distanceThreshold || velocity < -TOUCH_VELOCITY_THRESHOLD
+
+  if (shouldNext) {
+    const switched = triggerSwitchByDirection(1)
+    if (!switched) {
+      snapBackToCurrent()
+    }
+    return
+  }
+
+  if (shouldPrev) {
+    const switched = triggerSwitchByDirection(-1)
+    if (!switched) {
+      snapBackToCurrent()
+    }
+    return
+  }
+
+  snapBackToCurrent()
+}
+
+const onTouchEnd = () => {
+  finalizeTouch()
+}
+
+const onTouchCancel = () => {
+  finalizeTouch()
+}
+
+const resetFeedState = () => {
+  clearAnimationTimer()
+  clearWheelResetTimer()
+  wheelDeltaAccumulator = 0
+  activeIndex.value = 0
+  activeIndexInternal.value = 0
+  dragOffsetY.value = 0
+  isDragging.value = false
+  isAnimating.value = false
+  transitionEnabled.value = true
+  isCommentPanelVisible.value = false
+  lastActiveIndexBeforeFullscreen.value = 0
 }
 
 const ensureSeedAtTop = async (list: any[], seedId: string | null) => {
@@ -132,14 +354,9 @@ const ensureSeedAtTop = async (list: any[], seedId: string | null) => {
       list.unshift(detail)
     }
   } catch (error) {
-    console.warn('根据 videoId 获取详情失败:', error)
+    console.warn('Failed to load seed video detail:', error)
   }
   return list
-}
-
-const reloadVideos = (forceSeed: boolean = false) => {
-  resetFeedState()
-  loadVideoList({ forceSeed })
 }
 
 const applyExternalVideoList = (list: any[]) => {
@@ -151,40 +368,14 @@ const applyExternalVideoList = (list: any[]) => {
   })
 }
 
-// 更新内部激活索引（只有非全屏时才同步）
-const updateActiveIndexInternal = (index: number) => {
-  if (!isFullScreen.value) {
-    activeIndexInternal.value = index
-  }
-}
-
-// 根据滚动位置计算当前索引（优化版）
-const updateActiveIndexFromScroll = () => {
-  if (!feedRef.value) return
-  const scrollTop = feedRef.value.scrollTop
-  const height = itemHeight.value
-  const newIndex = Math.round(scrollTop / height)
-  if (newIndex !== activeIndex.value && newIndex >= 0 && newIndex < videoList.value.length) {
-    activeIndex.value = newIndex
-    updateActiveIndexInternal(newIndex)
-  }
-}
-
-// 触发当前激活视频变化事件
-const emitActiveVideoChange = () => {
-  const index = activeIndexInternal.value
-  if (index >= 0 && videoList.value[index]) {
-    emit('activeVideoChange', index, videoList.value[index])
-  }
-}
-
-// 加载视频列表
 const loadVideoList = async (options?: { forceSeed?: boolean }) => {
   if (hasExternalVideoList.value) {
     applyExternalVideoList(props.externalVideoList || [])
     return
   }
-  if (loading.value) return
+  if (loading.value) {
+    return
+  }
 
   loading.value = true
   const shouldInjectSeed = isRandomMode.value && (options?.forceSeed || (!seedHandled.value && !!pendingSeedId.value))
@@ -206,12 +397,12 @@ const loadVideoList = async (options?: { forceSeed?: boolean }) => {
     }
 
     videoList.value = fetchedVideos
-    // 通知第一个视频激活
     nextTick(() => {
+      updateItemHeight()
       emitActiveVideoChange()
     })
   } catch (error) {
-    console.error('加载视频列表失败:', error)
+    console.error('Failed to load video list:', error)
   } finally {
     if (isRandomMode.value) {
       if (normalizedSeed) {
@@ -229,32 +420,17 @@ const loadVideoList = async (options?: { forceSeed?: boolean }) => {
   }
 }
 
-// 使用 requestAnimationFrame 优化滚动处理
-let scrollRafId: number | null = null
-
-// 滚动事件处理
-const onScroll = () => {
-  if (isFullScreen.value || isProgrammaticScroll) return // 全屏或程序化滚动时忽略
-  
-  if (scrollRafId !== null) {
-    cancelAnimationFrame(scrollRafId)
-  }
-  
-  scrollRafId = requestAnimationFrame(() => {
-    updateActiveIndexFromScroll()
-    scrollRafId = null
-  })
+const reloadVideos = (forceSeed = false) => {
+  resetFeedState()
+  loadVideoList({ forceSeed })
 }
 
-// 监听内部索引变化，暂停上一个视频并通知父组件
 watch(activeIndexInternal, (newVal, oldVal) => {
   if (oldVal !== undefined && videoPlayers.value[oldVal]) {
     videoPlayers.value[oldVal].pause()
   }
-  // 自动播放新视频已在 DouyinVideoPlayer 中通过 autoplay prop 处理
-  
-  // 通知父组件当前激活的视频变化
   if (newVal !== undefined) {
+    isCommentPanelVisible.value = false
     emitActiveVideoChange()
     emit('commentPanelChange', false)
   }
@@ -270,16 +446,10 @@ watch(() => props.feedMode, () => {
 })
 
 watch(() => props.initialVideoId, (newVal, oldVal) => {
-  if (hasExternalVideoList.value) {
+  if (hasExternalVideoList.value || !isRandomMode.value) {
     return
   }
-  if (!isRandomMode.value) {
-    return
-  }
-  if (newVal === oldVal) {
-    return
-  }
-  if (newVal === null || newVal === undefined) {
+  if (newVal === oldVal || newVal === null || newVal === undefined) {
     return
   }
   const normalized = String(newVal)
@@ -302,9 +472,7 @@ watch(
   },
 )
 
-// 处理视频播放
 const handleVideoPlay = (index: number) => {
-  // 确保只有当前视频在播放
   videoPlayers.value.forEach((player, i) => {
     if (i !== index && player) {
       player.pause()
@@ -312,179 +480,126 @@ const handleVideoPlay = (index: number) => {
   })
 }
 
-// 处理视频暂停
-const handleVideoPause = (index: number) => {
-  // 可以在这里处理暂停逻辑
+const handleVideoPause = (_index: number) => {
+  // Reserved for future behavior
 }
 
 const handleCommentPanelChange = (index: number, visible: boolean) => {
   if (index !== activeIndexInternal.value) {
     return
   }
+  isCommentPanelVisible.value = visible
   emit('commentPanelChange', visible)
 }
 
-// 键盘事件
-const handleKeyDown = (e: KeyboardEvent) => {
-  if (isFullScreen.value) return // 全屏时禁用按键切换
-  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-    e.preventDefault()
+const handleKeyDown = (event: KeyboardEvent) => {
+  if (isFullScreen.value || isCommentPanelVisible.value) {
+    return
   }
-
-  const height = itemHeight.value
-  if (e.key === 'ArrowUp') {
-    const newIndex = activeIndex.value - 1
-    if (newIndex >= 0) {
-      isProgrammaticScroll = true
-      feedRef.value?.scrollTo({
-        top: newIndex * height,
-        behavior: 'smooth'
-      })
-      // 由于 smooth 滚动是异步的，需要在一段时间后重置标志
-      setTimeout(() => {
-        isProgrammaticScroll = false
-      }, 300) // 大致与动画时间匹配
-    }
-  } else if (e.key === 'ArrowDown') {
-    const newIndex = activeIndex.value + 1
-    if (newIndex < videoList.value.length) {
-      isProgrammaticScroll = true
-      feedRef.value?.scrollTo({
-        top: newIndex * height,
-        behavior: 'smooth'
-      })
-      setTimeout(() => {
-        isProgrammaticScroll = false
-      }, 300)
-    }
+  if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+    event.preventDefault()
+  }
+  if (event.key === 'ArrowUp') {
+    triggerSwitchByDirection(-1)
+  } else if (event.key === 'ArrowDown') {
+    triggerSwitchByDirection(1)
   }
 }
 
-// 全屏状态变化处理（由播放器内部处理）
 const handleFullscreenChange = (val: boolean) => {
-  const feed = feedRef.value
-  if (!feed) return
-
   if (val) {
-    // 进入全屏：记录当前激活索引，禁用滚动，暂停其他视频
     lastActiveIndexBeforeFullscreen.value = activeIndexInternal.value
-    feed.style.overflow = 'hidden'
     videoPlayers.value.forEach((player, idx) => {
       if (idx !== activeIndexInternal.value && player) {
         player.pause()
       }
     })
   } else {
-    // 退出全屏：恢复滚动，并强制滚动到之前激活的视频位置
-    feed.style.overflow = 'auto'
-    const targetTop = lastActiveIndexBeforeFullscreen.value * itemHeight.value
-    // 程序化滚动到目标位置
-    isProgrammaticScroll = true
-    feed.scrollTo({
-      top: targetTop,
-      behavior: 'auto' // 立即滚动，避免动画导致错位
+    const target = clampIndex(lastActiveIndexBeforeFullscreen.value)
+    activeIndex.value = target
+    activeIndexInternal.value = target
+    dragOffsetY.value = 0
+    transitionEnabled.value = false
+    requestAnimationFrame(() => {
+      transitionEnabled.value = true
     })
-    // 直接设置 activeIndex 和 activeIndexInternal 为之前的值
-    activeIndex.value = lastActiveIndexBeforeFullscreen.value
-    activeIndexInternal.value = lastActiveIndexBeforeFullscreen.value
-    // 重置标志
-    isProgrammaticScroll = false
   }
   isFullScreen.value = val
   emit('fullscreenChange', val)
 }
 
-// IntersectionObserver 精确监听视频可见性
-let observer: IntersectionObserver | null = null
+const handleResize = () => {
+  updateItemHeight()
+}
 
 onMounted(() => {
-  // 加载视频列表
   if (hasExternalVideoList.value) {
     applyExternalVideoList(props.externalVideoList || [])
   } else {
     reloadVideos(true)
   }
 
-  // 初始计算
-  updateActiveIndexFromScroll()
-
-  // 监听键盘
+  updateItemHeight()
+  window.addEventListener('resize', handleResize)
   window.addEventListener('keydown', handleKeyDown)
 
-  // 创建 IntersectionObserver
-  observer = new IntersectionObserver((entries) => {
-    if (isFullScreen.value) return // 全屏时忽略
-    for (const entry of entries) {
-      if (entry.isIntersecting) {
-        const index = Array.from(feedRef.value?.children || []).indexOf(entry.target)
-        if (index !== -1 && index !== activeIndex.value) {
-          activeIndex.value = index
-          updateActiveIndexInternal(index)
-        }
-        break
-      }
-    }
-  }, {
-    root: feedRef.value,
-    threshold: 0.6 // 60% 可见时认为激活
-  })
-
-  // 等待 DOM 渲染完成后观察每个视频项
-  watch(() => videoList.value, () => {
-    nextTick(() => {
-      if (feedRef.value && observer) {
-        Array.from(feedRef.value.children).forEach((child) => {
-          observer?.observe(child)
-        })
-      }
-    })
-  }, { immediate: true })
+  const feed = feedRef.value
+  if (feed) {
+    feed.addEventListener('wheel', onWheel, { passive: false })
+    feed.addEventListener('touchstart', onTouchStart, { passive: true })
+    feed.addEventListener('touchmove', onTouchMove, { passive: false })
+    feed.addEventListener('touchend', onTouchEnd, { passive: true })
+    feed.addEventListener('touchcancel', onTouchCancel, { passive: true })
+  }
 })
 
 onUnmounted(() => {
+  clearAnimationTimer()
+  clearWheelResetTimer()
+  window.removeEventListener('resize', handleResize)
   window.removeEventListener('keydown', handleKeyDown)
-  observer?.disconnect()
+
+  const feed = feedRef.value
+  if (feed) {
+    feed.removeEventListener('wheel', onWheel)
+    feed.removeEventListener('touchstart', onTouchStart)
+    feed.removeEventListener('touchmove', onTouchMove)
+    feed.removeEventListener('touchend', onTouchEnd)
+    feed.removeEventListener('touchcancel', onTouchCancel)
+  }
 })
 </script>
 
 <style scoped>
 .video-feed {
+  position: relative;
+  width: 100%;
   height: calc(100vh - 80px);
-  overflow-y: scroll;
-  overflow-x: hidden;
-  scroll-snap-type: y mandatory;
-  -webkit-overflow-scrolling: touch;
-  scroll-behavior: smooth;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  overflow: hidden;
   border-radius: 20px;
-  will-change: scroll-position;
+  background: #000;
+  will-change: transform;
   backface-visibility: hidden;
 }
 
-.video-feed::-webkit-scrollbar {
-  display: none;
+.video-feed-track {
+  width: 100%;
+  height: 100%;
+  will-change: transform;
 }
 
-.video-feed > * {
+.video-feed-track.dragging {
+  transition: none !important;
+}
+
+.video-feed-item {
   width: 100%;
   height: calc(100vh - 80px);
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
   transform: translateZ(0);
   will-change: transform;
 }
 
-.video-feed > .douyin-video-player {
+.video-feed-item > .douyin-video-player {
   contain: strict;
-}
-
-/* 加载状态 */
-.loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 16px;
 }
 </style>

@@ -1,4 +1,4 @@
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+﻿import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import type { CSSProperties } from 'vue'
 import Player from 'xgplayer'
 import 'xgplayer/dist/index.min.css'
@@ -1458,7 +1458,8 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   
   // 键盘快捷键
   const handleKeydown = (e: KeyboardEvent) => {
-    if (shouldIgnoreKeyboardShortcut(e)) {
+    // 同一页面会挂载多个播放器实例，仅当前激活视频响应快捷键
+    if (!props.autoplay || shouldIgnoreKeyboardShortcut(e)) {
       return
     }
     if (e.code === 'Space') {
@@ -1563,7 +1564,7 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   watch(
     () => props.videoData?.videoId,
     (videoId) => {
-      const keepCommentPanelOpen = showCommentPanel.value && !isCommentDisabledByInteraction.value
+      const keepCommentPanelOpen = showCommentPanel.value
       resetReactionSnapshot()
       resetCommentState()
       showCommentPanel.value = keepCommentPanelOpen
@@ -1701,10 +1702,6 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   
   // 处理评论
   const handleComment = () => {
-    if (isCommentDisabledByInteraction.value) {
-      ElMessage.warning('作者已关闭评论')
-      return
-    }
     runAfterLogin('comment', async () => {
       if (showCommentPanel.value) {
         showCommentPanel.value = false
@@ -1719,13 +1716,6 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
   }  
   // 处理分享
   const loadComments = async (reset: boolean = false) => {
-    if (isCommentDisabledByInteraction.value) {
-      commentList.value = []
-      commentHasMore.value = false
-      commentTotal.value = 0
-      commentCount.value = 0
-      return
-    }
     const videoId = getVideoId()
     if (videoId === null || videoId === undefined) {
       return
@@ -1800,7 +1790,7 @@ export const useDouyinVideoPlayer = (props: DouyinVideoPlayerProps, emit: Douyin
 
   const submitComment = () => {
     if (isCommentDisabledByInteraction.value) {
-      ElMessage.warning('作者已关闭评论')
+      ElMessage.warning('作者已关闭发送评论功能')
       return
     }
     runAfterLogin('comment', async () => {
