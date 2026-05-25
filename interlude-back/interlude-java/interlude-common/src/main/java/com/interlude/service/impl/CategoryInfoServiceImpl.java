@@ -16,7 +16,7 @@ import com.interlude.mapper.CategoryInfoMapper;
 import com.interlude.service.CategoryInfoService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;/**
+import jakarta.annotation.Resource;/**
  * @Description:分类信息Service
  * @auther:dazhi
  * @date:2025/10/27

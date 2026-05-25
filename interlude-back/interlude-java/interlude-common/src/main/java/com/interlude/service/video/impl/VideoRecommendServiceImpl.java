@@ -10,7 +10,7 @@ import com.interlude.mapper.video.VideoRecommendMapper;
 import com.interlude.service.video.VideoRecommendService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;/**
+import jakarta.annotation.Resource;/**
  * @Description:视频推荐表Service
  * @auther:dazhi
  * @date:2025/10/30

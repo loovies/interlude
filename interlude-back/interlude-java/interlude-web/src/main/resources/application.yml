@@ -3,6 +3,15 @@ server:
 #  servlet:
 #    context-path: /admin
 spring:
+  elasticsearch:
+    uris: http://127.0.0.1:9200
+  ai:
+    openai:
+      api-key: sk-7f02f83c000b4e89b5b103cf8ce49716
+      base-url: https://api.deepseek.com
+      chat:
+        options:
+          model: deepseek-chat
   servlet:
     multipart:
       max-file-size: 10MB
@@ -34,17 +43,18 @@ spring:
       max-lifetime: 1800000
       connection-timeout: 30000
       connection-test-query: SELECT 1
-  redis:
-    database: 0
-    host: 127.0.0.1
-    port: 6379
-    jedis:
-      pool:
-        max-active: 20
-        max-wait: -1
-        max-idle: 10
-        min-idle: 0
-    timeout: 2000
+  data:
+    redis:
+      database: 0
+      host: 127.0.0.1
+      port: 6379
+      timeout: 3000ms
+      jedis:
+        pool:
+          max-active: 8
+          max-wait: -1ms
+          max-idle: 8
+          min-idle: 0
 #mybatis 大小写转驼峰
 mybatis:
   configuration:
@@ -54,4 +64,11 @@ project:
   folder: F:/webser/interlude/
 log:
   root:
-    level: debug
+    level: info
+
+debug: false
+
+logging:
+  level:
+    org.springframework.boot.autoconfigure.condition: error
+    org.springframework.boot.autoconfigure.logging.ConditionEvaluationReportLoggingListener: off

@@ -10,7 +10,7 @@ import com.interlude.mapper.video.VideoStatsMapper;
 import com.interlude.service.video.VideoStatsService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;/**
+import jakarta.annotation.Resource;/**
  * @Description:视频统计表Service
  * @auther:dazhi
  * @date:2025/10/30

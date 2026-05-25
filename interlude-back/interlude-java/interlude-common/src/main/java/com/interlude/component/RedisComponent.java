@@ -13,7 +13,7 @@ import com.interlude.utils.DateUtils;
 import com.interlude.utils.StringTools;
 import org.springframework.context.annotation.Configuration;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.io.File;
 import java.util.Date;
 import java.util.List;

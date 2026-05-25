@@ -10,7 +10,7 @@ import com.interlude.mapper.video.VideoAuditLogMapper;
 import com.interlude.service.video.VideoAuditLogService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;/**
+import jakarta.annotation.Resource;/**
  * @Description:审核日志表Service
  * @auther:dazhi
  * @date:2025/10/30

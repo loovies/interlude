@@ -1,7 +1,7 @@
 package com.interlude.web.entity.dto;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 /**
  * 绑定或更新手机号请求。

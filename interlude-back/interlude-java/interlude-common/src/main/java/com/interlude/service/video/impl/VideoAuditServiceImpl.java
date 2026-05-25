@@ -13,7 +13,7 @@ import com.interlude.mapper.video.VideoInfoMapper;
 import com.interlude.service.video.VideoAuditService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;/**
+import jakarta.annotation.Resource;/**
  * @Description:视频审核表Service
  * @auther:dazhi
  * @date:2025/10/30

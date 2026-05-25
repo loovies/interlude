@@ -10,7 +10,7 @@ import com.interlude.mapper.UserEmailCodeMapper;
 import com.interlude.service.UserEmailCodeService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;/**
+import jakarta.annotation.Resource;/**
  * @Description:邮箱验证码Service
  * @auther:dazhi
  * @date:2025/10/14

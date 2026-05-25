@@ -1,6 +1,6 @@
 package com.interlude.web.entity.dto;
 
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * 注销账号确认请求。

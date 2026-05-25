@@ -9,7 +9,7 @@ import com.interlude.enums.VideoQualityEnum;
 import com.interlude.service.video.VideoFileService;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;

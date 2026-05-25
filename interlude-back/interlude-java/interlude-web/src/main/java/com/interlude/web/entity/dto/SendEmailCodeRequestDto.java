@@ -1,7 +1,7 @@
 package com.interlude.web.entity.dto;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * 发送邮箱验证码请求，注册和找回密码都复用这份入参。

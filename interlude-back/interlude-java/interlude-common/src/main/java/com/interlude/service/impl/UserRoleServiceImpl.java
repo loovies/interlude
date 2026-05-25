@@ -10,7 +10,7 @@ import com.interlude.mapper.UserRoleMapper;
 import com.interlude.service.UserRoleService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;/**
+import jakarta.annotation.Resource;/**
  * @Description:Service
  * @auther:dazhi
  * @date:2025/10/14

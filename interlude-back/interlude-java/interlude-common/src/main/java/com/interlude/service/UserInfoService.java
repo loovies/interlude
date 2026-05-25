@@ -7,7 +7,7 @@ import com.interlude.entity.po.UserInfo;
 import com.interlude.entity.query.UserInfoQuery;
 import com.interlude.exception.BusinessException;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * @Description:用户信息表

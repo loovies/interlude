@@ -2,10 +2,10 @@
   <div class="container">
     <Sidebar />
     <main class="main-content">
-      <div class="search-container">
+      <div v-if="route.name !== 'aiSearch'" class="search-container">
         <SearchBar />
       </div>
-      <div class="content-container">
+      <div class="content-container" :class="{ 'content-container--ai': route.name === 'aiSearch' }">
         <router-view />
       </div>
     </main>
@@ -13,8 +13,11 @@
 </template>
 
 <script setup lang="ts">
+import { useRoute } from 'vue-router'
 import Sidebar from '@/components/Sidebar.vue'
 import SearchBar from '@/components/SearchBar.vue'
+
+const route = useRoute()
 </script>
 
 <style lang="scss">
@@ -47,6 +50,10 @@ import SearchBar from '@/components/SearchBar.vue'
       padding: 10px;
       overflow-y: auto;
       overflow-x: hidden;
+    }
+
+    .content-container--ai {
+      overflow: hidden;
     }
   }
 

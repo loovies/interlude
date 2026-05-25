@@ -13,18 +13,18 @@ import com.interlude.entity.query.UserInfoQuery;
 import com.interlude.exception.BusinessException;
 import com.interlude.service.UserInfoService;
 import com.interlude.utils.StringTools;
-import com.wf.captcha.ArithmeticCaptcha;
+import com.wf.captcha.SpecCaptcha;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.annotation.Resource;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotEmpty;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotEmpty;
 
 /**
  * @Description:用户信息表
@@ -50,7 +50,8 @@ public class AccountController extends ABaseController{
 	 */
 	@RequestMapping("/checkCode")
 	public ResponseVO checkCode() {
-		ArithmeticCaptcha captcha = new ArithmeticCaptcha(160, 42);
+		SpecCaptcha captcha = new SpecCaptcha(160, 42);
+		captcha.setLen(5);
 		String code = captcha.text();
 		// 储存验证码到redis,并生成唯一ID成key, 防止验证码覆盖
 		String codeKey = redisComponent.saveCheckCode(code);

@@ -33,7 +33,7 @@ import com.interlude.web.entity.vo.video.WebVideoDetailVO;
 import com.interlude.web.entity.vo.video.WebVideoQualityVO;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;

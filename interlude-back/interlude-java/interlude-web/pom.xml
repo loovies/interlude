@@ -20,7 +20,25 @@
         <skipTests>true</skipTests>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>1.0.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
+
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-openai</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>com.interlude</groupId>
             <artifactId>interlude-common</artifactId>
@@ -33,7 +51,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>2.2.6.RELEASE</version>
+                <version>3.3.1</version>
                 <configuration>
                     <mainClass>com.interlude.web.interludeWebRunApplication</mainClass>
                 </configuration>

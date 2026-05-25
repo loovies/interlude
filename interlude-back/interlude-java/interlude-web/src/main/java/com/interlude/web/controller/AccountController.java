@@ -24,7 +24,7 @@ import com.interlude.web.entity.dto.SendEmailCodeRequestDto;
 import com.interlude.web.entity.dto.UpdateEmailRequestDto;
 import com.interlude.web.entity.dto.UpdatePasswordRequestDto;
 import com.interlude.web.entity.dto.UpdateUserInfoRequestDto;
-import com.wf.captcha.ArithmeticCaptcha;
+import com.wf.captcha.SpecCaptcha;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,10 +34,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
@@ -72,7 +72,8 @@ public class AccountController extends WebBaseController {
      */
     @GetMapping("/checkCode")
     public ResponseVO<CheckCodeResponseDto> checkCode() {
-        ArithmeticCaptcha captcha = new ArithmeticCaptcha(160, 42);
+        SpecCaptcha captcha = new SpecCaptcha(160, 42);
+        captcha.setLen(5);
         String code = captcha.text();
         String codeKey = redisComponent.saveCheckCode(code);
 

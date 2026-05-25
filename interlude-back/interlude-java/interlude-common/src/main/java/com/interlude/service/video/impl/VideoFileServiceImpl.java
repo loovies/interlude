@@ -10,7 +10,7 @@ import com.interlude.mapper.video.VideoFileMapper;
 import com.interlude.service.video.VideoFileService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;/**
+import jakarta.annotation.Resource;/**
  * @Description:视频文件表Service
  * @auther:dazhi
  * @date:2025/10/30

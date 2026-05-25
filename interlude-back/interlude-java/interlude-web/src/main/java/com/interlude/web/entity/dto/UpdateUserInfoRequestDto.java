@@ -1,6 +1,6 @@
 package com.interlude.web.entity.dto;
 
-import javax.validation.constraints.Size;
+import jakarta.validation.constraints.Size;
 
 /**
  * 当前用户资料修改请求。

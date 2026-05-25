@@ -10,7 +10,7 @@ import com.interlude.mapper.UserLogMapper;
 import com.interlude.service.UserLogService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;/**
+import jakarta.annotation.Resource;/**
  * @Description:用户日志表Service
  * @auther:dazhi
  * @date:2025/10/14

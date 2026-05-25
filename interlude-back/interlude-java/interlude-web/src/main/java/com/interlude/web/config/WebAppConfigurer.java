@@ -7,7 +7,7 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 @Configuration
 public class WebAppConfigurer implements WebMvcConfigurer {
@@ -32,6 +32,8 @@ public class WebAppConfigurer implements WebMvcConfigurer {
                         "/account/sendResetPasswordEmailCode",
                         "/account/register",
                         "/account/resetPassword",
+                        "/chat/**",
+                        "/search/**",
                         "/video/**",
                         "/error"
                 );

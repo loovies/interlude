@@ -9,7 +9,7 @@ import com.interlude.mapper.video.VideoReactionMapper;
 import com.interlude.service.video.VideoReactionService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.List;
 
 /**
