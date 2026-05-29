@@ -1,4 +1,4 @@
-package com.interlude.web.controller;
+package com.interlude.auth.controller;
 
 import com.interlude.component.RedisComponent;
 import com.interlude.entity.config.AppConfig;
@@ -7,14 +7,14 @@ import com.interlude.entity.dto.TokenUserInfoDto;
 import com.interlude.entity.vo.ResponseVO;
 import com.interlude.enums.ResponseCodeEnum;
 import com.interlude.utils.StringTools;
-import com.interlude.web.config.GatewayAuthHelper;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
-
+import com.interlude.auth.config.GatewayAuthHelper;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;

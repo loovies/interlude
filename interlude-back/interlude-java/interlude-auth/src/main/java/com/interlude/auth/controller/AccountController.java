@@ -1,4 +1,4 @@
-package com.interlude.web.controller;
+package com.interlude.auth.controller;
 
 import com.interlude.component.RedisComponent;
 import com.interlude.entity.config.AppConfig;
@@ -14,30 +14,16 @@ import com.interlude.service.UserInfoService;
 import com.interlude.service.WebAccountService;
 import com.interlude.utils.DateUtils;
 import com.interlude.utils.StringTools;
-import com.interlude.web.entity.dto.BindPhoneRequestDto;
-import com.interlude.web.entity.dto.CheckCodeResponseDto;
-import com.interlude.web.entity.dto.CloseAccountRequestDto;
-import com.interlude.web.entity.dto.LoginRequestDto;
-import com.interlude.web.entity.dto.RegisterRequestDto;
-import com.interlude.web.entity.dto.ResetPasswordRequestDto;
-import com.interlude.web.entity.dto.SendEmailCodeRequestDto;
-import com.interlude.web.entity.dto.UpdateEmailRequestDto;
-import com.interlude.web.entity.dto.UpdatePasswordRequestDto;
-import com.interlude.web.entity.dto.UpdateUserInfoRequestDto;
+import com.interlude.auth.entity.dto.*;
 import com.wf.captcha.SpecCaptcha;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
-
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;

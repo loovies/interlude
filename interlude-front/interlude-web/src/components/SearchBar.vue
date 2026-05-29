@@ -91,7 +91,7 @@
         <span>{{ uiText.following }}</span>
         <span>{{ uiText.alerts }}</span>
         <span>{{ uiText.messages }}</span>
-        <span>{{ uiText.upload }}</span>
+        <span @click="handleUploadClick">{{ uiText.upload }}</span>
       </div>
       <button v-if="!authStore.isLoggedIn" class="login-btn" type="button" @click="handleLoginClick">
         {{ uiText.signIn }}
@@ -322,6 +322,15 @@ const handleDocumentMouseDown = (event: MouseEvent) => {
 
 const handleLoginClick = () => {
   authStore.openLoginDialog('manual')
+}
+
+const handleUploadClick = async () => {
+  if (!authStore.isLoggedIn) {
+    authStore.openLoginDialog('publish')
+    return
+  }
+  const target = router.resolve('/creator/publish')
+  window.open(target.href, '_blank', 'noopener,noreferrer')
 }
 
 const handleOpenCurrentProfile = () => {

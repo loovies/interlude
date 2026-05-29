@@ -20,6 +20,7 @@ public class WebVideoCardVO {
 
     private String tags;
     private String interactionSettings;
+    private Integer status;
     private Integer visibility;
 
     private Integer duration;
@@ -120,6 +121,14 @@ public class WebVideoCardVO {
 
     public void setInteractionSettings(String interactionSettings) {
         this.interactionSettings = interactionSettings;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
     }
 
     public Integer getVisibility() {

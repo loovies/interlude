@@ -1,0 +1,64 @@
+server:
+  port: 7070
+
+gateway:
+  auth:
+    secret: interlude-gateway-local-secret
+
+spring:
+  application:
+    name: interlude-gateway
+  data:
+    redis:
+      database: 0
+      host: 127.0.0.1
+      port: 6379
+      timeout: 3000ms
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        group: DEFAULT_GROUP
+    gateway:
+      routes:
+        - id: interlude-auth-api
+          uri: lb://interlude-auth
+          predicates:
+            - Path=/api/account/**
+          filters:
+            - StripPrefix=1
+
+        - id: interlude-video-api
+          uri: lb://interlude-video
+          predicates:
+            - Path=/api/video/**
+          filters:
+            - StripPrefix=1
+
+        - id: interlude-web-api
+          uri: lb://interlude-web
+          predicates:
+            - Path=/api/**
+          filters:
+            - StripPrefix=1
+
+        - id: interlude-web-file
+          uri: lb://interlude-web
+          predicates:
+            - Path=/file/**
+
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origin-patterns:
+              - "http://localhost:3001"
+              - "http://127.0.0.1:3001"
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowed-headers:
+              - "*"
+            allow-credentials: true

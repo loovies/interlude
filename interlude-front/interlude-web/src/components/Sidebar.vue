@@ -1,7 +1,7 @@
-﻿<template>
+<template>
   <aside class="sidebar">
     <div class="logo">
-      <img :src="logoSrc" class="logo-img" />
+      <img :src="logoSrc" class="logo-img" alt="幕间 logo" />
       <span class="logo-text">幕间</span>
     </div>
 
@@ -58,10 +58,10 @@
 </template>
 
 <script setup lang="ts">
-import ThemeToggle from './ThemeToggle.vue'
 import { computed } from 'vue'
-import { useThemeStore } from '../stores/theme'
 import { useRoute } from 'vue-router'
+import ThemeToggle from './ThemeToggle.vue'
+import { useThemeStore } from '../stores/theme'
 
 const themeStore = useThemeStore()
 const route = useRoute()
@@ -97,11 +97,6 @@ const logoSrc = computed(() => {
   width: 32px;
   height: 32px;
   margin-left: 20px;
-}
-
-.logo-icon {
-  font-size: 28px;
-  margin-right: 8px;
 }
 
 .logo-text {

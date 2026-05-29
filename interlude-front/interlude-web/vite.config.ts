@@ -18,12 +18,11 @@ export default defineConfig({
     hmr: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:7071/',
+        target: 'http://localhost:7070/',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
       },
       '/file': {
-        target: 'http://localhost:7071/',
+        target: 'http://localhost:7070/',
         changeOrigin: true,
       },
     },

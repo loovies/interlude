@@ -30,6 +30,7 @@ export interface VideoData {
   categoryName?: string
   pCategoryName?: string
   interactionSettings?: string
+  status?: number
   visibility?: number
 }
 
@@ -118,6 +119,7 @@ interface WebVideoItem {
   categoryId?: number
   categoryName?: string
   interactionSettings?: string
+  status?: number
   visibility?: number
 }
 
@@ -347,6 +349,7 @@ function mapWebVideoItemToVideoData(item: WebVideoItem): VideoData {
     categoryName: item.categoryName,
     pCategoryName: item.pCategoryName,
     interactionSettings: item.interactionSettings,
+    status: toNumber(item.status, 1),
     visibility: toNumber(item.visibility, 1),
   }
 }
@@ -562,6 +565,7 @@ export async function fetchUserWorksVideoList(
   page: number = 1,
   pageSize: number = 80,
   visibility?: number,
+  status?: number,
 ): Promise<{ data: VideoData[]; total: number }> {
   const safePage = Math.max(1, page)
   const safePageSize = Math.max(1, pageSize)
@@ -570,6 +574,7 @@ export async function fetchUserWorksVideoList(
       params: {
         userId,
         visibility,
+        status,
         pageNo: safePage,
         pageSize: safePageSize,
       },

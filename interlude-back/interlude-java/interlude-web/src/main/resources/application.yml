@@ -2,6 +2,10 @@ server:
   port: 7071
 #  servlet:
 #    context-path: /admin
+gateway:
+  auth:
+    secret: interlude-gateway-local-secret
+
 spring:
   elasticsearch:
     uris: http://127.0.0.1:9200
@@ -18,6 +22,11 @@ spring:
       max-request-size: 15MB
   application:
     name: interlude-web
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        group: DEFAULT_GROUP
   # mail:
   #   host: smtp.qq.com
   #   port: 587

@@ -30,9 +30,18 @@ public class AppInterceptor implements HandlerInterceptor {
     @Resource
     private UserInfoService userInfoService;
 
+    @Resource
+    private GatewayAuthHelper gatewayAuthHelper;
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         if (!(handler instanceof HandlerMethod)) {
+            return true;
+        }
+
+        TokenUserInfoDto gatewayUser = gatewayAuthHelper.getGatewayUser(request);
+        if (gatewayUser != null) {
+            checkUserEnabled(gatewayUser.getUserId());
             return true;
         }
 
@@ -46,11 +55,15 @@ public class AppInterceptor implements HandlerInterceptor {
             throw new BusinessException(ResponseCodeEnum.CODE_901);
         }
 
-        UserInfo userInfo = userInfoService.getUserInfoByUserId(tokenUserInfoDto.getUserId());
+        checkUserEnabled(tokenUserInfoDto.getUserId());
+        return true;
+    }
+
+    private void checkUserEnabled(String userId) {
+        UserInfo userInfo = userInfoService.getUserInfoByUserId(userId);
         if (userInfo == null || (userInfo.getEnabled() != null && userInfo.getEnabled().intValue() == UserStatusEnum.DISABLE.getStatus())) {
             throw new BusinessException(ResponseCodeEnum.CODE_901);
         }
-        return true;
     }
 
     private String getTokenFromCookie(HttpServletRequest request) {

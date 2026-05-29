@@ -414,6 +414,26 @@ public class WebVideoQueryService {
     }
 
     /**
+     * 创作者中心作品列表使用：作者本人可以看到审核中、已发布、未通过等非公开状态。
+     */
+    public List<WebVideoCardVO> getCreatorCards(List<VideoInfo> videos, String ownerUserId) {
+        List<WebVideoCardVO> cards = new ArrayList<>();
+        String normalizedOwner = normalizeLoginUserId(ownerUserId);
+        if (videos == null || videos.isEmpty() || StringTools.isEmpty(normalizedOwner)) {
+            return cards;
+        }
+        for (VideoInfo videoInfo : videos) {
+            if (videoInfo == null || !normalizedOwner.equals(normalizeLoginUserId(videoInfo.getUserId()))) {
+                continue;
+            }
+            WebVideoCardVO card = toCard(videoInfo);
+            card.setCoverUrl(buildDirectFileUrl(videoInfo.getVideoCover()));
+            cards.add(card);
+        }
+        return cards;
+    }
+
+    /**
      * 获取发现页所需分类树。
      */
     public List<WebVideoCategoryVO> getCategoryTree() {
@@ -517,6 +537,7 @@ public class WebVideoQueryService {
         card.setPublishTime(formatDate(videoInfo.getPublishTime() == null ? videoInfo.getCreateTime() : videoInfo.getPublishTime()));
         card.setTags(videoInfo.getTags());
         card.setInteractionSettings(videoInfo.getInteractionSettings());
+        card.setStatus(videoInfo.getStatus());
         card.setVisibility(videoInfo.getVisibility());
         card.setpCategoryId(videoInfo.getPCategoryId());
         card.setCategoryId(videoInfo.getCategoryId());
@@ -842,6 +863,24 @@ public class WebVideoQueryService {
         }
 
         return "/api/video/discover/" + videoInfo.getVideoId() + "/cover";
+    }
+
+    private String buildDirectFileUrl(String filePath) {
+        if (StringTools.isEmpty(filePath)) {
+            return "";
+        }
+        String normalized = filePath.trim();
+        if (normalized.startsWith("http://") || normalized.startsWith("https://")) {
+            return normalized;
+        }
+        normalized = normalized.replace("\\", "/");
+        while (normalized.startsWith("/")) {
+            normalized = normalized.substring(1);
+        }
+        if (normalized.startsWith("file/")) {
+            return "/" + normalized;
+        }
+        return "/file/" + normalized;
     }
 
     private String normalizePath(String path) {

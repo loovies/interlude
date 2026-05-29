@@ -61,6 +61,44 @@ const router = createRouter({
       name: 'search',
       component: () => import('@/view/Search/index.vue'),
     },
+    {
+      path: '/creator',
+      name: 'creator',
+      redirect: '/creator/home',
+      component: () => import('@/view/Creator/index.vue'),
+      children: [
+        {
+          path: 'home',
+          name: 'creatorHome',
+          component: () => import('@/view/Creator/home/index.vue'),
+        },
+        {
+          path: 'publish',
+          name: 'creatorPublish',
+          component: () => import('@/view/Creator/publish/index.vue'),
+        },
+        {
+          path: 'data',
+          name: 'creatorData',
+          component: () => import('@/view/Creator/data/index.vue'),
+        },
+        {
+          path: 'works',
+          name: 'creatorWorks',
+          component: () => import('@/view/Creator/works/index.vue'),
+        },
+        {
+          path: 'interaction',
+          name: 'creatorInteraction',
+          component: () => import('@/view/Creator/interaction/index.vue'),
+        },
+        {
+          path: 'message',
+          name: 'creatorMessage',
+          component: () => import('@/view/Creator/message/index.vue'),
+        },
+      ],
+    },
 ],
 })
 
