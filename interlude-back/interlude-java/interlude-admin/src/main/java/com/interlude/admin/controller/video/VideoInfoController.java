@@ -52,6 +52,9 @@ public class VideoInfoController extends ABaseController {
 
     @RequestMapping("/loadVideoInfo")
     public ResponseVO loadVideoInfo(VideoInfoQuery videoInfoQuery){
+        if(videoInfoQuery == null){
+            videoInfoQuery = new VideoInfoQuery();
+        }
 
         ArrayList<Date> createTimeArray = videoInfoQuery.getCreateTimeArray();
         ArrayList<String> createFormatArray = new ArrayList<>();
@@ -82,11 +85,7 @@ public class VideoInfoController extends ABaseController {
                     .collect(Collectors.toCollection(ArrayList::new));
             videoInfoQuery.setVisibilityArrayList(vis);
         }
-        if(videoInfoQuery.getIsDescOrAscCreateTime().equals("desc")){
-            videoInfoQuery.setOrderBy("create_time desc");
-        }else{
-            videoInfoQuery.setOrderBy("create_time asc");
-        }
+        applyDefaultOrder(videoInfoQuery);
 
         PaginationResultVO<VideoInfo> listByPage = videoInfoService.findListByPage(videoInfoQuery);
         listByPage.getList().stream().forEach(item ->{
@@ -136,6 +135,18 @@ public class VideoInfoController extends ABaseController {
         result.setPageSize(listByPage.getPageSize());
         result.setPageTotal(listByPage.getPageTotal());
         return getSuccessResponseVO(result);
+    }
+
+    /**
+     * 稿件管理默认按最新时间倒序展示；相同时间再按视频 ID 倒序，保证分页翻页顺序稳定。
+     */
+    private void applyDefaultOrder(VideoInfoQuery videoInfoQuery){
+        String sortType = videoInfoQuery.getIsDescOrAscCreateTime();
+        if("asc".equalsIgnoreCase(sortType)){
+            videoInfoQuery.setOrderBy("publish_time asc, create_time asc, video_id asc");
+            return;
+        }
+        videoInfoQuery.setOrderBy("publish_time desc, create_time desc, video_id desc");
     }
 
     @RequestMapping("/{videoId}/playList")

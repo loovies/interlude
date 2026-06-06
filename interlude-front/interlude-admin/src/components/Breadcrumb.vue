@@ -22,7 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, getCurrentInstance, Ref, watch, onMounted, computed } from 'vue'
+import { ref, getCurrentInstance, watch, onMounted, computed } from 'vue'
+import type { Ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()

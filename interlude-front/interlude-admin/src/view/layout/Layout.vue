@@ -19,10 +19,9 @@
         </h5>
       </div>
       <el-menu
-        default-active="2"
         router
         class="menu-style"
-        :defaultActive="route.path"
+        :default-active="route.path"
         background-color="#FFFFFF"
         text-color="#1e1e1e"
         active-text-color="#1e1e1e"
@@ -83,7 +82,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, getCurrentInstance, Ref, watch, onMounted, computed } from 'vue'
+import { ref, getCurrentInstance, watch, onMounted, computed } from 'vue'
+import type { Ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 

@@ -168,6 +168,7 @@
 <script setup lang="ts">
 import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
+import { useRoute, useRouter } from 'vue-router'
 import { fetchCheckCode, loginByAccount, registerAccount, sendRegisterEmailCode } from '@/api/auth'
 import { useAuthStore } from '@/stores/auth'
 import logoImage from '@/assets/images/logo-b.png'
@@ -182,6 +183,8 @@ interface CaptchaState {
 }
 
 const authStore = useAuthStore()
+const route = useRoute()
+const router = useRouter()
 const activeTab = ref<LoginTab>('account')
 const rememberPassword = ref(authStore.rememberMe)
 
@@ -333,9 +336,22 @@ const stopEmailCountdown = () => {
   emailCodeCountdown.value = 0
 }
 
-const handleClose = () => {
+const clearLoginRedirectQuery = async () => {
+  if (typeof route.query.loginRedirect !== 'string' || !route.query.loginRedirect) {
+    return
+  }
+  const nextQuery = { ...route.query }
+  delete nextQuery.loginRedirect
+  await router.replace({
+    path: route.path,
+    query: nextQuery,
+  })
+}
+
+const handleClose = async () => {
   stopEmailCountdown()
   authStore.cancelLoginFlow()
+  await clearLoginRedirectQuery()
 }
 
 const storeRememberedCredentials = (account: string, password: string) => {
@@ -383,6 +399,14 @@ const validateFields = async (formRef: FormInstance | undefined, props: string |
   }
 }
 
+const handleLoginRedirect = async () => {
+  const redirect = typeof route.query.loginRedirect === 'string' ? route.query.loginRedirect : ''
+  if (!redirect) {
+    return
+  }
+  await router.replace(redirect)
+}
+
 const handleAccountLogin = async () => {
   if (!(await validateForm(accountFormRef.value))) {
     return
@@ -404,6 +428,7 @@ const handleAccountLogin = async () => {
     const user = await loginByAccount(payload)
     authStore.completeLogin(user)
     storeRememberedCredentials(accountForm.account, accountForm.password)
+    await handleLoginRedirect()
     ElMessage.success('登录成功')
   } catch (error) {
     ElMessage.error(getErrorMessage(error, '登录失败，请稍后再试'))
@@ -435,6 +460,7 @@ const handleEmailLogin = async () => {
     const user = await loginByAccount(payload)
     authStore.completeLogin(user)
     storeRememberedCredentials(emailForm.email, emailForm.password)
+    await handleLoginRedirect()
     ElMessage.success('登录成功')
   } catch (error) {
     ElMessage.error(getErrorMessage(error, '邮箱登录失败，请稍后再试'))
@@ -501,6 +527,7 @@ const handleRegister = async () => {
     const user = await registerAccount(payload)
     authStore.completeLogin(user)
     storeRememberedCredentials(registerForm.email, registerForm.password)
+    await handleLoginRedirect()
     ElMessage.success('注册并登录成功')
     resetRegisterForm()
     stopEmailCountdown()

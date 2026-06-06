@@ -19,10 +19,12 @@
     <modules>
         <module>interlude-common</module>
         <module>interlude-admin</module>
-        <module>interlude-web</module>
         <module>interlude-gateway</module>
         <module>interlude-auth</module>
         <module>interlude-video</module>
+        <module>interlude-file</module>
+        <module>interlude-search</module>
+        <module>interlude-chat</module>
     </modules>
 
     <properties>

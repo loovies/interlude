@@ -21,8 +21,16 @@ public class SysSettingDto implements Serializable {
         return registerEMailTitle;
     }
 
+    public void setRegisterEMailTitle(String registerEMailTitle) {
+        this.registerEMailTitle = registerEMailTitle;
+    }
+
     public String getRegisterEmailContent() {
         return registerEmailContent;
+    }
+
+    public void setRegisterEmailContent(String registerEmailContent) {
+        this.registerEmailContent = registerEmailContent;
     }
 
     public Integer getVideoSize() {

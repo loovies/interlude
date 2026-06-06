@@ -31,6 +31,7 @@ const Api = {
 
   //系统
   getSysSetting: '/sysSetting/loadSysSetting',
+  saveSysSetting: '/sysSetting/saveSysSetting',
 
   //草稿
   getDraftInfoByUserId: '/draft/getDraftInfoByUserId',

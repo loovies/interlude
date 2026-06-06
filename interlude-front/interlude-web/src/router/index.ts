@@ -1,4 +1,5 @@
-﻿import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -53,8 +54,8 @@ const router = createRouter({
           path: 'simple-test',
           name: 'simple-test',
           component: () => import('@/view/Playground/simple-test/index.vue'),
-        }
-      ]
+        },
+      ],
     },
     {
       path: '/search',
@@ -65,6 +66,10 @@ const router = createRouter({
       path: '/creator',
       name: 'creator',
       redirect: '/creator/home',
+      meta: {
+        // 创作中心页面需要先登录，避免用户直接通过地址栏进入。
+        requiresAuth: true,
+      },
       component: () => import('@/view/Creator/index.vue'),
       children: [
         {
@@ -99,8 +104,33 @@ const router = createRouter({
         },
       ],
     },
-],
+  ],
+})
+
+router.beforeEach(async (to) => {
+  const requiresAuth = to.matched.some((record) => record.meta?.requiresAuth)
+  if (!requiresAuth) {
+    return true
+  }
+
+  const authStore = useAuthStore()
+
+  // 先尝试自动登录，避免已有 token 的用户被误判成未登录。
+  if (!authStore.autoLoginFinished) {
+    await authStore.runAutoLogin()
+  }
+
+  if (authStore.isLoggedIn) {
+    return true
+  }
+
+  authStore.openLoginDialog('publish')
+  return {
+    path: '/recommend',
+    query: {
+      loginRedirect: to.fullPath,
+    },
+  }
 })
 
 export default router
-

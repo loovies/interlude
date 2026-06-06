@@ -43,7 +43,7 @@
             <el-form-item>
               <el-button
                 type="primary"
-                @click="loadVideoInfoList()"
+                @click="loadVideoInfoList(true)"
                 class="search-btn mainbtn"
                 style="width: 100px"
               >
@@ -222,12 +222,12 @@ import {
   ref,
   getCurrentInstance,
   nextTick,
-  Ref,
   onUnmounted,
   watch,
   onMounted,
   computed,
 } from 'vue'
+import type { Ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getRoleByUserId } from '@/utils/Api.js'
 import { storeToRefs } from 'pinia'
@@ -246,9 +246,20 @@ const { proxy } = getCurrentInstance()
 const route = useRoute()
 const router = useRouter()
 
-const formData = ref<Record<string, any>>({
+const createDefaultFormData = () => ({
   categoryArray: [],
-}) // 键值对象
+  status: -1,
+})
+
+const createDefaultTableData = () => ({
+  list: [],
+  pageNo: 1,
+  pageSize: 15,
+  totalCount: 0,
+  pageTotal: 0,
+})
+
+const formData = ref<Record<string, any>>(createDefaultFormData()) // 键值对象
 const formDataRef = ref()
 
 const tableOptions = {
@@ -364,11 +375,14 @@ const deleteVideo = (row: Object) => {
 const startUpload = (file: Object) => {}
 
 // 用户信息表格数据
-const tableData = ref([])
-const flag = ref('asc')
+const tableData = ref(createDefaultTableData())
+const flag = ref('desc')
 
 // 加载用户信息列表
-const loadVideoInfoList = async (): Promise<void> => {
+const loadVideoInfoList = async (resetPage: boolean = false): Promise<void> => {
+  if (resetPage) {
+    tableData.value.pageNo = 1
+  }
   let params: Record<string, any> = {
     pageNo: tableData.value.pageNo,
     pageSize: tableData.value.pageSize,
@@ -411,10 +425,8 @@ const changeShrink = (): void => {
 }
 
 const cheanFrom = () => {
-  formData.value = ref<Record<string, any>>({
-    categoryArray: [],
-  })
-  loadVideoInfoList()
+  formData.value = createDefaultFormData()
+  loadVideoInfoList(true)
 }
 
 // 单选按钮点击处理函数
@@ -443,7 +455,7 @@ const changeSort = (): void => {
   } else {
     flag.value = 'desc'
   }
-  loadVideoInfoList()
+  loadVideoInfoList(true)
 }
 
 const rowSelectedList = ref([])

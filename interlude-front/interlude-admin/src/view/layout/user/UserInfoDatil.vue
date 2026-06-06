@@ -149,7 +149,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, getCurrentInstance, nextTick, Ref } from 'vue'
+import { ref, getCurrentInstance, nextTick } from 'vue'
 import { uploadImage, getRoleByUserId } from '@/utils/Api.js'
 const { proxy } = getCurrentInstance()
 
@@ -172,7 +172,7 @@ const dialogConfig = ref({
 
 const emit = defineEmits(['reload'])
 
-const showEnabled: boolean = ref(true)
+const showEnabled = ref(true)
 
 const showEdit = (data: Array<Record<string, any>>, type: number) => {
   dialogConfig.value.show = true

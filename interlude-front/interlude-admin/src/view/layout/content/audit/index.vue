@@ -189,12 +189,12 @@ import {
   ref,
   getCurrentInstance,
   nextTick,
-  Ref,
   onUnmounted,
   watch,
   onMounted,
   computed,
 } from 'vue'
+import type { Ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getRoleByUserId } from '@/utils/Api.js'
 import { storeToRefs } from 'pinia'

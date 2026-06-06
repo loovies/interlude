@@ -34,13 +34,21 @@ spring:
         max-idle: 10
         min-idle: 0
     timeout: 5000
-#mybatis 大小写转驼峰
+
+# mybatis 大小写转驼峰
 mybatis:
   configuration:
     map-underscore-to-camel-case: true
 
 project:
   folder: F:/webser/interlude/
+
+task:
+  queue:
+    enabled: false
+    threadPoolSize: 2
+    emptyQueueSleepMs: 1500
+
 log:
   root:
     level: debug

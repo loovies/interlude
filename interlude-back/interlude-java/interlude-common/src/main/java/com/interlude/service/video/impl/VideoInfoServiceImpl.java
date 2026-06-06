@@ -173,6 +173,7 @@ public class VideoInfoServiceImpl implements VideoInfoService{
 			}
 			videoInfoMapper.insert(videoInfo);
 			uploadVideoFileInfoByKey.setVideoId(videoId);
+			// 将上传完成的视频信息写入 Redis 转码队列，由视频服务异步消费。
 			redisComponent.addFile2TransferQueue(uploadVideoFileInfoByKey);
 
 			// 新增审核表信息

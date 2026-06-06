@@ -107,6 +107,7 @@
 <script setup lang="ts">
 import videoInput from './videoInput.vue'
 import { ref, reactive, getCurrentInstance, nextTick } from 'vue'
+import type { Ref } from 'vue'
 const { proxy } = getCurrentInstance()
 import { vDraggable } from 'vue-draggable-plus'
 import { useSysSettingStore } from '../../../stores/sysSettingStore.ts'

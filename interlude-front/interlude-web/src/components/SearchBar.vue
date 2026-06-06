@@ -103,7 +103,7 @@
               {{ userInitial }}
             </el-avatar>
             <span class="user-name profile-jump" @click.stop="handleOpenCurrentProfile">{{ displayName }}</span>
-            <span class="entry-more">v</span>
+            <span class="entry-more">﹀</span>
           </button>
         </template>
         <div class="user-card">
@@ -327,6 +327,13 @@ const handleLoginClick = () => {
 const handleUploadClick = async () => {
   if (!authStore.isLoggedIn) {
     authStore.openLoginDialog('publish')
+    await router.replace({
+      path: route.path,
+      query: {
+        ...route.query,
+        loginRedirect: '/creator/publish',
+      },
+    })
     return
   }
   const target = router.resolve('/creator/publish')

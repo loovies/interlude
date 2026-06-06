@@ -35,15 +35,22 @@ spring:
           filters:
             - StripPrefix=1
 
-        - id: interlude-web-api
-          uri: lb://interlude-web
+        - id: interlude-search-api
+          uri: lb://interlude-search
           predicates:
-            - Path=/api/**
+            - Path=/api/search/**
           filters:
             - StripPrefix=1
 
-        - id: interlude-web-file
-          uri: lb://interlude-web
+        - id: interlude-chat-api
+          uri: lb://interlude-chat
+          predicates:
+            - Path=/api/chat/**
+          filters:
+            - StripPrefix=1
+
+        - id: interlude-file
+          uri: lb://interlude-file
           predicates:
             - Path=/file/**
 

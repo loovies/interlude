@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, getCurrentInstance, ComponentInternalInstance, reactive, nextTick } from 'vue'
+import { ref, getCurrentInstance } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { FormRules } from 'element-plus'
 import VueCookies from 'vue-cookies'
@@ -114,7 +114,10 @@ const submitFrom = (): void => {
     if (!res) {
       return
     }
-    router.push('/home')
+    // 登录成功后优先回到登录前准备访问的后台页面。
+    const redirectPath =
+      typeof route.query.redirect === 'string' && route.query.redirect ? route.query.redirect : '/home'
+    router.push(redirectPath)
     proxy.$Message.success('登录成功')
     VueCookies.set('account', res.data.phone)
     loginStore.saveUserInfo(res.data)

@@ -6,6 +6,7 @@ import com.interlude.service.video.VideoInfoService;
 import com.interlude.entity.config.TaskQueueConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
@@ -18,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
+@ConditionalOnProperty(prefix = "task.queue", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor    // 为final字段生成构造函数
 public class ExecuteQueueTask {
 

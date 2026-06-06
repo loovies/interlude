@@ -121,6 +121,7 @@ public class AuthFilter {
                 || path.equals("/video/danmu/list")
                 || path.equals("/video/follow/status")
                 || pathEqualsOrChild(path, "/search")
+                || pathEqualsOrChild(path, "/chat")
                 || pathEqualsOrChild(path, "/file")
                 || path.matches("^/video/play/\\d+$")
                 || path.matches("^/video/play/\\d+/playlist$")

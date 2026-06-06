@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import VueCookies from 'vue-cookies'
 
 const router = createRouter({
   // createWebHistory()  美观，无 #，如 https://example.com/user/id
@@ -10,12 +11,19 @@ const router = createRouter({
     {
       path: '/login',
       name: 'login',
+      meta: {
+        guestOnly: true,
+      },
       component: () => import('../view/account/Login.vue'),
     },
     {
       path: '/',
       name: 'layout',
       redirect: '/login',
+      meta: {
+        // 后台布局页下的页面都需要先完成管理员登录。
+        requiresAuth: true,
+      },
       component: () => import('@/view/layout/Layout.vue'),
       children: [
         {
@@ -61,6 +69,29 @@ const router = createRouter({
       ],
     },
   ],
+})
+
+router.beforeEach((to) => {
+  const adminToken = VueCookies.get('adminToken')
+  const requiresAuth = to.matched.some((record) => record.meta?.requiresAuth)
+  const guestOnly = to.matched.some((record) => record.meta?.guestOnly)
+
+  // 未登录时先跳登录页，并带上原目标地址，登录成功后再跳回去。
+  if (requiresAuth && !adminToken) {
+    return {
+      path: '/login',
+      query: {
+        redirect: to.fullPath,
+      },
+    }
+  }
+
+  // 已登录用户访问登录页时，直接回到原页面或后台首页。
+  if (guestOnly && adminToken) {
+    return typeof to.query.redirect === 'string' && to.query.redirect ? to.query.redirect : '/home'
+  }
+
+  return true
 })
 
 export default router

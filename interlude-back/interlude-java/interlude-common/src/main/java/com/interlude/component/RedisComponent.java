@@ -101,6 +101,11 @@ public class RedisComponent {
         return  settingDto;
     }
 
+    // 保存系统设置，供管理端统一维护上传和互动限制。
+    public void saveSysSetting(SysSettingDto settingDto){
+        redisUtils.set(Constants.REDIS_SYS_SETTING_KEY,settingDto);
+    }
+
     // 保存预上传文件
     public UploadResultDto savePreVideoFileInfo(String userId, String fileName,String fileIdentifier, Integer chunks) {
 
